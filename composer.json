@@ -3,7 +3,7 @@
   "description": "Zip create, modify and extract tool. Alternative ZipArchive.",
   "type": "library",
   "require-dev": {
-    "phpunit/phpunit": "^5.5"
+    "phpunit/phpunit": "4.8"
   },
   "license": "MIT",
   "authors": [
@@ -19,7 +19,7 @@
   },
   "autoload": {
     "psr-4": {
-      "Nelexa\\Zip\\": "src"
+      "Nelexa\\Zip\\": "src/Nelexa/Zip"
     }
   }
 }

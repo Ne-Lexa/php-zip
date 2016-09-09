@@ -235,7 +235,6 @@ $zip = new \Nelexa\Zip\ZipFile();
 $zip->open("output.zip");
 $zip->addFromString("new-file", file_get_contents(__FILE__));
 $zip->saveAs("output2.zip");
-$zip->save();
 $zip->close();
 
 // $ zipinfo output2.zip 

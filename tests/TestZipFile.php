@@ -1,6 +1,6 @@
 <?php
 
-class TestZipFile extends \PHPUnit\Framework\TestCase
+class TestZipFile extends PHPUnit_Framework_TestCase
 {
 
     public function testCreate()
