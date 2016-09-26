@@ -104,6 +104,13 @@ class ZipOutputFile implements \Countable, \ArrayAccess, \Iterator, ZipConstants
     private $level = self::LEVEL_DEFAULT_COMPRESSION;
 
     /**
+     * ZipAlign setting
+     *
+     * @var int
+     */
+    private $align;
+
+    /**
      * ZipOutputFile constructor.
      * @param ZipFile|null $zipFile
      */
@@ -806,6 +813,18 @@ class ZipOutputFile implements \Countable, \ArrayAccess, \Iterator, ZipConstants
     }
 
     /**
+     * @param int|null $align
+     */
+    public function setZipAlign($align = 4)
+    {
+        if ($align === null) {
+            $this->align = null;
+            return;
+        }
+        $this->align = (int)$align;
+    }
+
+    /**
      * Save as file
      *
      * @param string $filename Output filename
@@ -999,6 +1018,10 @@ class ZipOutputFile implements \Countable, \ArrayAccess, \Iterator, ZipConstants
 
         $offset = ftell($outputHandle);
 
+        // Commit changes.
+        $entry->setGeneralPurposeBitFlags($general);
+        $entry->setRawOffset($offset);
+
         // Start changes.
         // local file header signature     4 bytes  (0x04034b50)
         // version needed to extract       2 bytes
@@ -1012,6 +1035,22 @@ class ZipOutputFile implements \Countable, \ArrayAccess, \Iterator, ZipConstants
         // file name length                2 bytes
         // extra field length              2 bytes
         $extra = $entry->getRawExtraFields();
+
+        // zip align
+        $padding = 0;
+        if ($this->align !== null && !$entry->isEncrypted() && $entry->getMethod() === ZipEntry::METHOD_STORED) {
+            $padding =
+                (
+                    $this->align -
+                    (
+                        $offset +
+                        self::LOCAL_FILE_HEADER_MIN_LEN +
+                        strlen($entry->getName()) +
+                        strlen($extra)
+                    ) % $this->align
+                ) % $this->align;
+        }
+
         fwrite($outputHandle, pack('VvvvVVVVvv',
             ZipConstants::LOCAL_FILE_HEADER_SIG,
             $entry->getVersionNeededToExtract(),
@@ -1022,15 +1061,16 @@ class ZipOutputFile implements \Countable, \ArrayAccess, \Iterator, ZipConstants
             $dd ? 0 : (int)$entry->getRawCompressedSize(),
             $dd ? 0 : (int)$entry->getRawSize(),
             strlen($entry->getName()),
-            strlen($extra)
+            strlen($extra) + $padding
         ));
         // file name (variable size)
         fwrite($outputHandle, $entry->getName());
         // extra field (variable size)
         fwrite($outputHandle, $extra);
-        // Commit changes.
-        $entry->setGeneralPurposeBitFlags($general);
-        $entry->setRawOffset($offset);
+
+        if ($padding > 0) {
+            fwrite($outputHandle, str_repeat(chr(0), $padding));
+        }
 
         fwrite($outputHandle, $entryContent);
 
@@ -1059,7 +1099,6 @@ class ZipOutputFile implements \Countable, \ArrayAccess, \Iterator, ZipConstants
                 . " (expected compressed entry size of "
                 . $entry->getCompressedSize() . " bytes, but is actually " . $compressedSize . " bytes)");
         }
-
     }
 
     /**
@@ -1321,13 +1360,12 @@ class ZipOutputFile implements \Countable, \ArrayAccess, \Iterator, ZipConstants
      */
     public function offsetSet($entryName, $uncompressedDataContent)
     {
-        if(empty($entryName)){
+        if (empty($entryName)) {
             throw new IllegalArgumentException('Entry name empty');
         }
-        if($entryName[strlen($entryName)-1] === '/'){
+        if ($entryName[strlen($entryName) - 1] === '/') {
             $this->addEmptyDir($entryName);
-        }
-        else{
+        } else {
             $this->addFromString($entryName, $uncompressedDataContent);
         }
     }

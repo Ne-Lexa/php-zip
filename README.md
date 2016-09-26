@@ -2,7 +2,7 @@
 ================
 `PhpZip` - is to create, update, opening and unpacking ZIP archives in pure PHP.
 
-The library supports `ZIP64`, `Traditional PKWARE Encryption` and `WinZIP AES Encryption`.
+The library supports `ZIP64`, `zipalign`, `Traditional PKWARE Encryption` and `WinZIP AES Encryption`.
 
 The library does not require extension `php-xml` and class `ZipArchive`.
 
@@ -414,6 +414,11 @@ while ($iterator->valid())
 
     $iterator->next();
 }
+```
+Set zip alignment (alternate program `zipalign`).
+```php
+// before save or output
+$zipOutputFile->setAlign(4); // alternative cmd: zipalign -f -v 4 filename.zip
 ```
 Close zip archive.
 ```php
