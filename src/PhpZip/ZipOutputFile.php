@@ -269,7 +269,7 @@ class ZipOutputFile implements \Countable, \ArrayAccess, \Iterator, ZipConstants
      */
     public function setComment($comment)
     {
-        if (null !== $comment && !empty($comment)) {
+        if (null !== $comment && strlen($comment) !== 0) {
             $comment = (string)$comment;
             $length = strlen($comment);
             if (0x0000 > $length || $length > 0xffff) {
@@ -292,10 +292,10 @@ class ZipOutputFile implements \Countable, \ArrayAccess, \Iterator, ZipConstants
     public function addFromString($entryName, $data, $compressionMethod = ZipEntry::METHOD_DEFLATED)
     {
         $entryName = (string)$entryName;
-        if ($data === null) {
-            throw new IllegalArgumentException("data is null");
+        if ($data === null || strlen($data) === 0) {
+            throw new IllegalArgumentException("Data is empty");
         }
-        if (empty($entryName)) {
+        if ($entryName === null || strlen($entryName) === 0) {
             throw new IllegalArgumentException("Incorrect entry name " . $entryName);
         }
         $this->validateCompressionMethod($compressionMethod);
@@ -343,7 +343,7 @@ class ZipOutputFile implements \Countable, \ArrayAccess, \Iterator, ZipConstants
     )
     {
         $inputDir = (string)$inputDir;
-        if (empty($inputDir)) {
+        if ($inputDir === null || strlen($inputDir) === 0) {
             throw new IllegalArgumentException('Input dir empty');
         }
         if (!is_dir($inputDir)) {
@@ -367,8 +367,12 @@ class ZipOutputFile implements \Countable, \ArrayAccess, \Iterator, ZipConstants
         foreach ($files as $file) {
             $filename = str_replace($inputDir, $moveToPath, $file);
             $filename = ltrim($filename, '/');
-            is_dir($file) && FilesUtil::isEmptyDir($file) && $this->addEmptyDir($filename);
-            is_file($file) && $this->addFromFile($file, $filename, $compressionMethod);
+            if(is_dir($file)){
+                FilesUtil::isEmptyDir($file) && $this->addEmptyDir($filename);
+            }
+            elseif(is_file($file)){
+                $this->addFromFile($file, $filename, $compressionMethod);
+            }
         }
         return $this->count() > $count;
     }
@@ -392,7 +396,7 @@ class ZipOutputFile implements \Countable, \ArrayAccess, \Iterator, ZipConstants
     public function addEmptyDir($dirName)
     {
         $dirName = (string)$dirName;
-        if (empty($dirName)) {
+        if (strlen($dirName) === 0) {
             throw new IllegalArgumentException("dirName null or not string");
         }
         $dirName = rtrim($dirName, '/') . '/';
@@ -447,7 +451,7 @@ class ZipOutputFile implements \Countable, \ArrayAccess, \Iterator, ZipConstants
             throw new IllegalArgumentException("stream is not resource");
         }
         $entryName = (string)$entryName;
-        if (empty($entryName)) {
+        if (strlen($entryName) === 0) {
             throw new IllegalArgumentException("Incorrect entry name " . $entryName);
         }
         $this->validateCompressionMethod($compressionMethod);
@@ -486,7 +490,7 @@ class ZipOutputFile implements \Countable, \ArrayAccess, \Iterator, ZipConstants
         if (!is_dir($inputDir)) {
             throw new IllegalArgumentException('Directory ' . $inputDir . ' can\'t exists');
         }
-        if (null === $globPattern || !is_string($globPattern)) {
+        if (null === $globPattern || strlen($globPattern) === 0) {
             throw new IllegalArgumentException("globPattern null");
         }
         if (empty($globPattern)) {
@@ -514,8 +518,12 @@ class ZipOutputFile implements \Countable, \ArrayAccess, \Iterator, ZipConstants
         foreach ($filesFound as $file) {
             $filename = str_replace($inputDir, $moveToPath, $file);
             $filename = ltrim($filename, '/');
-            is_dir($file) && FilesUtil::isEmptyDir($file) && $this->addEmptyDir($filename);
-            is_file($file) && $this->addFromFile($file, $filename, $compressionMethod);
+            if(is_dir($file)){
+                FilesUtil::isEmptyDir($file) && $this->addEmptyDir($filename);
+            }
+            elseif(is_file($file)){
+                $this->addFromFile($file, $filename, $compressionMethod);
+            }
         }
         return $this->count() > $count;
     }
@@ -571,8 +579,12 @@ class ZipOutputFile implements \Countable, \ArrayAccess, \Iterator, ZipConstants
         foreach ($files as $file) {
             $filename = str_replace($inputDir, $moveToPath, $file);
             $filename = ltrim($filename, '/');
-            is_dir($file) && FilesUtil::isEmptyDir($file) && $this->addEmptyDir($filename);
-            is_file($file) && $this->addFromFile($file, $filename, $compressionMethod);
+            if(is_dir($file)){
+                FilesUtil::isEmptyDir($file) && $this->addEmptyDir($filename);
+            }
+            elseif(is_file($file)){
+                $this->addFromFile($file, $filename, $compressionMethod);
+            }
         }
         return $this->count() > $count;
     }
@@ -1268,7 +1280,7 @@ class ZipOutputFile implements \Countable, \ArrayAccess, \Iterator, ZipConstants
     public function outputAsAttachment($outputFilename, $mimeType = null)
     {
         $outputFilename = (string)$outputFilename;
-        if (empty($outputFilename)) {
+        if (strlen($outputFilename) === 0) {
             throw new IllegalArgumentException("Output filename is empty.");
         }
         if (empty($mimeType) || !is_string($mimeType)) {
@@ -1360,7 +1372,8 @@ class ZipOutputFile implements \Countable, \ArrayAccess, \Iterator, ZipConstants
      */
     public function offsetSet($entryName, $uncompressedDataContent)
     {
-        if (empty($entryName)) {
+        $entryName = (string)$entryName;
+        if (strlen($entryName) === 0) {
             throw new IllegalArgumentException('Entry name empty');
         }
         if ($entryName[strlen($entryName) - 1] === '/') {

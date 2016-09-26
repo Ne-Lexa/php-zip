@@ -401,7 +401,7 @@ class ZipFile implements \Countable, \ArrayAccess, \Iterator, ZipConstants
      */
     public static function openFromString($data)
     {
-        if (empty($data)) {
+        if (null === $data || strlen($data) === 0) {
             throw new IllegalArgumentException("Data not available");
         }
         if (!($handle = fopen('php://temp', 'r+b'))) {
