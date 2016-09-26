@@ -362,7 +362,7 @@ $zipOutputFile->saveAsFile($filename);
 ```
 Save archive to a stream.
 ```php
-$handle = fopen($filename, 'w+b);
+$handle = fopen($filename, 'w+b');
 $autoCloseResource = true;
 $zipOutputFile->saveAsStream($handle, $autoCloseResource);
 if(!$autoCloseResource){
