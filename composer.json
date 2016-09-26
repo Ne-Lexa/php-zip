@@ -1,12 +1,13 @@
 {
   "name": "nelexa/zip",
-  "description": "Zip files CRUD. Open, create, update, extract and get info tool. Support read and write encrypted archives. Support ZIP64 ext. Alternative ZipArchive. It does not require php-zip extension.",
+  "description": "Zip files CRUD. Open, create, update, extract and get info tool. Support read and write encrypted archives. Support ZIP64 ext and zip align. Alternative ZipArchive. It does not require php-zip extension.",
   "type": "library",
   "keywords": [
     "zip",
     "archive",
     "extract",
-    "winzip"
+    "winzip",
+    "zipalign"
   ],
   "require-dev": {
     "phpunit/phpunit": "4.8"

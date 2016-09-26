@@ -42,4 +42,20 @@ class ZipTestCase extends \PHPUnit_Framework_TestCase
         self::assertEquals(file_get_contents($filename), $actualEmptyZipData);
     }
 
+    /**
+     * @param string $filename
+     * @return bool|null If null - can not install zipalign
+     */
+    public static function doZipAlignVerify($filename)
+    {
+        if (DIRECTORY_SEPARATOR !== '\\' && `which zipalign`) {
+            exec("zipalign -c -v 4 " . escapeshellarg($filename), $output, $returnCode);
+            return $returnCode === 0;
+        } else {
+            echo 'Can not find program "zipalign" for test' . PHP_EOL;
+            fwrite(STDERR, 'Can not find program "zipalign" for test');
+            return null;
+        }
+    }
+
 }

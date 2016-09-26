@@ -1022,6 +1022,44 @@ class ZipTest extends ZipTestCase
         $zipFile->close();
     }
 
+    public function testZipAlign()
+    {
+        $zipOutputFile = ZipOutputFile::create();
+
+        for ($i = 0; $i < 100; $i++) {
+            $zipOutputFile->addFromString(
+                'entry' . $i . '.txt',
+                CryptoUtil::randomBytes(mt_rand(100, 4096)),
+                ZipEntry::METHOD_STORED
+            );
+        }
+        $zipOutputFile->saveAsFile($this->outputFilename);
+        $zipOutputFile->close();
+
+        self::assertCorrectZipArchive($this->outputFilename);
+
+        $result = self::doZipAlignVerify($this->outputFilename);
+        if($result === null) return; // zip align not installed
+
+        // check not zip align
+        self::assertFalse($result, false);
+
+        $zipFile = ZipFile::openFromFile($this->outputFilename);
+        $zipOutputFile = ZipOutputFile::openFromZipFile($zipFile);
+        $zipOutputFile->setZipAlign(4);
+        $zipOutputFile->saveAsFile($this->outputFilename);
+        $zipOutputFile->close();
+        $zipFile->close();
+
+        self::assertCorrectZipArchive($this->outputFilename);
+
+        $result = self::doZipAlignVerify($this->outputFilename);
+        self::assertNotNull($result);
+
+        // check zip align
+        self::assertTrue($result);
+    }
+
     /**
      * Test support ZIP64 ext (slow test - normal).
      */
