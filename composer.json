@@ -1,7 +1,13 @@
 {
   "name": "nelexa/zip",
-  "description": "Zip create, modify and extract tool. Alternative ZipArchive.",
+  "description": "Zip files CRUD. Open, create, update, extract and get info tool. Support read and write encrypted archives. Support ZIP64 ext. Alternative ZipArchive. It does not require php-zip extension.",
   "type": "library",
+  "keywords": [
+    "zip",
+    "archive",
+    "extract",
+    "winzip"
+  ],
   "require-dev": {
     "phpunit/phpunit": "4.8"
   },
@@ -9,17 +15,23 @@
   "authors": [
     {
       "name": "Ne-Lexa",
-      "email": "alexey@nelexa.ru"
+      "email": "alexey@nelexa.ru",
+      "role": "Developer"
     }
   ],
   "minimum-stability": "stable",
   "require": {
-    "php": ">=5.3",
-    "nelexa/buffer": "^1.0"
+    "php-64bit": "^5.4 || ^7.0",
+    "ext-mbstring": "*"
   },
   "autoload": {
     "psr-4": {
-      "Nelexa\\Zip\\": "src/Nelexa/Zip"
+      "": "src/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "": "tests/"
     }
   }
 }
