@@ -848,7 +848,7 @@ class ZipTest extends ZipTestCase
                 'data' => CryptoUtil::randomBytes(255),
                 'password' => CryptoUtil::randomBytes(255),
                 'encryption_method' => ZipEntry::ENCRYPTION_METHOD_WINZIP_AES,
-                'compression_method' => ZipEntry::METHOD_BZIP2,
+                'compression_method' => extension_loaded("bz2") ? ZipEntry::METHOD_BZIP2 : ZipEntry::METHOD_STORED,
             ],
             'Not password.dat' => [
                 'data' => CryptoUtil::randomBytes(255),
@@ -1022,6 +1022,9 @@ class ZipTest extends ZipTestCase
         $zipFile->close();
     }
 
+    /**
+     * Test zip alignment.
+     */
     public function testZipAlign()
     {
         $zipOutputFile = ZipOutputFile::create();
@@ -1042,7 +1045,7 @@ class ZipTest extends ZipTestCase
         if($result === null) return; // zip align not installed
 
         // check not zip align
-        self::assertFalse($result, false);
+        self::assertFalse($result);
 
         $zipFile = ZipFile::openFromFile($this->outputFilename);
         $zipOutputFile = ZipOutputFile::openFromZipFile($zipFile);
@@ -1062,6 +1065,7 @@ class ZipTest extends ZipTestCase
 
     /**
      * Test support ZIP64 ext (slow test - normal).
+     * Create > 65535 files in archive and open and extract to /dev/null.
      */
     public function testCreateAndOpenZip64Ext()
     {
@@ -1078,8 +1082,7 @@ class ZipTest extends ZipTestCase
 
         $zipFile = ZipFile::openFromFile($this->outputFilename);
         self::assertEquals($zipFile->count(), $countFiles);
-        foreach ($zipFile->getListFiles() as $entry) {
-            $zipFile->getEntryContent($entry);
+        foreach ($zipFile as $entry => $content) {
         }
         $zipFile->close();
     }
