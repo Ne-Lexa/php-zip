@@ -1,3 +1,4 @@
-/vendor/
+/vendor
 *.iml
-/.idea/
+/.idea
+/composer.lock
