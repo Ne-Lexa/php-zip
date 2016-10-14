@@ -4,12 +4,14 @@
 
 The library supports `ZIP64`, `zipalign`, `Traditional PKWARE Encryption` and `WinZIP AES Encryption`.
 
-The library does not require extension `php-xml` and class `ZipArchive`.
+ZIP64 extensions are automatically and transparently activated when reading or writing ZIP files of more than 4 GB size.
+
+The library does not require extension `php-zip` and class `ZipArchive`.
 
 Requirements
 ------------
 - `PHP` >= 5.4 (64 bit)
-- Php-extension `mbstring`
+- PHP-extension `mbstring`
 - Optional php-extension `bzip2` for BZIP2 compression.
 - Optional php-extension `openssl` or `mcrypt` for `WinZip Aes Encryption` support.
 
@@ -95,7 +97,7 @@ Get entry info.
 ```php
 $zipInfo = $zipFile->getEntryInfo('file.txt');
 echo $zipInfo . PHP_EOL;
-// ZipInfo {Path="file.txt", Size=9.77KB, Compressed size=2.04KB, Modified time=2016-09-24T19:25:10+03:00, Crc=0x4b5ab5c7, Method="Deflate", Platform="UNIX", Version=20}
+// ZipInfo {Path="file.txt", Size=9.77KB, Compressed size=2.04KB, Modified time=2016-09-24T19:25:10+03:00, Crc=0x4b5ab5c7, Method="Deflate", Attributes="-rw-r--r--", Platform="UNIX", Version=20}
 print_r($zipInfo);
 //PhpZip\Model\ZipInfo Object
 //(
@@ -112,6 +114,7 @@ print_r($zipInfo);
 //    [method:PhpZip\Model\ZipInfo:private] => Deflate
 //    [platform:PhpZip\Model\ZipInfo:private] => UNIX
 //    [version:PhpZip\Model\ZipInfo:private] => 20
+//    [attributes:PhpZip\Model\ZipInfo:private] => -rw-r--r--
 //)
 ```
 Get info for all entries.

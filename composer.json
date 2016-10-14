@@ -1,6 +1,6 @@
 {
   "name": "nelexa/zip",
-  "description": "Zip files CRUD. Open, create, update, extract and get info tool. Support read and write encrypted archives. Support ZIP64 ext and zip align. Alternative ZipArchive. It does not require php-zip extension.",
+  "description": "Zip files CRUD. Open, create, update, extract and get info tool. Supports appending to existing ZIP files, WinZip AES encryption, Traditional PKWARE Encryption, ZipAlign tool, BZIP2 compression, external file attributes and ZIP64 extensions. Alternative ZipArchive. It does not require php-zip extension.",
   "type": "library",
   "keywords": [
     "zip",

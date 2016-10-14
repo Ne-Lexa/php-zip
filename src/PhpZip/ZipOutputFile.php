@@ -153,6 +153,16 @@ class ZipOutputFile implements \Countable, \ArrayAccess, \Iterator, ZipConstants
     }
 
     /**
+     * Count zip entries.
+     *
+     * @return int
+     */
+    public function count()
+    {
+        return sizeof($this->entries);
+    }
+
+    /**
      * Returns the list files.
      *
      * @return string[]
@@ -300,9 +310,12 @@ class ZipOutputFile implements \Countable, \ArrayAccess, \Iterator, ZipConstants
         }
         $this->validateCompressionMethod($compressionMethod);
 
+        $externalAttributes = 0100644 << 16;
+
         $entry = new ZipEntry($entryName);
         $entry->setMethod($compressionMethod);
         $entry->setTime(time());
+        $entry->setExternalAttributes($externalAttributes);
 
         $this->entries[$entryName] = new ZipOutputStringEntry($data, $entry);
     }
@@ -367,24 +380,13 @@ class ZipOutputFile implements \Countable, \ArrayAccess, \Iterator, ZipConstants
         foreach ($files as $file) {
             $filename = str_replace($inputDir, $moveToPath, $file);
             $filename = ltrim($filename, '/');
-            if(is_dir($file)){
+            if (is_dir($file)) {
                 FilesUtil::isEmptyDir($file) && $this->addEmptyDir($filename);
-            }
-            elseif(is_file($file)){
+            } elseif (is_file($file)) {
                 $this->addFromFile($file, $filename, $compressionMethod);
             }
         }
         return $this->count() > $count;
-    }
-
-    /**
-     * Count zip entries.
-     *
-     * @return int
-     */
-    public function count()
-    {
-        return sizeof($this->entries);
     }
 
     /**
@@ -401,12 +403,15 @@ class ZipOutputFile implements \Countable, \ArrayAccess, \Iterator, ZipConstants
         }
         $dirName = rtrim($dirName, '/') . '/';
         if (!isset($this->entries[$dirName])) {
+            $externalAttributes = 040755 << 16;
+
             $entry = new ZipEntry($dirName);
             $entry->setTime(time());
             $entry->setMethod(ZipEntry::METHOD_STORED);
             $entry->setSize(0);
             $entry->setCompressedSize(0);
             $entry->setCrc(0);
+            $entry->setExternalAttributes($externalAttributes);
 
             $this->entries[$dirName] = new ZipOutputEmptyDirEntry($entry);
         }
@@ -456,9 +461,14 @@ class ZipOutputFile implements \Countable, \ArrayAccess, \Iterator, ZipConstants
         }
         $this->validateCompressionMethod($compressionMethod);
 
+        $fstat = fstat($stream);
+        $mode = sprintf('%o', $fstat['mode']);
+        $externalAttributes = (octdec($mode) & 0xffff) << 16;
+
         $entry = new ZipEntry($entryName);
         $entry->setMethod($compressionMethod);
         $entry->setTime(time());
+        $entry->setExternalAttributes($externalAttributes);
 
         $this->entries[$entryName] = new ZipOutputStreamEntry($stream, $entry);
     }
@@ -518,10 +528,9 @@ class ZipOutputFile implements \Countable, \ArrayAccess, \Iterator, ZipConstants
         foreach ($filesFound as $file) {
             $filename = str_replace($inputDir, $moveToPath, $file);
             $filename = ltrim($filename, '/');
-            if(is_dir($file)){
+            if (is_dir($file)) {
                 FilesUtil::isEmptyDir($file) && $this->addEmptyDir($filename);
-            }
-            elseif(is_file($file)){
+            } elseif (is_file($file)) {
                 $this->addFromFile($file, $filename, $compressionMethod);
             }
         }
@@ -579,10 +588,9 @@ class ZipOutputFile implements \Countable, \ArrayAccess, \Iterator, ZipConstants
         foreach ($files as $file) {
             $filename = str_replace($inputDir, $moveToPath, $file);
             $filename = ltrim($filename, '/');
-            if(is_dir($file)){
+            if (is_dir($file)) {
                 FilesUtil::isEmptyDir($file) && $this->addEmptyDir($filename);
-            }
-            elseif(is_file($file)){
+            } elseif (is_file($file)) {
                 $this->addFromFile($file, $filename, $compressionMethod);
             }
         }
@@ -906,7 +914,7 @@ class ZipOutputFile implements \Countable, \ArrayAccess, \Iterator, ZipConstants
         }
 
         if (ZipEntry::UNKNOWN === $entry->getPlatform()) {
-            $entry->setRawPlatform(ZipEntry::getCurrentPlatform());
+            $entry->setRawPlatform(ZipEntry::PLATFORM_UNIX);
         }
         if (ZipEntry::UNKNOWN === $entry->getTime()) {
             $entry->setTime(time());
