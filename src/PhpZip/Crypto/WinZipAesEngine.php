@@ -88,16 +88,20 @@ class WinZipAesEngine
             throw new ZipCryptoException("Expected end of file after WinZip AES authentication code!");
         }
 
-        do {
-            assert($this->entry->getPassword() !== null);
-            assert(self::AES_BLOCK_SIZE_BITS <= $keyStrengthBits);
+        $password = $this->entry->getPassword();
+        assert($password !== null);
+        assert(self::AES_BLOCK_SIZE_BITS <= $keyStrengthBits);
 
+        // WinZip 99-character limit
+        // @see https://sourceforge.net/p/p7zip/discussion/383044/thread/c859a2f0/
+        $password = substr($password, 0, 99);
+        do {
             // Here comes the strange part about WinZip AES encryption:
             // Its unorthodox use of the Password-Based Key Derivation
             // Function 2 (PBKDF2) of PKCS #5 V2.0 alias RFC 2898.
             // Yes, the password verifier is only a 16 bit value.
             // So we must use the MAC for password verification, too.
-            $keyParam = hash_pbkdf2("sha1", $this->entry->getPassword(), $salt, self::ITERATION_COUNT, (2 * $keyStrengthBits + self::PWD_VERIFIER_BITS) / 8, true);
+            $keyParam = hash_pbkdf2("sha1", $password, $salt, self::ITERATION_COUNT, (2 * $keyStrengthBits + self::PWD_VERIFIER_BITS) / 8, true);
             $ctrIvSize = self::AES_BLOCK_SIZE_BITS / 8;
             $iv = str_repeat(chr(0), $ctrIvSize);
 
@@ -201,6 +205,10 @@ class WinZipAesEngine
         // Init key strength.
         $password = $this->entry->getPassword();
         assert($password !== null);
+
+        // WinZip 99-character limit
+        // @see https://sourceforge.net/p/p7zip/discussion/383044/thread/c859a2f0/
+        $password = substr($password, 0, 99);
 
         $keyStrengthBytes = 32;
         $keyStrengthBits = $keyStrengthBytes * 8;

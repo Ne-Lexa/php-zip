@@ -9,18 +9,47 @@ class ZipTestCase extends \PHPUnit_Framework_TestCase
     /**
      * Assert correct zip archive.
      *
-     * @param $filename
+     * @param string $filename
+     * @param string|null $password
      */
-    public static function assertCorrectZipArchive($filename)
+    public static function assertCorrectZipArchive($filename, $password = null)
     {
-        if (DIRECTORY_SEPARATOR !== '\\' && `which zip`) {
-            exec("zip -T " . escapeshellarg($filename), $output, $returnCode);
+        if (DIRECTORY_SEPARATOR !== '\\' && `which unzip`) {
+            $command = "unzip";
+            if ($password !== null) {
+                $command .= " -P " . escapeshellarg($password);
+            }
+            $command .= " -t " . escapeshellarg($filename);
+            exec($command, $output, $returnCode);
 
             $output = implode(PHP_EOL, $output);
 
-            self::assertEquals($returnCode, 0);
-            self::assertNotContains('zip error', $output);
-            self::assertContains(' OK', $output);
+            if ($password !== null && $returnCode === 81) {
+                if(`which 7z`){
+                    // WinZip 99-character limit
+                    // @see https://sourceforge.net/p/p7zip/discussion/383044/thread/c859a2f0/
+                    $password = substr($password, 0, 99);
+
+                    $command = "7z t -p" . escapeshellarg($password). " " . escapeshellarg($filename);
+                    exec($command, $output, $returnCode);
+
+                    $output = implode(PHP_EOL, $output);
+
+                    self::assertEquals($returnCode, 0);
+                    self::assertNotContains(' Errors', $output);
+                    self::assertContains(' Ok', $output);
+                }
+                else{
+                    fwrite(STDERR, 'Program unzip cannot support this function.'.PHP_EOL);
+                    fwrite(STDERR, 'Please install 7z. For Ubuntu-like: sudo apt-get install p7zip-full'.PHP_EOL);
+                }
+            }
+            else {
+                self::assertEquals($returnCode, 0);
+                self::assertNotContains('incorrect password', $output);
+                self::assertContains(' OK', $output);
+                self::assertContains('No errors', $output);
+            }
         }
     }
 
@@ -52,7 +81,6 @@ class ZipTestCase extends \PHPUnit_Framework_TestCase
             exec("zipalign -c -v 4 " . escapeshellarg($filename), $output, $returnCode);
             return $returnCode === 0;
         } else {
-            echo 'Can not find program "zipalign" for test' . PHP_EOL;
             fwrite(STDERR, 'Can not find program "zipalign" for test');
             return null;
         }
