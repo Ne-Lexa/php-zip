@@ -752,7 +752,7 @@ class ZipTest extends ZipTestCase
      */
     public function testSetPassword()
     {
-        $password = CryptoUtil::randomBytes(100);
+        $password = base64_encode(CryptoUtil::randomBytes(100));
         $badPassword = "sdgt43r23wefe";
 
         $outputZip = ZipOutputFile::create();
@@ -760,6 +760,8 @@ class ZipTest extends ZipTestCase
         $outputZip->setPassword($password, ZipEntry::ENCRYPTION_METHOD_TRADITIONAL);
         $outputZip->saveAsFile($this->outputFilename);
         $outputZip->close();
+
+        self::assertCorrectZipArchive($this->outputFilename, $password);
 
         $zipFile = ZipFile::openFromFile($this->outputFilename);
 
@@ -790,6 +792,8 @@ class ZipTest extends ZipTestCase
         $outputZip->saveAsFile($this->outputFilename);
         $outputZip->close();
         $zipFile->close();
+
+        self::assertCorrectZipArchive($this->outputFilename, $password);
 
         // check from WinZip AES encryption
         $zipFile = ZipFile::openFromFile($this->outputFilename);

@@ -105,9 +105,26 @@ class TraditionalPkwareEncryptionEngine
     private function updateKeys($charAt)
     {
         $this->keys[0] = self::crc32($this->keys[0], $charAt);
-        $this->keys[1] = ($this->keys[1] + ($this->keys[0] & 0xff)) & 4294967295;
-        $this->keys[1] = ($this->keys[1] * 134775813 + 1) & 4294967295;
-        $this->keys[2] = self::crc32($this->keys[2], ($this->keys[1] >> 24) & 0xff);
+        $this->keys[1] = $this->keys[1] + ($this->keys[0] & 0xff);
+        $this->keys[1] = self::toInt($this->keys[1] * 134775813 + 1);
+        $this->keys[2] = self::toInt(self::crc32($this->keys[2], ($this->keys[1] >> 24) & 0xff));
+    }
+
+    /**
+     * Cast to int
+     *
+     * @param $i
+     * @return int
+     */
+    private static function toInt($i)
+    {
+        $i = (int)($i & 0xffffffff);
+        if ($i > 2147483647) {
+            return -(-$i & 0xffffffff);
+        } elseif ($i < -2147483648) {
+            return $i & -2147483648;
+        }
+        return $i;
     }
 
     /**
