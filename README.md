@@ -149,6 +149,10 @@ Get entry content.
 ```php
 $data = $zipFile->getEntryContent($entryName);
 ```
+Edit zip archive
+```php
+$zipOutputFile = $zipFile->edit();
+```
 Close zip archive.
 ```php
 $zipFile->close();
@@ -162,6 +166,11 @@ $zipOutputFile = \PhpZip\ZipOutputFile::create();
 ```
 Open zip file from update.
 ```php
+$filename = "file.zip";
+$zipOutputFile = \PhpZip\ZipOutputFile::openFromFile($filename);
+```
+or
+```php
 // initial ZipFile
 $zipFile = \PhpZip\ZipFile::openFromFile($filename);
 
@@ -169,23 +178,28 @@ $zipFile = \PhpZip\ZipFile::openFromFile($filename);
 $zipOutputFile = new \PhpZip\ZipOutputFile($zipFile);
 // or
 $zipOutputFile = \PhpZip\ZipOutputFile::openFromZipFile($zipFile);
+// or
+$zipOutputFile = $zipFile->edit();
 ```
 Add entry from file.
 ```php
 $zipOutputFile->addFromFile($filename); // $entryName == basename($filename);
 $zipOutputFile->addFromFile($filename, $entryName);
 $zipOutputFile->addFromFile($filename, $entryName, ZipEntry::METHOD_DEFLATED);
+$zipOutputFile->addFromFile($filename, $entryName, ZipEntry::METHOD_STORED); // no compress
 $zipOutputFile->addFromFile($filename, null, ZipEntry::METHOD_BZIP2); // $entryName == basename($filename);
 ```
 Add entry from string data.
 ```php
-$zipOutputFile->addFromString($entryName, $data)
-$zipOutputFile->addFromString($entryName, $data, ZipEntry::METHOD_DEFLATED)
+$zipOutputFile->addFromString($entryName, $data);
+$zipOutputFile->addFromString($entryName, $data, ZipEntry::METHOD_DEFLATED);
+$zipOutputFile->addFromString($entryName, $data, ZipEntry::METHOD_STORED); // no compress
 ```
 Add entry from stream.
 ```php
-$zipOutputFile->addFromStream($stream, $entryName)
-$zipOutputFile->addFromStream($stream, $entryName, ZipEntry::METHOD_DEFLATED)
+$zipOutputFile->addFromStream($stream, $entryName);
+$zipOutputFile->addFromStream($stream, $entryName, ZipEntry::METHOD_DEFLATED);
+$zipOutputFile->addFromStream($stream, $entryName, ZipEntry::METHOD_STORED); // no compress
 ```
 Add empty dir
 ```php
@@ -446,7 +460,7 @@ $zipOutputFile->close(); // close output file, release all streams
 $zipFile = \PhpZip\ZipFile::openFromFile($outputFilename); // open zip archive from file
 $zipFile->extractTo($outputDirExtract); // extract files to dir
 
-$zipOutputFile = \PhpZip\ZipOutputFile::openFromZipFile($zipFile); // create zip output archive for update
+$zipOutputFile = $zipFile->edit(); // create zip output archive for update
 $zipOutputFile->deleteFromRegex('~^\.~'); // delete all hidden (Unix) files
 $zipOutputFile->addFromString('dir/file.txt', 'Test file'); // add files from string contents
 $zipOutputFile->saveAsFile($outputFilename); // update zip file
