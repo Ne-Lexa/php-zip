@@ -153,6 +153,22 @@ class ZipOutputFile implements \Countable, \ArrayAccess, \Iterator, ZipConstants
     }
 
     /**
+     * Open zip file from update.
+     *
+     * @param string $filename
+     * @return ZipOutputFile
+     * @throws IllegalArgumentException
+     * @see ZipOutputFile::__construct()
+     */
+    public static function openFromFile($filename)
+    {
+        if (empty($filename)) {
+            throw new IllegalArgumentException("Zip file is null");
+        }
+        return new self(ZipFile::openFromFile($filename));
+    }
+
+    /**
      * Count zip entries.
      *
      * @return int

@@ -279,11 +279,9 @@ class ZipTest extends ZipTestCase
 
         self::assertCorrectZipArchive($this->outputFilename);
 
-        $zipFile = ZipFile::openFromFile($this->outputFilename);
-        $outputZipFile = new ZipOutputFile($zipFile);
+        $outputZipFile = ZipOutputFile::openFromFile($this->outputFilename);
         $outputZipFile->rename($oldName, $newName);
         $outputZipFile->saveAsFile($this->outputFilename);
-        $zipFile->close();
 
         self::assertCorrectZipArchive($this->outputFilename);
 
@@ -309,7 +307,7 @@ class ZipTest extends ZipTestCase
         self::assertCorrectZipArchive($this->outputFilename);
 
         $zipFile = ZipFile::openFromFile($this->outputFilename);
-        $outputZipFile = new ZipOutputFile($zipFile);
+        $outputZipFile = $zipFile->edit();
         $outputZipFile->deleteFromName($deleteEntryName);
         $outputZipFile->saveAsFile($this->outputFilename);
         $zipFile->close();
@@ -1087,6 +1085,7 @@ class ZipTest extends ZipTestCase
         $zipFile = ZipFile::openFromFile($this->outputFilename);
         self::assertEquals($zipFile->count(), $countFiles);
         foreach ($zipFile as $entry => $content) {
+            strlen($content);
         }
         $zipFile->close();
     }

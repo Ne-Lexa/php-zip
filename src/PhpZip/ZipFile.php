@@ -158,6 +158,13 @@ class ZipFile implements \Countable, \ArrayAccess, \Iterator, ZipConstants
     }
 
     /**
+     * @return ZipOutputFile
+     */
+    public function edit(){
+        return ZipOutputFile::openFromZipFile($this);
+    }
+
+    /**
      * Check zip file signature
      *
      * @param resource $handle
