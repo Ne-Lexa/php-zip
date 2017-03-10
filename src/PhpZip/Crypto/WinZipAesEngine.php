@@ -1,6 +1,7 @@
 <?php
 namespace PhpZip\Crypto;
 
+use PhpZip\Exception\RuntimeException;
 use PhpZip\Exception\ZipAuthenticationException;
 use PhpZip\Exception\ZipCryptoException;
 use PhpZip\Extra\WinZipAesEntryExtraField;
@@ -13,7 +14,7 @@ use PhpZip\Util\CryptoUtil;
  * @author Ne-Lexa alexey@nelexa.ru
  * @license MIT
  */
-class WinZipAesEngine
+class WinZipAesEngine implements CryptoEngine
 {
     /**
      * The block size of the Advanced Encryption Specification (AES) Algorithm
@@ -42,12 +43,12 @@ class WinZipAesEngine
     /**
      * Decrypt from stream resource.
      *
-     * @param resource $stream Input stream resource
+     * @param string $content Input stream buffer
      * @return string
      * @throws ZipAuthenticationException
      * @throws ZipCryptoException
      */
-    public function decrypt($stream)
+    public function decrypt($content)
     {
         /**
          * @var WinZipAesEntryExtraField $field
@@ -57,20 +58,20 @@ class WinZipAesEngine
             throw new ZipCryptoException($this->entry->getName() . " (missing extra field for WinZip AES entry)");
         }
 
-        $pos = ftell($stream);
-
         // Get key strength.
         $keyStrengthBits = $field->getKeyStrength();
         $keyStrengthBytes = $keyStrengthBits / 8;
 
-        $salt = fread($stream, $keyStrengthBytes / 2);
-        $passwordVerifier = fread($stream, self::PWD_VERIFIER_BITS / 8);
+        $pos = $keyStrengthBytes / 2;
+        $salt = substr($content, 0, $pos);
+        $passwordVerifier = substr($content, $pos, self::PWD_VERIFIER_BITS / 8);
+        $pos += self::PWD_VERIFIER_BITS / 8;
 
         $sha1Size = 20;
 
         // Init start, end and size of encrypted data.
-        $endPos = $pos + $this->entry->getCompressedSize();
-        $start = ftell($stream);
+        $start = $pos;
+        $endPos = strlen($content);
         $footerSize = $sha1Size / 2;
         $end = $endPos - $footerSize;
         $size = $end - $start;
@@ -80,9 +81,8 @@ class WinZipAesEngine
         }
 
         // Load authentication code.
-        fseek($stream, $end, SEEK_SET);
-        $authenticationCode = fread($stream, $footerSize);
-        if (ftell($stream) !== $endPos) {
+        $authenticationCode = substr($content, $end, $footerSize);
+        if ($end + $footerSize !== $endPos) {
             // This should never happen unless someone is writing to the
             // end of the file concurrently!
             throw new ZipCryptoException("Expected end of file after WinZip AES authentication code!");
@@ -95,27 +95,33 @@ class WinZipAesEngine
         // WinZip 99-character limit
         // @see https://sourceforge.net/p/p7zip/discussion/383044/thread/c859a2f0/
         $password = substr($password, 0, 99);
+        $ctrIvSize = self::AES_BLOCK_SIZE_BITS / 8;
+        $iv = str_repeat(chr(0), $ctrIvSize);
         do {
             // Here comes the strange part about WinZip AES encryption:
             // Its unorthodox use of the Password-Based Key Derivation
             // Function 2 (PBKDF2) of PKCS #5 V2.0 alias RFC 2898.
             // Yes, the password verifier is only a 16 bit value.
             // So we must use the MAC for password verification, too.
-            $keyParam = hash_pbkdf2("sha1", $password, $salt, self::ITERATION_COUNT, (2 * $keyStrengthBits + self::PWD_VERIFIER_BITS) / 8, true);
-            $ctrIvSize = self::AES_BLOCK_SIZE_BITS / 8;
-            $iv = str_repeat(chr(0), $ctrIvSize);
-
+            $keyParam = hash_pbkdf2(
+                "sha1",
+                $password,
+                $salt,
+                self::ITERATION_COUNT,
+                (2 * $keyStrengthBits + self::PWD_VERIFIER_BITS) / 8,
+                true
+            );
             $key = substr($keyParam, 0, $keyStrengthBytes);
-
             $sha1MacParam = substr($keyParam, $keyStrengthBytes, $keyStrengthBytes);
             // Verify password.
         } while (!$passwordVerifier === substr($keyParam, 2 * $keyStrengthBytes));
 
-        $content = stream_get_contents($stream, $size, $start);
+        $content = substr($content, $start, $size);
         $mac = hash_hmac('sha1', $content, $sha1MacParam, true);
 
         if ($authenticationCode !== substr($mac, 0, 10)) {
-            throw new ZipAuthenticationException($this->entry->getName() . " (authenticated WinZip AES entry content has been tampered with)");
+            throw new ZipAuthenticationException($this->entry->getName() .
+                " (authenticated WinZip AES entry content has been tampered with)");
         }
 
         return self::aesCtrSegmentIntegerCounter(false, $content, $key, $iv);
@@ -161,6 +167,7 @@ class WinZipAesEngine
      * @param string $key Aes key
      * @param string $iv Aes IV
      * @return string Encrypted data
+     * @throws RuntimeException
      */
     private static function encryptCtr($data, $key, $iv)
     {
@@ -170,7 +177,7 @@ class WinZipAesEngine
         } elseif (extension_loaded("mcrypt")) {
             return mcrypt_encrypt(MCRYPT_RIJNDAEL_128, $key, $data, "ctr", $iv);
         } else {
-            throw new \RuntimeException('Extension openssl or mcrypt not loaded');
+            throw new RuntimeException('Extension openssl or mcrypt not loaded');
         }
     }
 
@@ -181,6 +188,7 @@ class WinZipAesEngine
      * @param string $key Aes key
      * @param string $iv Aes IV
      * @return string Raw data
+     * @throws RuntimeException
      */
     private static function decryptCtr($data, $key, $iv)
     {
@@ -190,7 +198,7 @@ class WinZipAesEngine
         } elseif (extension_loaded("mcrypt")) {
             return mcrypt_decrypt(MCRYPT_RIJNDAEL_128, $key, $data, "ctr", $iv);
         } else {
-            throw new \RuntimeException('Extension openssl or mcrypt not loaded');
+            throw new RuntimeException('Extension openssl or mcrypt not loaded');
         }
     }
 

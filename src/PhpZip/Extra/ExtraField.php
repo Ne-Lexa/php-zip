@@ -80,7 +80,7 @@ abstract class ExtraField implements ExtraFieldHeader
         if (0x0000 > $size || $size > 0xffff) {
             throw new ZipException('size data block out of range.');
         }
-        $fp = fopen('php://temp', 'r+b');
+        $fp = fopen('php://memory', 'r+b');
         if (0 === $size) return $fp;
         $this->writeTo($fp, 0);
         rewind($fp);

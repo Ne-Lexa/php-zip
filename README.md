@@ -1,12 +1,20 @@
-`PhpZip` Version 2
-================
-`PhpZip` - is to create, update, opening and unpacking ZIP archives in pure PHP.
+`PhpZip` (ver 3.0.+)
+====================
+`PhpZip` - php library for manipulating zip archives.
 
-The library supports `ZIP64`, `zipalign`, `Traditional PKWARE Encryption` and `WinZIP AES Encryption`.
-
-ZIP64 extensions are automatically and transparently activated when reading or writing ZIP files of more than 4 GB size.
-
-The library does not require extension `php-zip` and class `ZipArchive`.
+Features:
+---------
+- Opening and unzipping zip files.
+- Create zip files.
+- Update zip files.
+- Pure php (not require extension `php-zip` and class `\ZipArchive`).
+- Output the modified archive as a string or output to the browser without saving the result to disk.
+- Support archive comment and entries comments.
+- Get info of zip entries.
+- Support zip password for PHP < 5.6.0 (`\ZipArchive` required this version), include update and remove password.
+- Support encryption method `Traditional PKWARE Encryption (ZipCrypto)` and `WinZIP AES Encryption`.
+- Support `ZIP64` (size > 4 GiB or files > 65535 in a .ZIP archive).
+- Support archive alignment functional [`zipalign`](https://developer.android.com/studio/command-line/zipalign.html).
 
 Requirements
 ------------
@@ -17,19 +25,44 @@ Requirements
 
 Installation
 ------------
-`composer require nelexa/zip`
+`composer require nelexa/zip:^3.0`
+
+Samples
+-------
+```php
+// create archive
+$zipFile = new \PhpZip\ZipFile();
+$zipFile->addFromString("zip/entry/filename", "Is file content")
+        ->addFile("/path/to/file", "data/tofile")
+        ->addDir(__DIR__, "to/path/")
+        ->saveAsFile($outputFilename)
+        ->close();
+        
+// open archive, extract, add files, set password and output to browser.
+$zipFile->openFile($outputFilename)
+        ->extractTo($outputDirExtract)
+        ->deleteFromRegex('~^\.~') // delete all hidden (Unix) files
+        ->addFromString('dir/file.txt', 'Test file')
+        ->withNewPassword('password')
+        ->outputAsAttachment('library.jar');
+```
+Other examples can be found in the `tests/` folder
 
 Documentation
 -------------
-#### Class `\PhpZip\ZipFile` (open, extract, info)
+
+
+
 Open zip archive from file.
 ```php
-$zipFile = \PhpZip\ZipFile::openFromFile($filename);
+$zipFile = new \PhpZip\ZipFile();
+$zipFile->openFile($filename);
 ```
 Open zip archive from data string.
 ```php
-$data = file_get_contents($filename);
-$zipFile = \PhpZip\ZipFile::openFromString($data);
+$data = file_get_contents($urlOrFile);
+$zipFile = new \PhpZip\ZipFile();
+$zipFile->openFromString($filename);
 ```
 Open zip archive from stream resource.
 ```php

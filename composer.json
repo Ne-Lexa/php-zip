@@ -4,6 +4,7 @@
   "type": "library",
   "keywords": [
     "zip",
+    "unzip",
     "archive",
     "extract",
     "winzip",
@@ -23,16 +24,22 @@
   "minimum-stability": "stable",
   "require": {
     "php-64bit": "^5.4 || ^7.0",
-    "ext-mbstring": "*"
+    "ext-mbstring": "*",
+    "nelexa/buffer": "^1.1"
   },
   "autoload": {
     "psr-4": {
-      "": "src/"
+      "PhpZip\\": "src/PhpZip"
     }
   },
   "autoload-dev": {
     "psr-4": {
-      "": "tests/"
+      "PhpZip\\": "tests/PhpZip"
     }
+  },
+  "suggest": {
+    "ext-openssl": "Needed to support encrypt zip entries or use ext-mcrypt",
+    "ext-mcrypt": "Needed to support encrypt zip entries or use ext-openssl",
+    "ext-bz2": "Needed to support BZIP2 compression"
   }
 }
