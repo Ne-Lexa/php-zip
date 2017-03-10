@@ -532,6 +532,24 @@ class ZipFileTest extends ZipTestCase
     }
 
     /**
+     * @expectedException \PhpZip\Exception\InvalidArgumentException
+     * @expectedExceptionMessage Glob pattern is empty
+     */
+    public function testDeleteFromGlobFailNull(){
+        $zipFile = new ZipFile();
+        $zipFile->deleteFromGlob(null);
+    }
+
+    /**
+     * @expectedException \PhpZip\Exception\InvalidArgumentException
+     * @expectedExceptionMessage Glob pattern is empty
+     */
+    public function testDeleteFromGlobFailEmpty(){
+        $zipFile = new ZipFile();
+        $zipFile->deleteFromGlob('');
+    }
+
+    /**
      * Delete entries from regex pattern
      */
     public function testDeleteFromRegex()
@@ -556,6 +574,24 @@ class ZipFileTest extends ZipTestCase
         self::assertFalse(isset($zipFile['Path/composer.json']));
         self::assertTrue(isset($zipFile['Path/bootstrap.xml']));
         $zipFile->close();
+    }
+
+    /**
+     * @expectedException \PhpZip\Exception\InvalidArgumentException
+     * @expectedExceptionMessage Regex pattern is empty.
+     */
+    public function testDeleteFromRegexFailNull(){
+        $zipFile = new ZipFile();
+        $zipFile->deleteFromRegex(null);
+    }
+
+    /**
+     * @expectedException \PhpZip\Exception\InvalidArgumentException
+     * @expectedExceptionMessage Regex pattern is empty.
+     */
+    public function testDeleteFromRegexFailEmpty(){
+        $zipFile = new ZipFile();
+        $zipFile->deleteFromRegex('');
     }
 
     /**
@@ -1017,6 +1053,26 @@ class ZipFileTest extends ZipTestCase
 
     /**
      * @expectedException \PhpZip\Exception\InvalidArgumentException
+     * @expectedExceptionMessage entryName is null
+     */
+    public function testAddFromArrayAccessNullName()
+    {
+        $zipFile = new ZipFile();
+        $zipFile[null] = 'content';
+    }
+
+    /**
+     * @expectedException \PhpZip\Exception\InvalidArgumentException
+     * @expectedExceptionMessage entryName is empty
+     */
+    public function testAddFromArrayAccessEmptyName()
+    {
+        $zipFile = new ZipFile();
+        $zipFile[''] = 'content';
+    }
+
+    /**
+     * @expectedException \PhpZip\Exception\InvalidArgumentException
      * @expectedExceptionMessage Contents is null
      */
     public function testAddFromStringNullContents()
@@ -1192,6 +1248,35 @@ class ZipFileTest extends ZipTestCase
     }
 
     /**
+     * @expectedException \PhpZip\Exception\InvalidArgumentException
+     * @expectedExceptionMessage handle is not resource
+     */
+    public function testSaveAsStreamBadStream()
+    {
+        $zipFile = new ZipFile();
+        $zipFile->saveAsStream("bad stream");
+    }
+
+    /**
+     * @expectedException \PhpZip\Exception\InvalidArgumentException
+     * @expectedExceptionMessage can not open from write
+     */
+    public function testSaveAsFileNotWritable()
+    {
+        $this->outputFilename = sys_get_temp_dir() . '/zipExtractTest';
+        if (is_dir($this->outputFilename)) {
+            FilesUtil::removeDir($this->outputFilename);
+        }
+        self::assertTrue(mkdir($this->outputFilename, 0444, true));
+        self::assertTrue(chmod($this->outputFilename, 0444));
+
+        $this->outputFilename .= '/' . uniqid() . '.zip';
+
+        $zipFile = new ZipFile();
+        $zipFile->saveAsFile($this->outputFilename);
+    }
+
+    /**
      * Test `ZipFile` implemented \ArrayAccess, \Countable and |iterator.
      */
     public function testZipFileArrayAccessAndCountableAndIterator()
@@ -1280,7 +1365,8 @@ class ZipFileTest extends ZipTestCase
      * @expectedException \PhpZip\Exception\InvalidArgumentException
      * @expectedExceptionMessage DirName empty
      */
-    public function testAddEmptyDirNullName(){
+    public function testAddEmptyDirNullName()
+    {
         $zipFile = new ZipFile();
         $zipFile->addEmptyDir(null);
     }
@@ -1289,7 +1375,8 @@ class ZipFileTest extends ZipTestCase
      * @expectedException \PhpZip\Exception\InvalidArgumentException
      * @expectedExceptionMessage DirName empty
      */
-    public function testAddEmptyDirEmptyName(){
+    public function testAddEmptyDirEmptyName()
+    {
         $zipFile = new ZipFile();
         $zipFile->addEmptyDir("");
     }

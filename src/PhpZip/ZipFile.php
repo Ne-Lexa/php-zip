@@ -498,8 +498,7 @@ class ZipFile implements \Countable, \ArrayAccess, \Iterator
             } else {
                 $compressionMethod = self::METHOD_STORED;
             }
-        }
-        elseif (!in_array($compressionMethod, self::$allowCompressionMethods, true)) {
+        } elseif (!in_array($compressionMethod, self::$allowCompressionMethods, true)) {
             throw new ZipUnsupportMethod('Unsupported method ' . $compressionMethod);
         }
 
@@ -860,12 +859,12 @@ class ZipFile implements \Countable, \ArrayAccess, \Iterator
         $filename = (string)$filename;
 
         $tempFilename = $filename . '.temp' . uniqid();
-        if (!($handle = fopen($tempFilename, 'w+b'))) {
+        if (!($handle = @fopen($tempFilename, 'w+b'))) {
             throw new InvalidArgumentException("File " . $tempFilename . ' can not open from write.');
         }
         $this->saveAsStream($handle);
 
-        if (!rename($tempFilename, $filename)) {
+        if (!@rename($tempFilename, $filename)) {
             throw new ZipException('Can not move ' . $tempFilename . ' to ' . $filename);
         }
     }
@@ -998,6 +997,10 @@ class ZipFile implements \Countable, \ArrayAccess, \Iterator
     {
         if ($entryName === null) {
             throw new InvalidArgumentException('entryName is null');
+        }
+        $entryName = (string)$entryName;
+        if (strlen($entryName) === 0) {
+            throw new InvalidArgumentException('entryName is empty');
         }
         if ($entryName[strlen($entryName) - 1] === '/') {
             $this->addEmptyDir($entryName);
