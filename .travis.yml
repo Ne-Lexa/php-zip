@@ -11,18 +11,12 @@ addons:
   code_climate:
     repo_token: 486a09d58d663450146c53c81c6c64938bcf3bb0b7c8ddebdc125fe97c18213a
 
-# cache vendor dirs
-cache:
-  directories:
-    - vendor
-    - $HOME/.composer/cache
-
 before_install:
   - sudo apt-get install -y p7zip-full
 
 before_script:
+  - composer validate --no-check-lock
   - composer install
 
 script:
-  - composer validate --no-check-lock
   - vendor/bin/phpunit -v -c bootstrap.xml
