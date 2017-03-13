@@ -296,7 +296,7 @@ class ZipFile implements \Countable, \ArrayAccess, \Iterator
      * @param string $destination Location where to extract the files.
      * @param array|string|null $entries The entries to extract. It accepts either
      *                                   a single entry name or an array of names.
-     * @return bool
+     * @return ZipFile
      * @throws ZipException
      */
     public function extractTo($destination, $entries = null)
@@ -335,7 +335,6 @@ class ZipFile implements \Countable, \ArrayAccess, \Iterator
             $zipEntries = $this->centralDirectory->getEntries();
         }
 
-        $extract = 0;
         foreach ($zipEntries as $entry) {
             $file = $destination . DIRECTORY_SEPARATOR . $entry->getName();
             if ($entry->isDirectory()) {
@@ -357,12 +356,11 @@ class ZipFile implements \Countable, \ArrayAccess, \Iterator
                 touch($dir, $entry->getTime());
             }
             if (file_put_contents($file, $entry->getEntryContent()) === false) {
-                return false;
+                throw new ZipException('Can not extract file '.$entry->getName());
             }
             touch($file, $entry->getTime());
-            $extract++;
         }
-        return $extract > 0;
+        return $this;
     }
 
     /**
@@ -652,7 +650,6 @@ class ZipFile implements \Countable, \ArrayAccess, \Iterator
         $files = [];
         foreach ($iterator as $file) {
             if ($file instanceof \SplFileInfo) {
-                empty($path) and $path = rtrim($file->getPath(), '/');
                 if ('..' === $file->getBasename()) {
                     continue;
                 }
@@ -663,7 +660,12 @@ class ZipFile implements \Countable, \ArrayAccess, \Iterator
                 }
             }
         }
+        if(empty($files)){
+            return $this;
+        }
 
+        natcasesort($files);
+        $path = array_shift($files);
         foreach ($files as $file) {
             $relativePath = str_replace($path, $localPath, $file);
             $relativePath = ltrim($relativePath, '/');
@@ -905,7 +907,7 @@ class ZipFile implements \Countable, \ArrayAccess, \Iterator
      * Delete entries by glob pattern.
      *
      * @param string $globPattern Glob pattern
-     * @return bool
+     * @return ZipFile
      * @throws InvalidArgumentException
      * @sse https://en.wikipedia.org/wiki/Glob_(programming) Glob pattern syntax
      */
@@ -915,14 +917,15 @@ class ZipFile implements \Countable, \ArrayAccess, \Iterator
             throw new InvalidArgumentException("Glob pattern is empty");
         }
         $globPattern = '~' . FilesUtil::convertGlobToRegEx($globPattern) . '~si';
-        return $this->deleteFromRegex($globPattern);
+        $this->deleteFromRegex($globPattern);
+        return $this;
     }
 
     /**
      * Delete entries by regex pattern.
      *
      * @param string $regexPattern Regex pattern
-     * @return bool
+     * @return ZipFile
      * @throws InvalidArgumentException
      */
     public function deleteFromRegex($regexPattern)
@@ -930,7 +933,8 @@ class ZipFile implements \Countable, \ArrayAccess, \Iterator
         if ($regexPattern === null || !is_string($regexPattern) || empty($regexPattern)) {
             throw new InvalidArgumentException("Regex pattern is empty.");
         }
-        return $this->centralDirectory->deleteEntriesFromRegex($regexPattern);
+        $this->centralDirectory->deleteEntriesFromRegex($regexPattern);
+        return $this;
     }
 
     /**
