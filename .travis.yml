@@ -12,7 +12,8 @@ addons:
     repo_token: 486a09d58d663450146c53c81c6c64938bcf3bb0b7c8ddebdc125fe97c18213a
 
 before_script:
-  composer install
+  - sudo apt-get install p7zip-full
+  - composer install
 
 script:
   vendor/bin/phpunit -v -c bootstrap.xml
