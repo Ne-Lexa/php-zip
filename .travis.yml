@@ -16,7 +16,6 @@ cache:
 before_install:
   - sudo apt-get -qq update
   - sudo apt-get install -y p7zip-full
-  - sudo apt-get install -y zipalign
 
 before_script:
   - composer install
