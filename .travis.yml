@@ -1,3 +1,5 @@
+sudo: false
+
 language: php
 php:
   - '5.5'
@@ -7,10 +9,17 @@ php:
   - hhvm
   - nightly
 
+# cache vendor dirs
+cache:
+  directories:
+    - vendor
+    - $HOME/.composer/cache
+
 before_script:
-  sudo apt-get install p7zip-full -y
-  sudo apt-get install zipalign -y
-  composer install
+  - sudo apt-get install p7zip-full -y
+  - sudo apt-get install zipalign -y
+  - composer install
 
 script:
-  vendor/bin/phpunit -v --tap -c bootstrap.xml
+  - composer validate --no-check-lock
+  - vendor/bin/phpunit -v --tap -c bootstrap.xml
