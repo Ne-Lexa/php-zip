@@ -62,8 +62,8 @@ abstract class ExtraField implements ExtraFieldHeader
     private static function getRegistry()
     {
         if (self::$registry === null) {
-            self::$registry[WinZipAesEntryExtraField::getHeaderId()] = '\PhpZip\Extra\WinZipAesEntryExtraField';
-            self::$registry[NtfsExtraField::getHeaderId()] = '\PhpZip\Extra\NtfsExtraField';
+            self::$registry[WinZipAesEntryExtraField::getHeaderId()] = WinZipAesEntryExtraField::class;
+            self::$registry[NtfsExtraField::getHeaderId()] = NtfsExtraField::class;
         }
         return self::$registry;
     }

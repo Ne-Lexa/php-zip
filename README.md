@@ -22,7 +22,7 @@ Features:
 
 Requirements
 ------------
-- `PHP` >= 5.4 (64 bit)
+- `PHP` >= 5.5 (64 bit)
 - PHP-extension `mbstring`
 - Optional php-extension `bzip2` for BZIP2 compression.
 - Optional php-extension `openssl` or `mcrypt` for `WinZip Aes Encryption` support.
