@@ -320,14 +320,6 @@ class EndOfCentralDirectory
     }
 
     /**
-     * @return bool
-     */
-    public function isModified()
-    {
-        return $this->modified;
-    }
-
-    /**
      * Write end of central directory.
      *
      * @param resource $outputStream Output stream

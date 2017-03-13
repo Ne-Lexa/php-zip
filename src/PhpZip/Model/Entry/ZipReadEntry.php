@@ -119,6 +119,10 @@ class ZipReadEntry extends ZipAbstractEntry
     public function getEntryContent()
     {
         if ($this->entryContent === null) {
+            if ($this->isDirectory()) {
+                $this->entryContent = null;
+                return $this->entryContent;
+            }
             $isEncrypted = $this->isEncrypted();
             $password = $this->getPassword();
             if ($isEncrypted && empty($password)) {

@@ -112,7 +112,11 @@ class CentralDirectory
         rewind($inputStream);
         // Constraint: A ZIP file must start with a Local File Header
         // or a (ZIP64) End Of Central Directory Record if it's empty.
-        $signature = unpack('V', fread($inputStream, 4))[1];
+        $signatureBytes = fread($inputStream, 4);
+        if (strlen($signatureBytes) < 4) {
+            throw new ZipException("Invalid zip file.");
+        }
+        $signature = unpack('V', $signatureBytes)[1];
         if (
             ZipEntry::LOCAL_FILE_HEADER_SIG !== $signature
             && EndOfCentralDirectory::ZIP64_END_OF_CENTRAL_DIRECTORY_RECORD_SIG !== $signature
@@ -342,7 +346,7 @@ class CentralDirectory
                 $prototypeEntry->setExternalAttributes($entry->getExternalAttributes());
                 $prototypeEntry->setExtra($entry->getExtra());
                 $prototypeEntry->setPassword($this->password, $this->encryptionMethod);
-                if($this->clearPassword){
+                if ($this->clearPassword) {
                     $prototypeEntry->clearEncryption();
                 }
             } else {

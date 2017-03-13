@@ -11,65 +11,12 @@ use PhpZip\Util\FilesUtil;
  */
 class ZipFileTest extends ZipTestCase
 {
-    /**
-     * @var string
-     */
-    private $outputFilename;
-
-    /**
-     * Before test
-     */
-    protected function setUp()
-    {
-        parent::setUp();
-
-        $this->outputFilename = sys_get_temp_dir() . '/' . uniqid() . '.zip';
-    }
-
-    /**
-     * After test
-     */
-    protected function tearDown()
-    {
-        parent::tearDown();
-
-        if ($this->outputFilename !== null && file_exists($this->outputFilename)) {
-            unlink($this->outputFilename);
-        }
-    }
-
-    /**
-     * Test create, open and extract empty archive.
-     */
-    public function testEmptyArchive()
-    {
-        $zipFile = new ZipFile();
-        $zipFile->saveAsFile($this->outputFilename);
-        $zipFile->close();
-
-        self::assertCorrectEmptyZip($this->outputFilename);
-
-        $extractPath = sys_get_temp_dir() . '/extract-empty-dir';
-        if (is_dir($extractPath)) {
-            FilesUtil::removeDir($extractPath);
-        }
-        self::assertTrue(mkdir($extractPath, 0755, true));
-
-        $zipFile->openFile($this->outputFilename);
-        self::assertEquals(count($zipFile), 0);
-        self::assertEquals($zipFile->count(), 0);
-        $zipFile->extractTo($extractPath);
-        $zipFile->close();
-
-        self::assertTrue(FilesUtil::isEmptyDir($extractPath));
-        FilesUtil::removeDir($extractPath);
-    }
 
     /**
      * @expectedException \PhpZip\Exception\InvalidArgumentException
      * @expectedExceptionMessage can't exists
      */
-    public function testCantExistsOpenFile()
+    public function testOpenFileCantExists()
     {
         $zipFile = new ZipFile();
         $zipFile->openFile(uniqid());
@@ -79,7 +26,7 @@ class ZipFileTest extends ZipTestCase
      * @expectedException \PhpZip\Exception\ZipException
      * @expectedExceptionMessage can't open
      */
-    public function testCantOpenFile()
+    public function testOpenFileCantOpen()
     {
         self::assertNotFalse(file_put_contents($this->outputFilename, 'content'));
         self::assertTrue(chmod($this->outputFilename, 0222));
@@ -89,10 +36,32 @@ class ZipFileTest extends ZipTestCase
     }
 
     /**
+     * @expectedException \PhpZip\Exception\ZipException
+     * @expectedExceptionMessage Invalid zip file
+     */
+    public function testOpenFileEmptyFile()
+    {
+        self::assertNotFalse(touch($this->outputFilename));
+        $zipFile = new ZipFile();
+        $zipFile->openFile($this->outputFilename);
+    }
+
+    /**
+     * @expectedException \PhpZip\Exception\ZipException
+     * @expectedExceptionMessage Expected Local File Header or (ZIP64) End Of Central Directory Record
+     */
+    public function testOpenFileInvalidZip()
+    {
+        self::assertNotFalse(file_put_contents($this->outputFilename, CryptoUtil::randomBytes(255)));
+        $zipFile = new ZipFile();
+        $zipFile->openFile($this->outputFilename);
+    }
+
+    /**
      * @expectedException \PhpZip\Exception\InvalidArgumentException
      * @expectedExceptionMessage Data not available
      */
-    public function testOpenFromStringNull()
+    public function testOpenFromStringNullString()
     {
         $zipFile = new ZipFile();
         $zipFile->openFromString(null);
@@ -102,36 +71,36 @@ class ZipFileTest extends ZipTestCase
      * @expectedException \PhpZip\Exception\InvalidArgumentException
      * @expectedExceptionMessage Data not available
      */
-    public function testOpenFromStringEmpty()
+    public function testOpenFromStringEmptyString()
     {
         $zipFile = new ZipFile();
         $zipFile->openFromString("");
     }
 
+    /**
+     * @expectedException \PhpZip\Exception\ZipException
+     * @expectedExceptionMessage Expected Local File Header or (ZIP64) End Of Central Directory Record
+     */
+    public function testOpenFromStringInvalidZip()
+    {
+        $zipFile = new ZipFile();
+        $zipFile->openFromString(CryptoUtil::randomBytes(255));
+    }
+
     public function testOpenFromString()
     {
         $zipFile = new ZipFile();
-        $zipFile->addFromString('file', 'content', ZipFile::METHOD_DEFLATED);
+        $zipFile->addFromString('file', 'content');
+        $zipFile['file2'] = 'content 2';
         $zipContents = $zipFile->outputAsString();
         $zipFile->close();
 
         $zipFile->openFromString($zipContents);
+        self::assertEquals($zipFile->count(), 2);
         self::assertTrue(isset($zipFile['file']));
+        self::assertTrue(isset($zipFile['file2']));
         self::assertEquals($zipFile['file'], 'content');
-        $zipFile->close();
-    }
-
-    public function testOpenFromStream()
-    {
-        $zipFile = new ZipFile();
-        $zipFile->addFromString('file', 'content', ZipFile::METHOD_DEFLATED)
-            ->saveAsFile($this->outputFilename);
-        $zipFile->close();
-
-        $handle = fopen($this->outputFilename, 'rb');
-        $zipFile->openFromStream($handle);
-        self::assertTrue(isset($zipFile['file']));
-        self::assertEquals($zipFile['file'], 'content');
+        self::assertEquals($zipFile['file2'], 'content 2');
         $zipFile->close();
     }
 
@@ -139,7 +108,17 @@ class ZipFileTest extends ZipTestCase
      * @expectedException \PhpZip\Exception\InvalidArgumentException
      * @expectedExceptionMessage Invalid stream resource
      */
-    public function testOpenFromInvalidStream()
+    public function testOpenFromStreamNullStream()
+    {
+        $zipFile = new ZipFile();
+        $zipFile->openFromStream(null);
+    }
+
+    /**
+     * @expectedException \PhpZip\Exception\InvalidArgumentException
+     * @expectedExceptionMessage Invalid stream resource
+     */
+    public function testOpenFromStreamInvalidResourceType()
     {
         $zipFile = new ZipFile();
         $zipFile->openFromStream("stream resource");
@@ -163,24 +142,98 @@ class ZipFileTest extends ZipTestCase
     }
 
     /**
+     * @expectedException \PhpZip\Exception\ZipException
+     * @expectedExceptionMessage Invalid zip file
+     */
+    public function testOpenFromStreamEmptyContents()
+    {
+        $fp = fopen($this->outputFilename, 'w+b');
+        $zipFile = new ZipFile();
+        $zipFile->openFromStream($fp);
+    }
+
+    /**
+     * @expectedException \PhpZip\Exception\ZipException
+     * @expectedExceptionMessage Expected Local File Header or (ZIP64) End Of Central Directory Record
+     */
+    public function testOpenFromStreamInvalidZip()
+    {
+        $fp = fopen($this->outputFilename, 'w+b');
+        fwrite($fp, CryptoUtil::randomBytes(255));
+        $zipFile = new ZipFile();
+        $zipFile->openFromStream($fp);
+    }
+
+    public function testOpenFromStream()
+    {
+        $zipFile = new ZipFile();
+        $zipFile
+            ->addFromString('file', 'content')
+            ->saveAsFile($this->outputFilename);
+        $zipFile->close();
+
+        $handle = fopen($this->outputFilename, 'rb');
+        $zipFile->openFromStream($handle);
+        self::assertEquals($zipFile->count(), 1);
+        self::assertTrue(isset($zipFile['file']));
+        self::assertEquals($zipFile['file'], 'content');
+        $zipFile->close();
+    }
+
+    /**
+     * Test create, open and extract empty archive.
+     */
+    public function testEmptyArchive()
+    {
+        $zipFile = new ZipFile();
+        $zipFile->saveAsFile($this->outputFilename);
+        $zipFile->close();
+
+        self::assertCorrectEmptyZip($this->outputFilename);
+        self::assertTrue(mkdir($this->outputDirname, 0755, true));
+
+        $zipFile->openFile($this->outputFilename);
+        self::assertEquals($zipFile->count(), 0);
+        $zipFile->extractTo($this->outputDirname);
+        $zipFile->close();
+
+        self::assertTrue(FilesUtil::isEmptyDir($this->outputDirname));
+    }
+
+    /**
      * No modified archive
      *
      * @see ZipOutputFile::create()
      */
     public function testNoModifiedArchive()
     {
+        self::assertTrue(mkdir($this->outputDirname, 0755, true));
+
+        $fileActual = $this->outputDirname . DIRECTORY_SEPARATOR . 'file_actual.zip';
+        $fileExpected = $this->outputDirname . DIRECTORY_SEPARATOR . 'file_expected.zip';
+
         $zipFile = new ZipFile();
-        $zipFile->addDir(__DIR__);
-        $zipFile->saveAsFile($this->outputFilename);
+        $zipFile->addDirRecursive(__DIR__);
+        $zipFile->saveAsFile($fileActual);
+        self::assertCorrectZipArchive($fileActual);
         $zipFile->close();
 
-        self::assertCorrectZipArchive($this->outputFilename);
+        $zipFile->openFile($fileActual);
+        $zipFile->saveAsFile($fileExpected);
+        self::assertCorrectZipArchive($fileExpected);
 
-        $zipFile->openFile($this->outputFilename);
-        $zipFile->saveAsFile($this->outputFilename);
+        $zipFileExpected = new ZipFile();
+        $zipFileExpected->openFile($fileExpected);
+
+        self::assertEquals($zipFileExpected->count(), $zipFile->count());
+        self::assertEquals($zipFileExpected->getListFiles(), $zipFile->getListFiles());
+
+        foreach ($zipFile as $entryName => $content) {
+            self::assertEquals($zipFileExpected[$entryName], $content);
+        }
+
+        $zipFileExpected->close();
         $zipFile->close();
-
-        self::assertCorrectZipArchive($this->outputFilename);
     }
 
     /**
@@ -282,170 +335,6 @@ class ZipFileTest extends ZipTestCase
     }
 
     /**
-     * Create archive and add directory recursively.
-     */
-    public function testAddDirRecursively()
-    {
-        $inputDir = dirname(dirname(__DIR__)) . DIRECTORY_SEPARATOR . "src";
-
-        $zipFile = new ZipFile();
-        $zipFile->addDir($inputDir);
-        $zipFile->saveAsFile($this->outputFilename);
-        $zipFile->close();
-
-        self::assertCorrectZipArchive($this->outputFilename);
-    }
-
-    /**
-     * Create archive and add directory not recursively.
-     */
-    public function testAddDirNotRecursively()
-    {
-        $inputDir = dirname(dirname(__DIR__));
-        $recursive = false;
-
-        $zipFile = new ZipFile();
-        $zipFile->addDir($inputDir, $recursive);
-        $zipFile->saveAsFile($this->outputFilename);
-        $zipFile->close();
-
-        self::assertCorrectZipArchive($this->outputFilename);
-    }
-
-    /**
-     * Create archive and add directory and put files to path.
-     */
-    public function testAddDirAndMoveToPath()
-    {
-        $inputDir = __DIR__;
-        $files = array_slice(scandir($inputDir), 2);
-
-        $recursive = true;
-
-        $zipFile = new ZipFile();
-        $moveToPath = 'Library/tests';
-        $zipFile->addDir($inputDir, $recursive, $moveToPath);
-        $zipFile->saveAsFile($this->outputFilename);
-        $zipFile->close();
-
-        self::assertCorrectZipArchive($this->outputFilename);
-
-        $zipFile->openFile($this->outputFilename);
-        self::assertEquals(count($zipFile), count($files));
-        foreach ($files as $file) {
-            self::assertTrue(isset($zipFile[$moveToPath . '/' . $file]));
-            self::assertEquals($zipFile[$moveToPath . '/' . $file], file_get_contents($inputDir . '/' . $file));
-        }
-        $zipFile->close();
-    }
-
-    /**
-     * Create archive and add directory with ignore files list.
-     */
-    public function testAddDirAndIgnoreFiles()
-    {
-        $inputDir = dirname(dirname(__DIR__)) . DIRECTORY_SEPARATOR;
-
-        $recursive = false;
-
-        $zipFile = new ZipFile();
-        $ignoreFiles = ['tests/', '.git/', 'composer.lock', 'vendor/', ".idea/"];
-        $moveToPath = 'PhpZip Library';
-        $zipFile->addDir($inputDir, $recursive, $moveToPath, $ignoreFiles);
-        $zipFile->saveAsFile($this->outputFilename);
-        $zipFile->close();
-
-        self::assertCorrectZipArchive($this->outputFilename);
-    }
-
-    /**
-     * Create archive and add directory recursively with ignore files list.
-     */
-    public function testAddDirAndIgnoreFilesRecursively()
-    {
-        $inputDir = dirname(dirname(__DIR__)) . DIRECTORY_SEPARATOR;
-
-        $recursive = true;
-
-        $zipFile = new ZipFile();
-        $ignoreFiles = ['tests/', '.git/', 'composer.lock', 'vendor/', ".idea/copyright/"];
-        $moveToPath = 'PhpZip Library';
-        $zipFile->addDir($inputDir, $recursive, $moveToPath, $ignoreFiles);
-        $zipFile->saveAsFile($this->outputFilename);
-        $zipFile->close();
-
-        self::assertCorrectZipArchive($this->outputFilename);
-    }
-
-    /**
-     * Create archive and add files from glob pattern
-     */
-    public function testAddFilesFromGlob()
-    {
-        $inputDir = dirname(dirname(__DIR__)) . DIRECTORY_SEPARATOR;
-        $moveToPath = null;
-        $recursive = false;
-
-        $zipFile = new ZipFile();
-        $zipFile->addFilesFromGlob($inputDir, '**.{php,xml}', $moveToPath, $recursive);
-        $zipFile->saveAsFile($this->outputFilename);
-        $zipFile->close();
-
-        self::assertCorrectZipArchive($this->outputFilename);
-    }
-
-    /**
-     * Create archive and add recursively files from glob pattern
-     */
-    public function testAddFilesFromGlobRecursive()
-    {
-        $inputDir = dirname(dirname(__DIR__)) . DIRECTORY_SEPARATOR;
-        $moveToPath = "PhpZip Library";
-        $recursive = true;
-
-        $zipFile = new ZipFile();
-        $zipFile->addFilesFromGlob($inputDir, '**.{php,xml}', $moveToPath, $recursive);
-        $zipFile->saveAsFile($this->outputFilename);
-        $zipFile->close();
-
-        self::assertCorrectZipArchive($this->outputFilename);
-    }
-
-    /**
-     * Create archive and add files from regex pattern
-     */
-    public function testAddFilesFromRegex()
-    {
-        $inputDir = dirname(dirname(__DIR__)) . DIRECTORY_SEPARATOR;
-        $moveToPath = "Test";
-        $recursive = false;
-
-        $zipFile = new ZipFile();
-        $zipFile->addFilesFromRegex($inputDir, '~\.(xml|php)$~i', $moveToPath, $recursive);
-        $zipFile->saveAsFile($this->outputFilename);
-        $zipFile->close();
-
-        self::assertCorrectZipArchive($this->outputFilename);
-    }
-
-    /**
-     * Create archive and add files recursively from regex pattern
-     */
-    public function testAddFilesFromRegexRecursive()
-    {
-        $inputDir = dirname(dirname(__DIR__)) . DIRECTORY_SEPARATOR;
-        $moveToPath = "Test";
-        $recursive = true;
-
-        $zipFile = new ZipFile();
-        $zipFile->addFilesFromRegex($inputDir, '~\.(xml|php)$~i', $recursive, $moveToPath);
-        $zipFile->saveAsFile($this->outputFilename);
-        $zipFile->close();
-
-        self::assertCorrectZipArchive($this->outputFilename);
-    }
-
-    /**
      * Rename zip entry name.
      */
     public function testRename()
@@ -454,7 +343,7 @@ class ZipFileTest extends ZipTestCase
         $newName = 'tests/' . $oldName;
 
         $zipFile = new ZipFile();
-        $zipFile->addDir(__DIR__);
+        $zipFile->addDirRecursive(__DIR__);
         $zipFile->saveAsFile($this->outputFilename);
         $zipFile->close();
 
@@ -478,6 +367,60 @@ class ZipFileTest extends ZipTestCase
     }
 
     /**
+     * @expectedException \PhpZip\Exception\InvalidArgumentException
+     * @expectedExceptionMessage name is null
+     */
+    public function testRenameEntryNull()
+    {
+        $zipFile = new ZipFile();
+        $zipFile->rename(null, 'new-file');
+    }
+
+    /**
+     * @expectedException \PhpZip\Exception\InvalidArgumentException
+     * @expectedExceptionMessage name is null
+     */
+    public function testRenameEntryNull2()
+    {
+        $zipFile = new ZipFile();
+        $zipFile->rename('old-file', null);
+    }
+
+    /**
+     * @expectedException \PhpZip\Exception\InvalidArgumentException
+     * @expectedExceptionMessage is exists
+     */
+    public function testRenameEntryNewEntyExists()
+    {
+        $zipFile = new ZipFile();
+        $zipFile['file'] = 'content';
+        $zipFile['file2'] = 'content 2';
+        $zipFile->saveAsFile($this->outputFilename);
+        $zipFile->close();
+
+        $zipFile = new ZipFile();
+        $zipFile->openFile($this->outputFilename);
+        $zipFile->rename('file2', 'file');
+    }
+
+    /**
+     * @expectedException \PhpZip\Exception\ZipNotFoundEntry
+     * @expectedExceptionMessage Not found entry
+     */
+    public function testRenameEntryNotFound()
+    {
+        $zipFile = new ZipFile();
+        $zipFile['file'] = 'content';
+        $zipFile['file2'] = 'content 2';
+        $zipFile->saveAsFile($this->outputFilename);
+        $zipFile->close();
+
+        $zipFile = new ZipFile();
+        $zipFile->openFile($this->outputFilename);
+        $zipFile->rename('file2.bak', 'file3');
+    }
+
+    /**
      * Delete entry from name.
      */
     public function testDeleteFromName()
@@ -486,7 +429,7 @@ class ZipFileTest extends ZipTestCase
         $deleteEntryName = 'composer.json';
 
         $zipFile = new ZipFile();
-        $zipFile->addDir($inputDir, false);
+        $zipFile->addDir($inputDir);
         $zipFile->saveAsFile($this->outputFilename);
         $zipFile->close();
 
@@ -504,6 +447,30 @@ class ZipFileTest extends ZipTestCase
         $zipFile->close();
     }
 
+    public function testDeleteNewEntry(){
+        $zipFile = new ZipFile();
+        $zipFile['entry1'] = '';
+        $zipFile['entry2'] = '';
+        $zipFile->deleteFromName('entry2');
+        $zipFile->saveAsFile($this->outputFilename);
+        $zipFile->close();
+
+        $zipFile->openFile($this->outputFilename);
+        self::assertEquals(sizeof($zipFile), 1);
+        self::assertTrue(isset($zipFile['entry1']));
+        self::assertFalse(isset($zipFile['entry2']));
+        $zipFile->close();
+    }
+
+    /**
+     * @expectedException \PhpZip\Exception\ZipNotFoundEntry
+     * @expectedExceptionMessage Not found entry entry
+     */
+    public function testDeleteFromNameNotFoundEntry(){
+        $zipFile = new ZipFile();
+        $zipFile->deleteFromName('entry');
+    }
+
     /**
      * Delete zip entries from glob pattern
      */
@@ -512,7 +479,7 @@ class ZipFileTest extends ZipTestCase
         $inputDir = dirname(dirname(__DIR__));
 
         $zipFile = new ZipFile();
-        $zipFile->addFilesFromGlob($inputDir, '**.{php,xml,json}', '/', true);
+        $zipFile->addFilesFromGlobRecursive($inputDir, '**.{php,xml,json}', '/');
         $zipFile->saveAsFile($this->outputFilename);
         $zipFile->close();
 
@@ -535,7 +502,8 @@ class ZipFileTest extends ZipTestCase
      * @expectedException \PhpZip\Exception\InvalidArgumentException
      * @expectedExceptionMessage Glob pattern is empty
      */
-    public function testDeleteFromGlobFailNull(){
+    public function testDeleteFromGlobFailNull()
+    {
         $zipFile = new ZipFile();
         $zipFile->deleteFromGlob(null);
     }
@@ -544,7 +512,8 @@ class ZipFileTest extends ZipTestCase
      * @expectedException \PhpZip\Exception\InvalidArgumentException
      * @expectedExceptionMessage Glob pattern is empty
      */
-    public function testDeleteFromGlobFailEmpty(){
+    public function testDeleteFromGlobFailEmpty()
+    {
         $zipFile = new ZipFile();
         $zipFile->deleteFromGlob('');
     }
@@ -557,7 +526,7 @@ class ZipFileTest extends ZipTestCase
         $inputDir = dirname(dirname(__DIR__));
 
         $zipFile = new ZipFile();
-        $zipFile->addFilesFromRegex($inputDir, '~\.(xml|php|json)$~i', 'Path', true);
+        $zipFile->addFilesFromRegexRecursive($inputDir, '~\.(xml|php|json)$~i', 'Path');
         $zipFile->saveAsFile($this->outputFilename);
         $zipFile->close();
 
@@ -565,6 +534,8 @@ class ZipFileTest extends ZipTestCase
 
         $zipFile->openFile($this->outputFilename);
         $zipFile->deleteFromRegex('~\.(json)$~i');
+        $zipFile->addFromString('test.txt', 'content');
+        $zipFile->deleteFromRegex('~\.txt$~');
         $zipFile->saveAsFile($this->outputFilename);
         $zipFile->close();
 
@@ -572,6 +543,7 @@ class ZipFileTest extends ZipTestCase
 
         $zipFile->openFile($this->outputFilename);
         self::assertFalse(isset($zipFile['Path/composer.json']));
+        self::assertFalse(isset($zipFile['Path/test.txt']));
         self::assertTrue(isset($zipFile['Path/bootstrap.xml']));
         $zipFile->close();
     }
@@ -580,7 +552,8 @@ class ZipFileTest extends ZipTestCase
      * @expectedException \PhpZip\Exception\InvalidArgumentException
      * @expectedExceptionMessage Regex pattern is empty.
      */
-    public function testDeleteFromRegexFailNull(){
+    public function testDeleteFromRegexFailNull()
+    {
         $zipFile = new ZipFile();
         $zipFile->deleteFromRegex(null);
     }
@@ -589,7 +562,8 @@ class ZipFileTest extends ZipTestCase
      * @expectedException \PhpZip\Exception\InvalidArgumentException
      * @expectedExceptionMessage Regex pattern is empty.
      */
-    public function testDeleteFromRegexFailEmpty(){
+    public function testDeleteFromRegexFailEmpty()
+    {
         $zipFile = new ZipFile();
         $zipFile->deleteFromRegex('');
     }
@@ -600,7 +574,7 @@ class ZipFileTest extends ZipTestCase
     public function testDeleteAll()
     {
         $zipFile = new ZipFile();
-        $zipFile->addDir(__DIR__);
+        $zipFile->addDirRecursive(__DIR__);
         $zipFile->saveAsFile($this->outputFilename);
         $zipFile->close();
 
@@ -742,6 +716,7 @@ class ZipFileTest extends ZipTestCase
      * Test zip entry very long comment.
      *
      * @expectedException \PhpZip\Exception\ZipException
+     * @expectedExceptionMessage Comment too long
      */
     public function testVeryLongEntryComment()
     {
@@ -752,6 +727,16 @@ class ZipFileTest extends ZipTestCase
         $zipFile = new ZipFile();
         $zipFile->addFile(__FILE__, 'test');
         $zipFile->setEntryComment('test', $comment);
+    }
+
+    /**
+     * @expectedException \PhpZip\Exception\ZipException
+     * @expectedExceptionMessage Not found entry
+     */
+    public function testSetEntryCommentNotFoundEntry()
+    {
+        $zipFile = new ZipFile();
+        $zipFile->setEntryComment('test', 'comment');
     }
 
     /**
@@ -799,6 +784,25 @@ class ZipFileTest extends ZipTestCase
             self::assertEquals($entryInfo, $info);
         }
         $zipFile->close();
+    }
+
+    /**
+     * @expectedException \PhpZip\Exception\InvalidArgumentException
+     * @expectedExceptionMessage Invalid compression level. Minimum level -1. Maximum level 9
+     */
+    public function testSetInvalidCompressionLevel(){
+        $zipFile = new ZipFile();
+        $zipFile->setCompressionLevel(-2);
+    }
+
+    /**
+    /**
+     * @expectedException \PhpZip\Exception\InvalidArgumentException
+     * @expectedExceptionMessage Invalid compression level. Minimum level -1. Maximum level 9
+     */
+    public function testSetInvalidCompressionLevel2(){
+        $zipFile = new ZipFile();
+        $zipFile->setCompressionLevel(10);
     }
 
     /**
@@ -975,7 +979,7 @@ class ZipFileTest extends ZipTestCase
 
         // create encryption password with ZipCrypto
         $zipFile = new ZipFile();
-        $zipFile->addDir(__DIR__);
+        $zipFile->addDirRecursive(__DIR__);
         $zipFile->withNewPassword($password, ZipFile::ENCRYPTION_METHOD_TRADITIONAL);
         $zipFile->saveAsFile($this->outputFilename);
         $zipFile->close();
@@ -1049,6 +1053,18 @@ class ZipFileTest extends ZipTestCase
             self::assertFalse($info->isEncrypted());
         }
         $zipFile->close();
+    }
+
+    /**
+     * @expectedException \PhpZip\Exception\ZipException
+     * @expectedExceptionMessage Invalid encryption method
+     */
+    public function testSetEncryptionMethodInvalid(){
+        $zipFile = new ZipFile();
+        $encryptionMethod = 9999;
+        $zipFile->withNewPassword('pass', $encryptionMethod);
+        $zipFile['entry'] = 'content';
+        $zipFile->outputAsString();
     }
 
     /**
@@ -1216,7 +1232,7 @@ class ZipFileTest extends ZipTestCase
 
     /**
      * @expectedException \PhpZip\Exception\InvalidArgumentException
-     * @expectedExceptionMessage File is not exists
+     * @expectedExceptionMessage is not exists
      */
     public function testAddFileCantExists()
     {
@@ -1245,6 +1261,266 @@ class ZipFileTest extends ZipTestCase
 
         $zipFile = new ZipFile();
         $zipFile->addFile($this->outputFilename);
+    }
+
+    /**
+     * @expectedException \PhpZip\Exception\InvalidArgumentException
+     * @expectedExceptionMessage Input dir empty
+     */
+    public function testAddDirNullDirname()
+    {
+        $zipFile = new ZipFile();
+        $zipFile->addDir(null);
+    }
+
+    /**
+     * @expectedException \PhpZip\Exception\InvalidArgumentException
+     * @expectedExceptionMessage Input dir empty
+     */
+    public function testAddDirEmptyDirname()
+    {
+        $zipFile = new ZipFile();
+        $zipFile->addDir("");
+    }
+
+    /**
+     * @expectedException \PhpZip\Exception\InvalidArgumentException
+     * @expectedExceptionMessage can't exists
+     */
+    public function testAddDirCantExists()
+    {
+        $zipFile = new ZipFile();
+        $zipFile->addDir(uniqid());
+    }
+
+    /**
+     * @expectedException \PhpZip\Exception\InvalidArgumentException
+     * @expectedExceptionMessage Input dir empty
+     */
+    public function testAddDirRecursiveNullDirname()
+    {
+        $zipFile = new ZipFile();
+        $zipFile->addDirRecursive(null);
+    }
+
+    /**
+     * @expectedException \PhpZip\Exception\InvalidArgumentException
+     * @expectedExceptionMessage Input dir empty
+     */
+    public function testAddDirRecursiveEmptyDirname()
+    {
+        $zipFile = new ZipFile();
+        $zipFile->addDirRecursive("");
+    }
+
+    /**
+     * @expectedException \PhpZip\Exception\InvalidArgumentException
+     * @expectedExceptionMessage can't exists
+     */
+    public function testAddDirRecursiveCantExists()
+    {
+        $zipFile = new ZipFile();
+        $zipFile->addDirRecursive(uniqid());
+    }
+
+    /**
+     * @expectedException \PhpZip\Exception\InvalidArgumentException
+     * @expectedExceptionMessage Input dir empty
+     */
+    public function testAddFilesFromGlobNull()
+    {
+        $zipFile = new ZipFile();
+        $zipFile->addFilesFromGlob(null, '*.png');
+    }
+
+    /**
+     * @expectedException \PhpZip\Exception\InvalidArgumentException
+     * @expectedExceptionMessage Input dir empty
+     */
+    public function testAddFilesFromGlobEmpty()
+    {
+        $zipFile = new ZipFile();
+        $zipFile->addFilesFromGlob("", '*.png');
+    }
+
+    /**
+     * @expectedException \PhpZip\Exception\InvalidArgumentException
+     * @expectedExceptionMessage can't exists
+     */
+    public function testAddFilesFromGlobCantExists()
+    {
+        $zipFile = new ZipFile();
+        $zipFile->addFilesFromGlob("path/to/path", '*.png');
+    }
+
+    /**
+     * @expectedException \PhpZip\Exception\InvalidArgumentException
+     * @expectedExceptionMessage glob pattern empty
+     */
+    public function testAddFilesFromGlobNullPattern()
+    {
+        $zipFile = new ZipFile();
+        $zipFile->addFilesFromGlob(__DIR__, null);
+    }
+
+    /**
+     * @expectedException \PhpZip\Exception\InvalidArgumentException
+     * @expectedExceptionMessage glob pattern empty
+     */
+    public function testAddFilesFromGlobEmptyPattern()
+    {
+        $zipFile = new ZipFile();
+        $zipFile->addFilesFromGlob(__DIR__, '');
+    }
+
+    /**
+     * @expectedException \PhpZip\Exception\InvalidArgumentException
+     * @expectedExceptionMessage Input dir empty
+     */
+    public function testAddFilesFromGlobRecursiveNull()
+    {
+        $zipFile = new ZipFile();
+        $zipFile->addFilesFromGlobRecursive(null, '*.png');
+    }
+
+    /**
+     * @expectedException \PhpZip\Exception\InvalidArgumentException
+     * @expectedExceptionMessage Input dir empty
+     */
+    public function testAddFilesFromGlobRecursiveEmpty()
+    {
+        $zipFile = new ZipFile();
+        $zipFile->addFilesFromGlobRecursive("", '*.png');
+    }
+
+    /**
+     * @expectedException \PhpZip\Exception\InvalidArgumentException
+     * @expectedExceptionMessage can't exists
+     */
+    public function testAddFilesFromGlobRecursiveCantExists()
+    {
+        $zipFile = new ZipFile();
+        $zipFile->addFilesFromGlobRecursive("path/to/path", '*.png');
+    }
+
+    /**
+     * @expectedException \PhpZip\Exception\InvalidArgumentException
+     * @expectedExceptionMessage glob pattern empty
+     */
+    public function testAddFilesFromGlobRecursiveNullPattern()
+    {
+        $zipFile = new ZipFile();
+        $zipFile->addFilesFromGlobRecursive(__DIR__, null);
+    }
+
+    /**
+     * @expectedException \PhpZip\Exception\InvalidArgumentException
+     * @expectedExceptionMessage glob pattern empty
+     */
+    public function testAddFilesFromGlobRecursiveEmptyPattern()
+    {
+        $zipFile = new ZipFile();
+        $zipFile->addFilesFromGlobRecursive(__DIR__, '');
+    }
+
+    /**
+     * @expectedException \PhpZip\Exception\InvalidArgumentException
+     * @expectedExceptionMessage Input dir empty
+     */
+    public function testAddFilesFromRegexDirectoryNull()
+    {
+        $zipFile = new ZipFile();
+        $zipFile->addFilesFromRegex(null, '~\.png$~i');
+    }
+
+    /**
+     * @expectedException \PhpZip\Exception\InvalidArgumentException
+     * @expectedExceptionMessage Input dir empty
+     */
+    public function testAddFilesFromRegexDirectoryEmpty()
+    {
+        $zipFile = new ZipFile();
+        $zipFile->addFilesFromRegex("", '~\.png$~i');
+    }
+
+    /**
+     * @expectedException \PhpZip\Exception\InvalidArgumentException
+     * @expectedExceptionMessage can't exists
+     */
+    public function testAddFilesFromRegexCantExists()
+    {
+        $zipFile = new ZipFile();
+        $zipFile->addFilesFromRegex("path/to/path", '~\.png$~i');
+    }
+
+    /**
+     * @expectedException \PhpZip\Exception\InvalidArgumentException
+     * @expectedExceptionMessage regex pattern empty
+     */
+    public function testAddFilesFromRegexNullPattern()
+    {
+        $zipFile = new ZipFile();
+        $zipFile->addFilesFromRegex(__DIR__, null);
+    }
+
+    /**
+     * @expectedException \PhpZip\Exception\InvalidArgumentException
+     * @expectedExceptionMessage regex pattern empty
+     */
+    public function testAddFilesFromRegexEmptyPattern()
+    {
+        $zipFile = new ZipFile();
+        $zipFile->addFilesFromRegex(__DIR__, '');
+    }
+
+    /**
+     * @expectedException \PhpZip\Exception\InvalidArgumentException
+     * @expectedExceptionMessage Input dir empty
+     */
+    public function testAddFilesFromRegexRecursiveDirectoryNull()
+    {
+        $zipFile = new ZipFile();
+        $zipFile->addFilesFromRegexRecursive(null, '~\.png$~i');
+    }
+
+    /**
+     * @expectedException \PhpZip\Exception\InvalidArgumentException
+     * @expectedExceptionMessage Input dir empty
+     */
+    public function testAddFilesFromRegexRecursiveEmpty()
+    {
+        $zipFile = new ZipFile();
+        $zipFile->addFilesFromRegexRecursive("", '~\.png$~i');
+    }
+
+    /**
+     * @expectedException \PhpZip\Exception\InvalidArgumentException
+     * @expectedExceptionMessage can't exists
+     */
+    public function testAddFilesFromRegexRecursiveCantExists()
+    {
+        $zipFile = new ZipFile();
+        $zipFile->addFilesFromGlobRecursive("path/to/path", '~\.png$~i');
+    }
+
+    /**
+     * @expectedException \PhpZip\Exception\InvalidArgumentException
+     * @expectedExceptionMessage regex pattern empty
+     */
+    public function testAddFilesFromRegexRecursiveNullPattern()
+    {
+        $zipFile = new ZipFile();
+        $zipFile->addFilesFromRegexRecursive(__DIR__, null);
+    }
+
+    /**
+     * @expectedException \PhpZip\Exception\InvalidArgumentException
+     * @expectedExceptionMessage regex pattern empty
+     */
+    public function testAddFilesFromRegexRecursiveEmptyPattern()
+    {
+        $zipFile = new ZipFile();
+        $zipFile->addFilesFromRegexRecursive(__DIR__, '');
     }
 
     /**
@@ -1361,6 +1637,24 @@ class ZipFileTest extends ZipTestCase
         $zipFile->close();
     }
 
+    public function testArrayAccessAddFile()
+    {
+        $entryName = 'path/to/file.dat';
+
+        $zipFile = new ZipFile();
+        $zipFile[$entryName] = new \SplFileInfo(__FILE__);
+        $zipFile->saveAsFile($this->outputFilename);
+        $zipFile->close();
+
+        self::assertCorrectZipArchive($this->outputFilename);
+
+        $zipFile->openFile($this->outputFilename);
+        self::assertEquals(sizeof($zipFile), 1);
+        self::assertTrue(isset($zipFile[$entryName]));
+        self::assertEquals($zipFile[$entryName], file_get_contents(__FILE__));
+        $zipFile->close();
+    }
+
     /**
      * @expectedException \PhpZip\Exception\InvalidArgumentException
      * @expectedExceptionMessage DirName empty
@@ -1379,6 +1673,97 @@ class ZipFileTest extends ZipTestCase
     {
         $zipFile = new ZipFile();
         $zipFile->addEmptyDir("");
+    }
+
+    /**
+     * @expectedException \PhpZip\Exception\InvalidArgumentException
+     * @expectedExceptionMessage Output filename is empty.
+     */
+    public function testOutputAsAttachmentNullName()
+    {
+        $zipFile = new ZipFile();
+        $zipFile->outputAsAttachment(null);
+    }
+
+    /**
+     * @expectedException \PhpZip\Exception\InvalidArgumentException
+     * @expectedExceptionMessage Output filename is empty.
+     */
+    public function testOutputAsAttachmentEmptyName()
+    {
+        $zipFile = new ZipFile();
+        $zipFile->outputAsAttachment('');
+    }
+
+    /**
+     * @expectedException \PhpZip\Exception\ZipNotFoundEntry
+     * @expectedExceptionMessage Zip entry bad entry name not found
+     */
+    public function testNotFoundEntry(){
+        $zipFile = new ZipFile();
+        $zipFile['bad entry name'];
+    }
+
+    /**
+     * Test rewrite input file.
+     */
+    public function testRewriteFile()
+    {
+        $zipFile = new ZipFile();
+        $zipFile['file'] = 'content';
+        $zipFile['file2'] = 'content2';
+        $zipFile->saveAsFile($this->outputFilename);
+        $zipFile->close();
+
+        $md5file = md5_file($this->outputFilename);
+
+        $zipFile->openFile($this->outputFilename);
+        self::assertEquals(count($zipFile), 2);
+        self::assertTrue(isset($zipFile['file']));
+        self::assertTrue(isset($zipFile['file2']));
+        $zipFile['file3'] = 'content3';
+        self::assertEquals(count($zipFile), 2);
+        $zipFile = $zipFile->rewrite();
+        self::assertEquals(count($zipFile), 3);
+        self::assertTrue(isset($zipFile['file']));
+        self::assertTrue(isset($zipFile['file2']));
+        self::assertTrue(isset($zipFile['file3']));
+        $zipFile->close();
+
+        self::assertNotEquals(md5_file($this->outputFilename), $md5file);
+    }
+
+    /**
+     * Test rewrite for string.
+     */
+    public function testRewriteString()
+    {
+        $zipFile = new ZipFile();
+        $zipFile['file'] = 'content';
+        $zipFile['file2'] = 'content2';
+        $zipFile->saveAsFile($this->outputFilename);
+        $zipFile->close();
+
+        $zipFile->openFromString(file_get_contents($this->outputFilename));
+        self::assertEquals(count($zipFile), 2);
+        self::assertTrue(isset($zipFile['file']));
+        self::assertTrue(isset($zipFile['file2']));
+        $zipFile['file3'] = 'content3';
+        $zipFile = $zipFile->rewrite();
+        self::assertEquals(count($zipFile), 3);
+        self::assertTrue(isset($zipFile['file']));
+        self::assertTrue(isset($zipFile['file2']));
+        self::assertTrue(isset($zipFile['file3']));
+        $zipFile->close();
+    }
+
+    /**
+     * @expectedException \PhpZip\Exception\ZipException
+     * @expectedExceptionMessage input stream is null
+     */
+    public function testRewriteNullStream(){
+        $zipFile = new ZipFile();
+        $zipFile->rewrite();
     }
 
     /**

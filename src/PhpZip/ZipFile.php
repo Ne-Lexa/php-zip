@@ -433,7 +433,7 @@ class ZipFile implements \Countable, \ArrayAccess, \Iterator
             throw new InvalidArgumentException("Filename is null");
         }
         if (!is_file($filename)) {
-            throw new InvalidArgumentException("File is not exists");
+            throw new InvalidArgumentException("File $filename is not exists");
         }
 
         if (null === $compressionMethod) {
@@ -559,23 +559,17 @@ class ZipFile implements \Countable, \ArrayAccess, \Iterator
     }
 
     /**
-     * Add directory to the zip archive.
+     * Add directory not recursively to the zip archive.
      *
      * @param string $inputDir Input directory
-     * @param bool $recursive Recursive search files
-     * @param string|null $toLocalPath If not null then put $inputDir to path $outEntryDir
-     * @param array $ignoreFiles List of files to exclude from the folder $inputDir.
-     * @param int|null $compressionMethod Compression method
-     * @return bool
+     * @param string $localPath Add files to this directory, or the root.
+     * @param int|null $compressionMethod Compression method.
+     *                 Use ZipFile::METHOD_STORED, ZipFile::METHOD_DEFLATED or ZipFile::METHOD_BZIP2.
+     *                 If null, then auto choosing method.
+     * @return ZipFile
      * @throws InvalidArgumentException
      */
-    public function addDir(
-        $inputDir,
-        $recursive = true,
-        $toLocalPath = "/",
-        array $ignoreFiles = [],
-        $compressionMethod = null
-    )
+    public function addDir($inputDir, $localPath = "/", $compressionMethod = null)
     {
         $inputDir = (string)$inputDir;
         if ($inputDir === null || strlen($inputDir) === 0) {
@@ -584,30 +578,102 @@ class ZipFile implements \Countable, \ArrayAccess, \Iterator
         if (!is_dir($inputDir)) {
             throw new InvalidArgumentException('Directory ' . $inputDir . ' can\'t exists');
         }
+        $inputDir = rtrim($inputDir, '/\\') . DIRECTORY_SEPARATOR;
 
-        if (null !== $toLocalPath && is_string($toLocalPath) && !empty($toLocalPath)) {
-            $toLocalPath = rtrim($toLocalPath, '/') . '/';
-        } else {
-            $toLocalPath = "/";
+        $directoryIterator = new \DirectoryIterator($inputDir);
+        return $this->addFilesFromIterator($directoryIterator, $localPath, $compressionMethod);
+    }
+
+    /**
+     * Add recursive directory to the zip archive.
+     *
+     * @param string $inputDir Input directory
+     * @param string $localPath Add files to this directory, or the root.
+     * @param int|null $compressionMethod Compression method.
+     *                 Use ZipFile::METHOD_STORED, ZipFile::METHOD_DEFLATED or ZipFile::METHOD_BZIP2.
+     *                 If null, then auto choosing method.
+     * @return ZipFile
+     * @throws InvalidArgumentException
+     * @throws ZipUnsupportMethod
+     * @see ZipFile::METHOD_STORED
+     * @see ZipFile::METHOD_DEFLATED
+     * @see ZipFile::METHOD_BZIP2
+     */
+    public function addDirRecursive($inputDir, $localPath = "/", $compressionMethod = null)
+    {
+        $inputDir = (string)$inputDir;
+        if ($inputDir === null || strlen($inputDir) === 0) {
+            throw new InvalidArgumentException('Input dir empty');
+        }
+        if (!is_dir($inputDir)) {
+            throw new InvalidArgumentException('Directory ' . $inputDir . ' can\'t exists');
         }
         $inputDir = rtrim($inputDir, '/\\') . DIRECTORY_SEPARATOR;
 
-        $count = $this->count();
+        $directoryIterator = new \RecursiveDirectoryIterator($inputDir);
+        return $this->addFilesFromIterator($directoryIterator, $localPath, $compressionMethod);
+    }
 
-        $files = FilesUtil::fileSearchWithIgnore($inputDir, $recursive, $ignoreFiles);
+    /**
+     * Add directories from directory iterator.
+     *
+     * @param \Iterator $iterator Directory iterator.
+     * @param string $localPath Add files to this directory, or the root.
+     * @param int|null $compressionMethod Compression method.
+     *                 Use ZipFile::METHOD_STORED, ZipFile::METHOD_DEFLATED or ZipFile::METHOD_BZIP2.
+     *                 If null, then auto choosing method.
+     * @return ZipFile
+     * @throws InvalidArgumentException
+     * @throws ZipUnsupportMethod
+     * @see ZipFile::METHOD_STORED
+     * @see ZipFile::METHOD_DEFLATED
+     * @see ZipFile::METHOD_BZIP2
+     */
+    public function addFilesFromIterator(
+        \Iterator $iterator,
+        $localPath = '/',
+        $compressionMethod = null
+    )
+    {
+        $localPath = (string)$localPath;
+        if (null !== $localPath && 0 !== strlen($localPath)) {
+            $localPath = rtrim($localPath, '/');
+        } else {
+            $localPath = "";
+        }
+
+        $iterator = $iterator instanceof \RecursiveIterator ?
+            new \RecursiveIteratorIterator($iterator) :
+            new \IteratorIterator($iterator);
         /**
-         * @var \SplFileInfo $file
+         * @var string[] $files
+         * @var string $path
          */
-        foreach ($files as $file) {
-            $filename = str_replace($inputDir, $toLocalPath, $file);
-            $filename = ltrim($filename, '/');
-            if (is_dir($file)) {
-                FilesUtil::isEmptyDir($file) && $this->addEmptyDir($filename);
-            } elseif (is_file($file)) {
-                $this->addFile($file, $filename, $compressionMethod);
+        $files = [];
+        foreach ($iterator as $file) {
+            if ($file instanceof \SplFileInfo) {
+                empty($path) and $path = rtrim($file->getPath(), '/');
+                if ('..' === $file->getBasename()) {
+                    continue;
+                }
+                if ('.' === $file->getBasename()) {
+                    $files[] = dirname($file->getPathname());
+                } else {
+                    $files[] = $file->getPathname();
+                }
             }
         }
-        return $this->count() > $count;
+
+        foreach ($files as $file) {
+            $relativePath = str_replace($path, $localPath, $file);
+            $relativePath = ltrim($relativePath, '/');
+            if (is_dir($file)) {
+                FilesUtil::isEmptyDir($file) && $this->addEmptyDir($relativePath);
+            } elseif (is_file($file)) {
+                $this->addFile($file, $relativePath, $compressionMethod);
+            }
+        }
+        return $this;
     }
 
     /**
@@ -615,33 +681,69 @@ class ZipFile implements \Countable, \ArrayAccess, \Iterator
      *
      * @param string $inputDir Input directory
      * @param string $globPattern Glob pattern.
-     * @param string|null $moveToPath Add files to this directory, or the root.
-     * @param bool $recursive Recursive search.
-     * @param int $compressionMethod Compression method.
+     * @param string|null $localPath Add files to this directory, or the root.
+     * @param int|null $compressionMethod Compression method.
+     *                 Use ZipFile::METHOD_STORED, ZipFile::METHOD_DEFLATED or ZipFile::METHOD_BZIP2.
+     *                 If null, then auto choosing method.
      * @return ZipFile
      * @throws InvalidArgumentException
      * @sse https://en.wikipedia.org/wiki/Glob_(programming) Glob pattern syntax
      */
-    public function addFilesFromGlob(
+    public function addFilesFromGlob($inputDir, $globPattern, $localPath = '/', $compressionMethod = null)
+    {
+        return $this->addGlob($inputDir, $globPattern, $localPath, false, $compressionMethod);
+    }
+
+    /**
+     * Add files recursively from glob pattern.
+     *
+     * @param string $inputDir Input directory
+     * @param string $globPattern Glob pattern.
+     * @param string|null $localPath Add files to this directory, or the root.
+     * @param int|null $compressionMethod Compression method.
+     *                 Use ZipFile::METHOD_STORED, ZipFile::METHOD_DEFLATED or ZipFile::METHOD_BZIP2.
+     *                 If null, then auto choosing method.
+     * @return ZipFile
+     * @throws InvalidArgumentException
+     * @sse https://en.wikipedia.org/wiki/Glob_(programming) Glob pattern syntax
+     */
+    public function addFilesFromGlobRecursive($inputDir, $globPattern, $localPath = '/', $compressionMethod = null)
+    {
+        return $this->addGlob($inputDir, $globPattern, $localPath, true, $compressionMethod);
+    }
+
+    /**
+     * Add files from glob pattern.
+     *
+     * @param string $inputDir Input directory
+     * @param string $globPattern Glob pattern.
+     * @param string|null $localPath Add files to this directory, or the root.
+     * @param bool $recursive Recursive search.
+     * @param int|null $compressionMethod Compression method.
+     *                 Use ZipFile::METHOD_STORED, ZipFile::METHOD_DEFLATED or ZipFile::METHOD_BZIP2.
+     *                 If null, then auto choosing method.
+     * @return ZipFile
+     * @throws InvalidArgumentException
+     * @sse https://en.wikipedia.org/wiki/Glob_(programming) Glob pattern syntax
+     */
+    private function addGlob(
         $inputDir,
         $globPattern,
-        $moveToPath = '/',
+        $localPath = '/',
         $recursive = true,
-        $compressionMethod = self::METHOD_DEFLATED
+        $compressionMethod = null
     )
     {
         $inputDir = (string)$inputDir;
-        if (empty($inputDir)) {
+        if (null === $inputDir || 0 === strlen($inputDir)) {
             throw new InvalidArgumentException('Input dir empty');
         }
         if (!is_dir($inputDir)) {
             throw new InvalidArgumentException('Directory ' . $inputDir . ' can\'t exists');
         }
-        if (null === $globPattern || strlen($globPattern) === 0) {
-            throw new InvalidArgumentException("globPattern null");
-        }
+        $globPattern = (string)$globPattern;
         if (empty($globPattern)) {
-            throw new InvalidArgumentException("globPattern empty");
+            throw new InvalidArgumentException("glob pattern empty");
         }
 
         $inputDir = rtrim($inputDir, '/\\') . DIRECTORY_SEPARATOR;
@@ -651,17 +753,17 @@ class ZipFile implements \Countable, \ArrayAccess, \Iterator
         if ($filesFound === false || empty($filesFound)) {
             return $this;
         }
-        if (!empty($moveToPath) && is_string($moveToPath)) {
-            $moveToPath = rtrim($moveToPath, '/') . '/';
+        if (!empty($localPath) && is_string($localPath)) {
+            $localPath = rtrim($localPath, '/') . '/';
         } else {
-            $moveToPath = "/";
+            $localPath = "/";
         }
 
         /**
          * @var string $file
          */
         foreach ($filesFound as $file) {
-            $filename = str_replace($inputDir, $moveToPath, $file);
+            $filename = str_replace($inputDir, $localPath, $file);
             $filename = ltrim($filename, '/');
             if (is_dir($file)) {
                 FilesUtil::isEmptyDir($file) && $this->addEmptyDir($filename);
@@ -677,29 +779,67 @@ class ZipFile implements \Countable, \ArrayAccess, \Iterator
      *
      * @param string $inputDir Search files in this directory.
      * @param string $regexPattern Regex pattern.
-     * @param string|null $moveToPath Add files to this directory, or the root.
+     * @param string|null $localPath Add files to this directory, or the root.
+     * @param int|null $compressionMethod Compression method.
+     *                 Use ZipFile::METHOD_STORED, ZipFile::METHOD_DEFLATED or ZipFile::METHOD_BZIP2.
+     *                 If null, then auto choosing method.
+     * @return ZipFile
+     * @internal param bool $recursive Recursive search.
+     */
+    public function addFilesFromRegex($inputDir, $regexPattern, $localPath = "/", $compressionMethod = null)
+    {
+        return $this->addRegex($inputDir, $regexPattern, $localPath, false, $compressionMethod);
+    }
+
+    /**
+     * Add files recursively from regex pattern.
+     *
+     * @param string $inputDir Search files in this directory.
+     * @param string $regexPattern Regex pattern.
+     * @param string|null $localPath Add files to this directory, or the root.
+     * @param int|null $compressionMethod Compression method.
+     *                 Use ZipFile::METHOD_STORED, ZipFile::METHOD_DEFLATED or ZipFile::METHOD_BZIP2.
+     *                 If null, then auto choosing method.
+     * @return ZipFile
+     * @internal param bool $recursive Recursive search.
+     */
+    public function addFilesFromRegexRecursive($inputDir, $regexPattern, $localPath = "/", $compressionMethod = null)
+    {
+        return $this->addRegex($inputDir, $regexPattern, $localPath, true, $compressionMethod);
+    }
+
+
+    /**
+     * Add files from regex pattern.
+     *
+     * @param string $inputDir Search files in this directory.
+     * @param string $regexPattern Regex pattern.
+     * @param string|null $localPath Add files to this directory, or the root.
      * @param bool $recursive Recursive search.
-     * @param int $compressionMethod Compression method.
+     * @param int|null $compressionMethod Compression method.
+     *                 Use ZipFile::METHOD_STORED, ZipFile::METHOD_DEFLATED or ZipFile::METHOD_BZIP2.
+     *                 If null, then auto choosing method.
      * @return ZipFile
      * @throws InvalidArgumentException
      */
-    public function addFilesFromRegex(
+    private function addRegex(
         $inputDir,
         $regexPattern,
-        $moveToPath = "/",
+        $localPath = "/",
         $recursive = true,
-        $compressionMethod = self::METHOD_DEFLATED
+        $compressionMethod = null
     )
     {
-        if ($regexPattern === null || !is_string($regexPattern) || empty($regexPattern)) {
+        $regexPattern = (string)$regexPattern;
+        if (empty($regexPattern)) {
             throw new InvalidArgumentException("regex pattern empty");
         }
         $inputDir = (string)$inputDir;
-        if (empty($inputDir)) {
-            throw new InvalidArgumentException('Invalid $inputDir value');
+        if (null === $inputDir || 0 === strlen($inputDir)) {
+            throw new InvalidArgumentException('Input dir empty');
         }
         if (!is_dir($inputDir)) {
-            throw new InvalidArgumentException('Path ' . $inputDir . ' can\'t directory.');
+            throw new InvalidArgumentException('Directory ' . $inputDir . ' can\'t exists');
         }
         $inputDir = rtrim($inputDir, '/\\') . DIRECTORY_SEPARATOR;
 
@@ -707,10 +847,10 @@ class ZipFile implements \Countable, \ArrayAccess, \Iterator
         if ($files === false || empty($files)) {
             return $this;
         }
-        if (!empty($moveToPath) && is_string($moveToPath)) {
-            $moveToPath = rtrim($moveToPath, '/') . '/';
+        if (!empty($localPath) && is_string($localPath)) {
+            $localPath = rtrim($localPath, '/') . '/';
         } else {
-            $moveToPath = "/";
+            $localPath = "/";
         }
         $inputDir = rtrim($inputDir, '/\\') . DIRECTORY_SEPARATOR;
 
@@ -718,7 +858,7 @@ class ZipFile implements \Countable, \ArrayAccess, \Iterator
          * @var string $file
          */
         foreach ($files as $file) {
-            $filename = str_replace($inputDir, $moveToPath, $file);
+            $filename = str_replace($inputDir, $localPath, $file);
             $filename = ltrim($filename, '/');
             if (is_dir($file)) {
                 FilesUtil::isEmptyDir($file) && $this->addEmptyDir($filename);
@@ -937,6 +1077,31 @@ class ZipFile implements \Countable, \ArrayAccess, \Iterator
     }
 
     /**
+     * Rewrite and reopen zip archive.
+     * @return ZipFile
+     * @throws ZipException
+     */
+    public function rewrite()
+    {
+        if($this->inputStream === null){
+            throw new ZipException('input stream is null');
+        }
+        $meta = stream_get_meta_data($this->inputStream);
+        $content = $this->outputAsString();
+        $this->close();
+        if ($meta['wrapper_type'] === 'plainfile') {
+            if (file_put_contents($meta['uri'], $content) === false) {
+                throw new ZipException("Can not overwrite the zip file in the {$meta['uri']} file.");
+            }
+            if (!($handle = @fopen($meta['uri'], 'rb'))) {
+                throw new ZipException("File {$meta['uri']} can't open.");
+            }
+            return $this->openFromStream($handle);
+        }
+        return $this->openFromString($content);
+    }
+
+    /**
      * Close zip archive and release input stream.
      */
     public function close()
@@ -976,12 +1141,11 @@ class ZipFile implements \Countable, \ArrayAccess, \Iterator
      * @link http://php.net/manual/en/arrayaccess.offsetget.php
      * @param string $entryName The offset to retrieve.
      * @return string|null
+     * @throws ZipNotFoundEntry
      */
     public function offsetGet($entryName)
     {
-        return $this->offsetExists($entryName) ?
-            $this->centralDirectory->getEntry($entryName)->getEntryContent() :
-            null;
+        return $this->centralDirectory->getEntry($entryName)->getEntryContent();
     }
 
     /**
@@ -992,6 +1156,8 @@ class ZipFile implements \Countable, \ArrayAccess, \Iterator
      * @throws InvalidArgumentException
      * @see ZipFile::addFromString
      * @see ZipFile::addEmptyDir
+     * @see ZipFile::addFile
+     * @see ZipFile::addFilesFromIterator
      */
     public function offsetSet($entryName, $contents)
     {
@@ -1002,6 +1168,15 @@ class ZipFile implements \Countable, \ArrayAccess, \Iterator
         if (strlen($entryName) === 0) {
             throw new InvalidArgumentException('entryName is empty');
         }
+        if ($contents instanceof \SplFileInfo) {
+            if ($contents instanceof \DirectoryIterator) {
+                $this->addFilesFromIterator($contents, $entryName);
+                return;
+            }
+            $this->addFile($contents->getPathname(), $entryName);
+            return;
+        }
+        $contents = (string)$contents;
         if ($entryName[strlen($entryName) - 1] === '/') {
             $this->addEmptyDir($entryName);
         } else {

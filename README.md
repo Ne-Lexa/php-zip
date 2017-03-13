@@ -1,6 +1,10 @@
-`PhpZip` (ver 3.0.+)
+`PhpZip`
 ====================
 `PhpZip` - php library for manipulating zip archives.
+
+[![Latest Stable Version](https://poser.pugx.org/nelexa/zip/v/stable)](https://packagist.org/packages/nelexa/zip)
+[![Total Downloads](https://poser.pugx.org/nelexa/zip/downloads)](https://packagist.org/packages/nelexa/zip)
+[![License](https://poser.pugx.org/nelexa/zip/license)](https://packagist.org/packages/nelexa/zip)
 
 Features:
 ---------

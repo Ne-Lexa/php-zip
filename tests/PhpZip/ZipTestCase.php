@@ -1,12 +1,51 @@
 <?php
 namespace PhpZip;
+
 use PhpZip\Model\EndOfCentralDirectory;
+use PhpZip\Util\FilesUtil;
 
 /**
  * PHPUnit test case and helper methods.
  */
 class ZipTestCase extends \PHPUnit_Framework_TestCase
 {
+
+    /**
+     * @var string
+     */
+    protected $outputFilename;
+    /**
+     * @var string
+     */
+    protected $outputDirname;
+
+    /**
+     * Before test
+     */
+    protected function setUp()
+    {
+        parent::setUp();
+
+        $id = uniqid('phpzip');
+        $this->outputFilename = sys_get_temp_dir() . '/' . $id . '.zip';
+        $this->outputDirname = sys_get_temp_dir() . '/' . $id;
+    }
+
+    /**
+     * After test
+     */
+    protected function tearDown()
+    {
+        parent::tearDown();
+
+        if ($this->outputFilename !== null && file_exists($this->outputFilename)) {
+            unlink($this->outputFilename);
+        }
+        if ($this->outputDirname !== null && is_dir($this->outputDirname)) {
+            FilesUtil::removeDir($this->outputDirname);
+        }
+    }
+
     /**
      * Assert correct zip archive.
      *
