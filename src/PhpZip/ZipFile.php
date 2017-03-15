@@ -461,6 +461,9 @@ class ZipFile implements \Countable, \ArrayAccess, \Iterator
             $localName = basename($filename);
         }
         $this->addFromStream($handle, $localName, $compressionMethod);
+        $this->centralDirectory
+            ->getModifiedEntry($localName)
+            ->setTime(filemtime($filename));
         return $this;
     }
 

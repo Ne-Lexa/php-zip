@@ -218,7 +218,7 @@ abstract class ZipNewEntry extends ZipAbstractEntry
                 $this->getMethod(),
                 // last mod file time              2 bytes
                 // last mod file date              2 bytes
-                $this->getTime(),
+                $this->getDosTime(),
                 // crc-32                          4 bytes
                 $dd ? 0 : $this->getCrc(),
                 // compressed size                 4 bytes
