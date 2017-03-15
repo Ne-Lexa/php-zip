@@ -1,6 +1,7 @@
 <?php
 namespace PhpZip\Util;
 
+use PhpZip\Exception\RuntimeException;
 use PhpZip\Exception\ZipException;
 
 /**
@@ -14,7 +15,7 @@ class CryptoUtil
      *
      * @param int $length
      * @return string
-     * @throws ZipException
+     * @throws RuntimeException
      */
     public static final function randomBytes($length)
     {
@@ -26,7 +27,7 @@ class CryptoUtil
         } elseif (function_exists('mcrypt_create_iv')) {
             return mcrypt_create_iv($length);
         } else {
-            throw new ZipException('Extension openssl or mcrypt not loaded');
+            throw new RuntimeException('Extension openssl or mcrypt not loaded');
         }
     }
 }

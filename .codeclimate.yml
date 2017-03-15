@@ -1,0 +1,9 @@
+engines:
+  duplication:
+    enabled: true
+    config:
+      languages:
+        - php
+exclude_paths:
+  - tests/
+  - vendor/

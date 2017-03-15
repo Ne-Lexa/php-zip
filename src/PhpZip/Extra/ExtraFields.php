@@ -1,7 +1,6 @@
 <?php
 namespace PhpZip\Extra;
 
-
 use PhpZip\Exception\ZipException;
 
 /**
@@ -118,8 +117,17 @@ class ExtraFields
         }
         if (0 === $size) return '';
 
-        $fp = fopen('php://temp', 'r+b');
-        $this->writeTo($fp, 0);
+        $fp = fopen('php://memory', 'r+b');
+        $offset = 0;
+        /**
+         * @var ExtraField $ef
+         */
+        foreach ($this->extra as $ef) {
+            fwrite($fp, pack('vv', $ef::getHeaderId(), $ef->getDataSize()));
+            $offset += 4;
+            fwrite($fp, $ef->writeTo($fp, $offset));
+            $offset += $ef->getDataSize();
+        }
         rewind($fp);
         $content = stream_get_contents($fp);
         fclose($fp);
@@ -149,27 +157,6 @@ class ExtraFields
     }
 
     /**
-     * Serializes a list of Extra Fields of ExtraField::getExtraLength bytes to the
-     * stream resource $handle at the zero based offset $off.
-     *
-     * @param resource $handle
-     * @param int $off Offset
-     */
-    private function writeTo($handle, $off)
-    {
-        fseek($handle, $off, SEEK_SET);
-        /**
-         * @var ExtraField $ef
-         */
-        foreach ($this->extra as $ef) {
-            fwrite($handle, pack('vv', $ef::getHeaderId(), $ef->getDataSize()));
-            $off += 4;
-            fwrite($handle, $ef->writeTo($handle, $off));
-            $off += $ef->getDataSize();
-        }
-    }
-
-    /**
      * Initializes this Extra Field by deserializing a Data Block of
      * size bytes $size from the resource $handle at the zero based offset $off.
      *
@@ -187,7 +174,7 @@ class ExtraFields
         if (null !== $handle && 0 < $size) {
             $end = $off + $size;
             while ($off < $end) {
-                fseek($handle, $off, SEEK_SET);
+                fseek($handle, $off);
                 $unpack = unpack('vheaderId/vdataSize', fread($handle, 4));
                 $off += 4;
                 $extraField = ExtraField::create($unpack['headerId']);

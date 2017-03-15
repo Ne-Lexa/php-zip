@@ -4,6 +4,7 @@ namespace PhpZip\Model;
 use PhpZip\Extra\NtfsExtraField;
 use PhpZip\Extra\WinZipAesEntryExtraField;
 use PhpZip\Util\FilesUtil;
+use PhpZip\ZipFile;
 
 /**
  * Zip info
@@ -85,7 +86,7 @@ class ZipInfo
     ];
 
     private static $valuesCompressionMethod = [
-        ZipEntry::METHOD_STORED => 'no compression',
+        ZipFile::METHOD_STORED => 'no compression',
         1 => 'shrink',
         2 => 'reduce level 1',
         3 => 'reduce level 2',
@@ -93,7 +94,7 @@ class ZipInfo
         5 => 'reduce level 4',
         6 => 'implode',
         7 => 'reserved for Tokenizing compression algorithm',
-        ZipEntry::METHOD_DEFLATED => 'deflate',
+        ZipFile::METHOD_DEFLATED => 'deflate',
         9 => 'deflate64',
         10 => 'PKWARE Data Compression Library Imploding (old IBM TERSE)',
         11 => 'reserved by PKWARE',
@@ -107,7 +108,7 @@ class ZipInfo
         19 => 'IBM LZ77 z Architecture (PFS)',
         97 => 'WavPack',
         98 => 'PPMd version I, Rev 1',
-        ZipEntry::WINZIP_AES => 'WinZip AES',
+        ZipEntry::METHOD_WINZIP_AES => 'WinZip AES',
     ];
 
     /**
@@ -192,7 +193,7 @@ class ZipInfo
         $ctime = null;
 
         $field = $entry->getExtraField(NtfsExtraField::getHeaderId());
-        if ($field !== null && $field instanceof NtfsExtraField) {
+        if (null !== $field && $field instanceof NtfsExtraField) {
             /**
              * @var NtfsExtraField $field
              */
@@ -214,34 +215,36 @@ class ZipInfo
         $this->platform = self::getPlatformName($entry);
         $this->version = $entry->getVersionNeededToExtract();
 
-        $attribs = str_repeat(" ", 12);
-        $xattr = (($entry->getRawExternalAttributes() >> 16) & 0xFFFF);
+        $attributes = str_repeat(" ", 12);
+        $externalAttributes = $entry->getExternalAttributes();
+        $xattr = (($externalAttributes >> 16) & 0xFFFF);
         switch ($entry->getPlatform()) {
             case self::MADE_BY_MS_DOS:
+            /** @noinspection PhpMissingBreakStatementInspection */
             case self::MADE_BY_WINDOWS_NTFS:
                 if ($entry->getPlatform() != self::MADE_BY_MS_DOS ||
                     ($xattr & 0700) !=
                     (0400 |
-                        (!($entry->getRawExternalAttributes() & 1) << 7) |
-                        (($entry->getRawExternalAttributes() & 0x10) << 2))
+                        (!($externalAttributes & 1) << 7) |
+                        (($externalAttributes & 0x10) << 2))
                 ) {
-                    $xattr = $entry->getRawExternalAttributes() & 0xFF;
-                    $attribs = ".r.-...     ";
-                    $attribs[2] = ($xattr & 0x01) ? '-' : 'w';
-                    $attribs[5] = ($xattr & 0x02) ? 'h' : '-';
-                    $attribs[6] = ($xattr & 0x04) ? 's' : '-';
-                    $attribs[4] = ($xattr & 0x20) ? 'a' : '-';
+                    $xattr = $externalAttributes & 0xFF;
+                    $attributes = ".r.-...     ";
+                    $attributes[2] = ($xattr & 0x01) ? '-' : 'w';
+                    $attributes[5] = ($xattr & 0x02) ? 'h' : '-';
+                    $attributes[6] = ($xattr & 0x04) ? 's' : '-';
+                    $attributes[4] = ($xattr & 0x20) ? 'a' : '-';
                     if ($xattr & 0x10) {
-                        $attribs[0] = 'd';
-                        $attribs[3] = 'x';
+                        $attributes[0] = 'd';
+                        $attributes[3] = 'x';
                     } else
-                        $attribs[0] = '-';
+                        $attributes[0] = '-';
                     if ($xattr & 0x08)
-                        $attribs[0] = 'V';
+                        $attributes[0] = 'V';
                     else {
                         $ext = strtolower(pathinfo($entry->getName(), PATHINFO_EXTENSION));
                         if (in_array($ext, ["com", "exe", "btm", "cmd", "bat"])) {
-                            $attribs[3] = 'x';
+                            $attributes[3] = 'x';
                         }
                     }
                     break;
@@ -250,51 +253,51 @@ class ZipInfo
             default: /* assume Unix-like */
                 switch ($xattr & self::UNX_IFMT) {
                     case self::UNX_IFDIR:
-                        $attribs[0] = 'd';
+                        $attributes[0] = 'd';
                         break;
                     case self::UNX_IFREG:
-                        $attribs[0] = '-';
+                        $attributes[0] = '-';
                         break;
                     case self::UNX_IFLNK:
-                        $attribs[0] = 'l';
+                        $attributes[0] = 'l';
                         break;
                     case self::UNX_IFBLK:
-                        $attribs[0] = 'b';
+                        $attributes[0] = 'b';
                         break;
                     case self::UNX_IFCHR:
-                        $attribs[0] = 'c';
+                        $attributes[0] = 'c';
                         break;
                     case self::UNX_IFIFO:
-                        $attribs[0] = 'p';
+                        $attributes[0] = 'p';
                         break;
                     case self::UNX_IFSOCK:
-                        $attribs[0] = 's';
+                        $attributes[0] = 's';
                         break;
                     default:
-                        $attribs[0] = '?';
+                        $attributes[0] = '?';
                         break;
                 }
-                $attribs[1] = ($xattr & self::UNX_IRUSR) ? 'r' : '-';
-                $attribs[4] = ($xattr & self::UNX_IRGRP) ? 'r' : '-';
-                $attribs[7] = ($xattr & self::UNX_IROTH) ? 'r' : '-';
-                $attribs[2] = ($xattr & self::UNX_IWUSR) ? 'w' : '-';
-                $attribs[5] = ($xattr & self::UNX_IWGRP) ? 'w' : '-';
-                $attribs[8] = ($xattr & self::UNX_IWOTH) ? 'w' : '-';
+                $attributes[1] = ($xattr & self::UNX_IRUSR) ? 'r' : '-';
+                $attributes[4] = ($xattr & self::UNX_IRGRP) ? 'r' : '-';
+                $attributes[7] = ($xattr & self::UNX_IROTH) ? 'r' : '-';
+                $attributes[2] = ($xattr & self::UNX_IWUSR) ? 'w' : '-';
+                $attributes[5] = ($xattr & self::UNX_IWGRP) ? 'w' : '-';
+                $attributes[8] = ($xattr & self::UNX_IWOTH) ? 'w' : '-';
 
                 if ($xattr & self::UNX_IXUSR)
-                    $attribs[3] = ($xattr & self::UNX_ISUID) ? 's' : 'x';
+                    $attributes[3] = ($xattr & self::UNX_ISUID) ? 's' : 'x';
                 else
-                    $attribs[3] = ($xattr & self::UNX_ISUID) ? 'S' : '-';  /* S==undefined */
+                    $attributes[3] = ($xattr & self::UNX_ISUID) ? 'S' : '-';  /* S==undefined */
                 if ($xattr & self::UNX_IXGRP)
-                    $attribs[6] = ($xattr & self::UNX_ISGID) ? 's' : 'x';  /* == UNX_ENFMT */
+                    $attributes[6] = ($xattr & self::UNX_ISGID) ? 's' : 'x';  /* == UNX_ENFMT */
                 else
-                    $attribs[6] = ($xattr & self::UNX_ISGID) ? 'S' : '-';  /* SunOS 4.1.x */
+                    $attributes[6] = ($xattr & self::UNX_ISGID) ? 'S' : '-';  /* SunOS 4.1.x */
                 if ($xattr & self::UNX_IXOTH)
-                    $attribs[9] = ($xattr & self::UNX_ISVTX) ? 't' : 'x';  /* "sticky bit" */
+                    $attributes[9] = ($xattr & self::UNX_ISVTX) ? 't' : 'x';  /* "sticky bit" */
                 else
-                    $attribs[9] = ($xattr & self::UNX_ISVTX) ? 'T' : '-';  /* T==undefined */
+                    $attributes[9] = ($xattr & self::UNX_ISVTX) ? 'T' : '-';  /* T==undefined */
         }
-        $this->attributes = trim($attribs);
+        $this->attributes = trim($attributes);
     }
 
     /**
@@ -305,10 +308,10 @@ class ZipInfo
     {
         $return = '';
         if ($entry->isEncrypted()) {
-            if ($entry->getMethod() === ZipEntry::WINZIP_AES) {
+            if ($entry->getMethod() === ZipEntry::METHOD_WINZIP_AES) {
                 $field = $entry->getExtraField(WinZipAesEntryExtraField::getHeaderId());
                 $return = ucfirst(self::$valuesCompressionMethod[$entry->getMethod()]);
-                if ($field !== null) {
+                if (null !== $field) {
                     /**
                      * @var WinZipAesEntryExtraField $field
                      */

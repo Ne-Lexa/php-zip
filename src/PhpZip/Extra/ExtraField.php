@@ -45,7 +45,7 @@ abstract class ExtraField implements ExtraFieldHeader
         if (isset(self::getRegistry()[$headerId])) {
             $extraClassName = self::getRegistry()[$headerId];
             $extraField = new $extraClassName;
-            if ($headerId !== $extraField::getHeaderId()) {
+            if ($extraField::getHeaderId() !== $headerId) {
                 throw new ZipException('Runtime error support headerId ' . $headerId);
             }
         } else {
@@ -61,9 +61,9 @@ abstract class ExtraField implements ExtraFieldHeader
      */
     private static function getRegistry()
     {
-        if (self::$registry === null) {
-            self::$registry[WinZipAesEntryExtraField::getHeaderId()] = '\PhpZip\Extra\WinZipAesEntryExtraField';
-            self::$registry[NtfsExtraField::getHeaderId()] = '\PhpZip\Extra\NtfsExtraField';
+        if (null === self::$registry) {
+            self::$registry[WinZipAesEntryExtraField::getHeaderId()] = WinZipAesEntryExtraField::class;
+            self::$registry[NtfsExtraField::getHeaderId()] = NtfsExtraField::class;
         }
         return self::$registry;
     }
@@ -80,7 +80,7 @@ abstract class ExtraField implements ExtraFieldHeader
         if (0x0000 > $size || $size > 0xffff) {
             throw new ZipException('size data block out of range.');
         }
-        $fp = fopen('php://temp', 'r+b');
+        $fp = fopen('php://memory', 'r+b');
         if (0 === $size) return $fp;
         $this->writeTo($fp, 0);
         rewind($fp);
