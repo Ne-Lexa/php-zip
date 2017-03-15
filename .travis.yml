@@ -1,0 +1,33 @@
+language: php
+php:
+  - '5.5'
+  - '5.6'
+  - '7.0'
+  - '7.1'
+  - hhvm
+  - nightly
+
+# cache vendor dirs
+cache:
+  directories:
+    - vendor
+    - $HOME/.composer/cache
+
+addons:
+  code_climate:
+    repo_token: 486a09d58d663450146c53c81c6c64938bcf3bb0b7c8ddebdc125fe97c18213a
+
+install:
+  - travis_retry composer self-update && composer --version
+  - travis_retry composer install --prefer-dist --no-interaction
+
+before_script:
+  - sudo apt-get install p7zip-full
+
+script:
+  - composer validate --no-check-lock
+  - vendor/bin/phpunit -v -c bootstrap.xml --coverage-clover build/logs/clover.xml
+
+after_success:
+  - vendor/bin/test-reporter
+

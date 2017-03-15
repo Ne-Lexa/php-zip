@@ -8,7 +8,7 @@ namespace PhpZip\Exception;
  * @author Ne-Lexa alexey@nelexa.ru
  * @license MIT
  */
-class IllegalArgumentException extends ZipException
+class InvalidArgumentException extends ZipException
 {
 
 }

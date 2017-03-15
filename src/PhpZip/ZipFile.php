@@ -1,101 +1,108 @@
 <?php
 namespace PhpZip;
 
-use PhpZip\Crypto\TraditionalPkwareEncryptionEngine;
-use PhpZip\Crypto\WinZipAesEngine;
-use PhpZip\Exception\Crc32Exception;
-use PhpZip\Exception\IllegalArgumentException;
-use PhpZip\Exception\ZipCryptoException;
+use PhpZip\Exception\InvalidArgumentException;
 use PhpZip\Exception\ZipException;
 use PhpZip\Exception\ZipNotFoundEntry;
 use PhpZip\Exception\ZipUnsupportMethod;
-use PhpZip\Extra\WinZipAesEntryExtraField;
-use PhpZip\Mapper\OffsetPositionMapper;
-use PhpZip\Mapper\PositionMapper;
+use PhpZip\Model\CentralDirectory;
+use PhpZip\Model\Entry\ZipNewEmptyDirEntry;
+use PhpZip\Model\Entry\ZipNewStreamEntry;
+use PhpZip\Model\Entry\ZipNewStringEntry;
 use PhpZip\Model\ZipEntry;
 use PhpZip\Model\ZipInfo;
-use PhpZip\Util\PackUtil;
+use PhpZip\Util\FilesUtil;
 
 /**
- * This class is able to open the .ZIP file in read mode and extract files from it.
+ * Create, open .ZIP files, modify, get info and extract files.
  *
  * Implemented support traditional PKWARE encryption and WinZip AES encryption.
  * Implemented support ZIP64.
  * Implemented support skip a preamble like the one found in self extracting archives.
+ * Support ZipAlign functional.
  *
  * @see https://pkware.cachefly.net/webdocs/casestudies/APPNOTE.TXT .ZIP File Format Specification
  * @author Ne-Lexa alexey@nelexa.ru
  * @license MIT
  */
-class ZipFile implements \Countable, \ArrayAccess, \Iterator, ZipConstants
+class ZipFile implements \Countable, \ArrayAccess, \Iterator
 {
     /**
-     * Input seekable stream resource.
+     * Default compression level.
+     */
+    const LEVEL_DEFAULT_COMPRESSION = -1;
+    /**
+     * Compression level for fastest compression.
+     */
+    const LEVEL_BEST_SPEED = 1;
+    /**
+     * Compression level for best compression.
+     */
+    const LEVEL_BEST_COMPRESSION = 9;
+    /**
+     * Method for Stored (uncompressed) entries.
+     * @see ZipEntry::setMethod()
+     */
+    const METHOD_STORED = 0;
+    /**
+     * Method for Deflated compressed entries.
+     * @see ZipEntry::setMethod()
+     */
+    const METHOD_DEFLATED = 8;
+    /**
+     * No specified method for set encryption method to WinZip AES encryption.
+     */
+    const ENCRYPTION_METHOD_WINZIP_AES = 1;
+    /**
+     * Method for BZIP2 compressed entries.
+     * Require php extension bz2.
+     * @see ZipEntry::setMethod()
+     */
+    const METHOD_BZIP2 = 12;
+    /**
+     * No specified method for set encryption method to Traditional PKWARE encryption.
+     */
+    const ENCRYPTION_METHOD_TRADITIONAL = 0;
+
+    /**
+     * Allow compression methods.
+     * @var int[]
+     */
+    private static $allowCompressionMethods = [
+        self::METHOD_STORED,
+        self::METHOD_DEFLATED,
+        self::METHOD_BZIP2
+    ];
+    /**
+     * Input seekable input stream.
      *
      * @var resource
      */
     private $inputStream;
 
     /**
-     * The total number of bytes in the ZIP archive.
-     *
-     * @var int
+     * @var CentralDirectory
      */
-    private $length;
+    private $centralDirectory;
+    /**
+     * Default mime types.
+     *
+     * @var array
+     */
+    private static $defaultMimeTypes = [
+        'zip' => 'application/zip',
+        'apk' => 'application/vnd.android.package-archive',
+        'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'jar' => 'application/java-archive',
+        'epub' => 'application/epub+zip'
+    ];
 
     /**
-     * The charset to use for entry names and comments.
-     *
-     * @var string
+     * ZipFile constructor.
      */
-    private $charset;
-
-    /**
-     * The number of bytes in the preamble of this ZIP file.
-     *
-     * @var int
-     */
-    private $preamble;
-
-    /**
-     * The number of bytes in the postamble of this ZIP file.
-     *
-     * @var int
-     */
-    private $postamble;
-
-    /**
-     * Maps entry names to zip entries.
-     *
-     * @var ZipEntry[]
-     */
-    private $entries;
-
-    /**
-     * The file comment.
-     *
-     * @var string
-     */
-    private $comment;
-
-    /**
-     * Maps offsets specified in the ZIP file to real offsets in the file.
-     *
-     * @var PositionMapper
-     */
-    private $mapper;
-
-    /**
-     * Private ZipFile constructor.
-     *
-     * @see ZipFile::openFromFile()
-     * @see ZipFile::openFromString()
-     * @see ZipFile::openFromStream()
-     */
-    private function __construct()
+    public function __construct()
     {
-        $this->mapper = new PositionMapper();
-        $this->charset = "UTF-8";
+        $this->centralDirectory = new CentralDirectory();
     }
 
     /**
@@ -103,299 +110,19 @@ class ZipFile implements \Countable, \ArrayAccess, \Iterator, ZipConstants
      *
      * @param string $filename
      * @return ZipFile
-     * @throws IllegalArgumentException if file doesn't exists.
+     * @throws InvalidArgumentException if file doesn't exists.
      * @throws ZipException             if can't open file.
      */
-    public static function openFromFile($filename)
+    public function openFile($filename)
     {
         if (!file_exists($filename)) {
-            throw new IllegalArgumentException("File $filename can't exists.");
+            throw new InvalidArgumentException("File $filename can't exists.");
         }
-        if (!($handle = fopen($filename, 'rb'))) {
+        if (!($handle = @fopen($filename, 'rb'))) {
             throw new ZipException("File $filename can't open.");
         }
-        $zipFile = self::openFromStream($handle);
-        $zipFile->length = filesize($filename);
-        return $zipFile;
-    }
-
-    /**
-     * Open zip archive from stream resource
-     *
-     * @param resource $handle
-     * @return ZipFile
-     * @throws IllegalArgumentException Invalid stream resource
-     *         or resource cannot seekable stream
-     */
-    public static function openFromStream($handle)
-    {
-        if (!is_resource($handle)) {
-            throw new IllegalArgumentException("Invalid stream resource.");
-        }
-        $meta = stream_get_meta_data($handle);
-        if (!$meta['seekable']) {
-            throw new IllegalArgumentException("Resource cannot seekable stream.");
-        }
-        $zipFile = new self();
-        $stats = fstat($handle);
-        if (isset($stats['size'])) {
-            $zipFile->length = $stats['size'];
-        }
-        $zipFile->checkZipFileSignature($handle);
-        $numEntries = $zipFile->findCentralDirectory($handle);
-        $zipFile->mountCentralDirectory($handle, $numEntries);
-        if ($zipFile->preamble + $zipFile->postamble >= $zipFile->length) {
-            assert(0 === $numEntries);
-            $zipFile->checkZipFileSignature($handle);
-        }
-        assert(null !== $handle);
-        assert(null !== $zipFile->charset);
-        assert(null !== $zipFile->entries);
-        assert(null !== $zipFile->mapper);
-        $zipFile->inputStream = $handle;
-        // Do NOT close stream!
-        return $zipFile;
-    }
-
-    /**
-     * @return ZipOutputFile
-     */
-    public function edit(){
-        return ZipOutputFile::openFromZipFile($this);
-    }
-
-    /**
-     * Check zip file signature
-     *
-     * @param resource $handle
-     * @throws ZipException if this not .ZIP file.
-     */
-    private function checkZipFileSignature($handle)
-    {
-        rewind($handle);
-        $signature = current(unpack('V', fread($handle, 4)));
-        // Constraint: A ZIP file must start with a Local File Header
-        // or a (ZIP64) End Of Central Directory Record if it's empty.
-        if (self::LOCAL_FILE_HEADER_SIG !== $signature && self::ZIP64_END_OF_CENTRAL_DIRECTORY_RECORD_SIG !== $signature && self::END_OF_CENTRAL_DIRECTORY_RECORD_SIG !== $signature
-        ) {
-            throw new ZipException("Expected Local File Header or (ZIP64) End Of Central Directory Record! Signature: " . $signature);
-        }
-    }
-
-    /**
-     * Positions the file pointer at the first Central File Header.
-     * Performs some means to check that this is really a ZIP file.
-     *
-     * @param resource $handle
-     * @return int
-     * @throws ZipException If the file is not compatible to the ZIP File
-     *         Format Specification.
-     */
-    private function findCentralDirectory($handle)
-    {
-        // Search for End of central directory record.
-        $max = $this->length - self::END_OF_CENTRAL_DIRECTORY_RECORD_MIN_LEN;
-        $min = $max >= 0xffff ? $max - 0xffff : 0;
-        for ($endOfCentralDirRecordPos = $max; $endOfCentralDirRecordPos >= $min; $endOfCentralDirRecordPos--) {
-            fseek($handle, $endOfCentralDirRecordPos, SEEK_SET);
-            // end of central dir signature    4 bytes  (0x06054b50)
-            if (self::END_OF_CENTRAL_DIRECTORY_RECORD_SIG !== current(unpack('V', fread($handle, 4))))
-                continue;
-
-            // Process End Of Central Directory Record.
-            $data = fread($handle, self::END_OF_CENTRAL_DIRECTORY_RECORD_MIN_LEN - 4);
-
-            /**
-             * @var int $diskNo number of this disk                        - 2 bytes
-             * @var int $cdDiskNo number of the disk with the start of the
-             *                         central directory                   - 2 bytes
-             * @var int $cdEntriesDisk total number of entries in the central
-             *                         directory on this disk              - 2 bytes
-             * @var int $cdEntries total number of entries in the central
-             *                         directory                           - 2 bytes
-             * @var int $cdSize size of the central directory              - 4 bytes
-             * @var int $cdPos offset of start of central directory with
-             *                         respect to the starting disk number - 4 bytes
-             * @var int $commentLen ZIP file comment length                - 2 bytes
-             */
-            $unpack = unpack('vdiskNo/vcdDiskNo/vcdEntriesDisk/vcdEntries/VcdSize/VcdPos/vcommentLen', $data);
-            extract($unpack);
-
-            if (0 !== $diskNo || 0 !== $cdDiskNo || $cdEntriesDisk !== $cdEntries) {
-                throw new ZipException(
-                    "ZIP file spanning/splitting is not supported!"
-                );
-            }
-            // .ZIP file comment       (variable size)
-            if (0 < $commentLen) {
-                $this->comment = fread($handle, $commentLen);
-            }
-            $this->preamble = $endOfCentralDirRecordPos;
-            $this->postamble = $this->length - ftell($handle);
-
-            // Check for ZIP64 End Of Central Directory Locator.
-            $endOfCentralDirLocatorPos = $endOfCentralDirRecordPos - self::ZIP64_END_OF_CENTRAL_DIRECTORY_LOCATOR_LEN;
-
-            fseek($handle, $endOfCentralDirLocatorPos, SEEK_SET);
-
-            // zip64 end of central dir locator
-            // signature                       4 bytes  (0x07064b50)
-            if (
-                0 > $endOfCentralDirLocatorPos ||
-                ftell($handle) === $this->length ||
-                self::ZIP64_END_OF_CENTRAL_DIRECTORY_LOCATOR_SIG !== current(unpack('V', fread($handle, 4)))
-            ) {
-                // Seek and check first CFH, probably requiring an offset mapper.
-                $offset = $endOfCentralDirRecordPos - $cdSize;
-                fseek($handle, $offset, SEEK_SET);
-                $offset -= $cdPos;
-                if (0 !== $offset) {
-                    $this->mapper = new OffsetPositionMapper($offset);
-                }
-                return (int)$cdEntries;
-            }
-
-            // number of the disk with the
-            // start of the zip64 end of
-            // central directory               4 bytes
-            $zip64EndOfCentralDirectoryRecordDisk = current(unpack('V', fread($handle, 4)));
-            // relative offset of the zip64
-            // end of central directory record 8 bytes
-            $zip64EndOfCentralDirectoryRecordPos = PackUtil::unpackLongLE(fread($handle, 8));
-            // total number of disks           4 bytes
-            $totalDisks = current(unpack('V', fread($handle, 4)));
-            if (0 !== $zip64EndOfCentralDirectoryRecordDisk || 1 !== $totalDisks) {
-                throw new ZipException("ZIP file spanning/splitting is not supported!");
-            }
-            fseek($handle, $zip64EndOfCentralDirectoryRecordPos, SEEK_SET);
-            // zip64 end of central dir
-            // signature                       4 bytes  (0x06064b50)
-            $zip64EndOfCentralDirSig = current(unpack('V', fread($handle, 4)));
-            if (self::ZIP64_END_OF_CENTRAL_DIRECTORY_RECORD_SIG !== $zip64EndOfCentralDirSig) {
-                throw new ZipException("Expected ZIP64 End Of Central Directory Record!");
-            }
-            // size of zip64 end of central
-            // directory record                8 bytes
-            // version made by                 2 bytes
-            // version needed to extract       2 bytes
-            fseek($handle, 12, SEEK_CUR);
-            // number of this disk             4 bytes
-            $diskNo = current(unpack('V', fread($handle, 4)));
-            // number of the disk with the
-            // start of the central directory  4 bytes
-            $cdDiskNo = current(unpack('V', fread($handle, 4)));
-            // total number of entries in the
-            // central directory on this disk  8 bytes
-            $cdEntriesDisk = PackUtil::unpackLongLE(fread($handle, 8));
-            // total number of entries in the
-            // central directory               8 bytes
-            $cdEntries = PackUtil::unpackLongLE(fread($handle, 8));
-            if (0 !== $diskNo || 0 !== $cdDiskNo || $cdEntriesDisk !== $cdEntries) {
-                throw new ZipException(
-                    "ZIP file spanning/splitting is not supported!");
-            }
-            if ($cdEntries < 0 || 0x7fffffff < $cdEntries) {
-                throw new ZipException(
-                    "Total Number Of Entries In The Central Directory out of range!");
-            }
-            // size of the central directory   8 bytes
-            //$cdSize = self::getLongLE($channel);
-            fseek($handle, 8, SEEK_CUR);
-            // offset of start of central
-            // directory with respect to
-            // the starting disk number        8 bytes
-            $cdPos = PackUtil::unpackLongLE(fread($handle, 8));
-            // zip64 extensible data sector    (variable size)
-            fseek($handle, $cdPos, SEEK_SET);
-            $this->preamble = $zip64EndOfCentralDirectoryRecordPos;
-            return (int)$cdEntries;
-        }
-        // Start recovering file entries from min.
-        $this->preamble = $min;
-        $this->postamble = $this->length - $min;
-        return 0;
-    }
-
-    /**
-     * Reads the central directory from the given seekable byte channel
-     * and populates the internal tables with ZipEntry instances.
-     *
-     * The ZipEntry's will know all data that can be obtained from the
-     * central directory alone, but not the data that requires the local
-     * file header or additional data to be read.
-     *
-     * @param resource $handle Input channel.
-     * @param int $numEntries Size zip entries.
-     * @throws ZipException
-     */
-    private function mountCentralDirectory($handle, $numEntries)
-    {
-        $numEntries = (int)$numEntries;
-        $entries = [];
-        for (; ; $numEntries--) {
-            // central file header signature   4 bytes  (0x02014b50)
-            if (self::CENTRAL_FILE_HEADER_SIG !== current(unpack('V', fread($handle, 4)))) {
-                break;
-            }
-            // version made by                 2 bytes
-            $versionMadeBy = current(unpack('v', fread($handle, 2)));
-
-            // version needed to extract       2 bytes
-            fseek($handle, 2, SEEK_CUR);
-
-            $unpack = unpack('vgpbf/vrawMethod/VrawTime/VrawCrc/VrawCompressedSize/VrawSize/vfileLen/vextraLen/vcommentLen', fread($handle, 26));
-
-            // disk number start               2 bytes
-            // internal file attributes        2 bytes
-            fseek($handle, 4, SEEK_CUR);
-
-            // external file attributes        4 bytes
-            // relative offset of local header 4 bytes
-            $unpack2 = unpack('VrawExternalAttributes/VlfhOff', fread($handle, 8));
-
-            $utf8 = 0 !== ($unpack['gpbf'] & ZipEntry::GPBF_UTF8);
-            if ($utf8) {
-                $this->charset = "UTF-8";
-            }
-
-            // See appendix D of PKWARE's ZIP File Format Specification.
-            $name = fread($handle, $unpack['fileLen']);
-            $entry = new ZipEntry($name, $handle);
-            $entry->setRawPlatform($versionMadeBy >> 8);
-            $entry->setGeneralPurposeBitFlags($unpack['gpbf']);
-            $entry->setRawMethod($unpack['rawMethod']);
-            $entry->setRawTime($unpack['rawTime']);
-            $entry->setRawCrc($unpack['rawCrc']);
-            $entry->setRawCompressedSize($unpack['rawCompressedSize']);
-            $entry->setRawSize($unpack['rawSize']);
-            $entry->setRawExternalAttributes($unpack2['rawExternalAttributes']);
-            $entry->setRawOffset($unpack2['lfhOff']); // must be unmapped!
-            if (0 < $unpack['extraLen']) {
-                $entry->setRawExtraFields(fread($handle, $unpack['extraLen']));
-            }
-            if (0 < $unpack['commentLen']) {
-                $entry->setComment(fread($handle, $unpack['commentLen']));
-            }
-
-            unset($unpack, $unpack2);
-
-            // Re-load virtual offset after ZIP64 Extended Information
-            // Extra Field may have been parsed, map it to the real
-            // offset and conditionally update the preamble size from it.
-            $lfhOff = $this->mapper->map($entry->getOffset());
-            if ($lfhOff < $this->preamble) {
-                $this->preamble = $lfhOff;
-            }
-            $entries[$entry->getName()] = $entry;
-        }
-
-        if (0 !== $numEntries % 0x10000) {
-            throw new ZipException("Expected " . abs($numEntries) .
-                ($numEntries > 0 ? " more" : " less") .
-                " entries in the Central Directory!");
-        }
-
-        $this->entries = $entries;
+        $this->openFromStream($handle);
+        return $this;
     }
 
     /**
@@ -403,62 +130,60 @@ class ZipFile implements \Countable, \ArrayAccess, \Iterator, ZipConstants
      *
      * @param string $data
      * @return ZipFile
-     * @throws IllegalArgumentException if data not available.
+     * @throws InvalidArgumentException if data not available.
      * @throws ZipException             if can't open temp stream.
      */
-    public static function openFromString($data)
+    public function openFromString($data)
     {
         if (null === $data || strlen($data) === 0) {
-            throw new IllegalArgumentException("Data not available");
+            throw new InvalidArgumentException("Data not available");
         }
         if (!($handle = fopen('php://temp', 'r+b'))) {
             throw new ZipException("Can't open temp stream.");
         }
         fwrite($handle, $data);
         rewind($handle);
-        $zipFile = self::openFromStream($handle);
-        $zipFile->length = strlen($data);
-        return $zipFile;
+        $this->openFromStream($handle);
+        return $this;
     }
 
     /**
-     * Returns the number of entries in this ZIP file.
+     * Open zip archive from stream resource
      *
-     * @return int
+     * @param resource $handle
+     * @return ZipFile
+     * @throws InvalidArgumentException Invalid stream resource
+     *         or resource cannot seekable stream
+     */
+    public function openFromStream($handle)
+    {
+        if (!is_resource($handle)) {
+            throw new InvalidArgumentException("Invalid stream resource.");
+        }
+        $meta = stream_get_meta_data($handle);
+        if (!$meta['seekable']) {
+            throw new InvalidArgumentException("Resource cannot seekable stream.");
+        }
+        $this->inputStream = $handle;
+        $this->centralDirectory = new CentralDirectory();
+        $this->centralDirectory->mountCentralDirectory($this->inputStream);
+        return $this;
+    }
+
+    /**
+     * @return int Returns the number of entries in this ZIP file.
      */
     public function count()
     {
-        return sizeof($this->entries);
+        return sizeof($this->centralDirectory->getEntries());
     }
 
     /**
-     * Returns the list files.
-     *
-     * @return string[]
+     * @return string[] Returns the list files.
      */
     public function getListFiles()
     {
-        return array_keys($this->entries);
-    }
-
-    /**
-     * @api
-     * @return ZipEntry[]
-     */
-    public function getRawEntries()
-    {
-        return $this->entries;
-    }
-
-    /**
-     * Checks whether a entry exists
-     *
-     * @param string $entryName
-     * @return bool
-     */
-    public function hasEntry($entryName)
-    {
-        return isset($this->entries[$entryName]);
+        return array_keys($this->centralDirectory->getEntries());
     }
 
     /**
@@ -472,42 +197,7 @@ class ZipFile implements \Countable, \ArrayAccess, \Iterator, ZipConstants
      */
     public function isDirectory($entryName)
     {
-        if (!isset($this->entries[$entryName])) {
-            throw new ZipNotFoundEntry('Zip entry ' . $entryName . ' not found');
-        }
-        return $this->entries[$entryName]->isDirectory();
-    }
-
-    /**
-     * Set password to all encrypted entries.
-     *
-     * @param string $password Password
-     */
-    public function setPassword($password)
-    {
-        foreach ($this->entries as $entry) {
-            if ($entry->isEncrypted()) {
-                $entry->setPassword($password);
-            }
-        }
-    }
-
-    /**
-     * Set password to concrete zip entry.
-     *
-     * @param string $entryName Zip entry name
-     * @param string $password Password
-     * @throws ZipNotFoundEntry if don't exist zip entry.
-     */
-    public function setEntryPassword($entryName, $password)
-    {
-        if (!isset($this->entries[$entryName])) {
-            throw new ZipNotFoundEntry('Zip entry ' . $entryName . ' not found');
-        }
-        $entry = $this->entries[$entryName];
-        if ($entry->isEncrypted()) {
-            $entry->setPassword($password);
-        }
+        return $this->centralDirectory->getEntry($entryName)->isDirectory();
     }
 
     /**
@@ -515,22 +205,36 @@ class ZipFile implements \Countable, \ArrayAccess, \Iterator, ZipConstants
      *
      * @return string The file comment.
      */
-    public function getComment()
+    public function getArchiveComment()
     {
-        return null === $this->comment ? '' : $this->decode($this->comment);
+        return $this->centralDirectory->getArchiveComment();
     }
 
     /**
-     * Decode charset entry name.
+     * Set password to all input encrypted entries.
      *
-     * @param string $text
-     * @return string
+     * @param string $password Password
+     * @return ZipFile
      */
-    private function decode($text)
+    public function withReadPassword($password)
     {
-        $inCharset = mb_detect_encoding($text, mb_detect_order(), true);
-        if ($inCharset === $this->charset) return $text;
-        return iconv($inCharset, $this->charset, $text);
+        foreach ($this->centralDirectory->getEntries() as $entry) {
+            if ($entry->isEncrypted()) {
+                $entry->setPassword($password);
+            }
+        }
+        return $this;
+    }
+
+    /**
+     * Set archive comment.
+     *
+     * @param null|string $comment
+     * @throws InvalidArgumentException Length comment out of range
+     */
+    public function setArchiveComment($comment = null)
+    {
+        $this->centralDirectory->getEndOfCentralDirectory()->setComment($comment);
     }
 
     /**
@@ -542,31 +246,21 @@ class ZipFile implements \Countable, \ArrayAccess, \Iterator, ZipConstants
      */
     public function getEntryComment($entryName)
     {
-        if (!isset($this->entries[$entryName])) {
-            throw new ZipNotFoundEntry("Not found entry " . $entryName);
-        }
-        return $this->entries[$entryName]->getComment();
+        return $this->centralDirectory->getEntry($entryName)->getComment();
     }
 
     /**
-     * Returns the name of the character set which is effectively used for
-     * decoding entry names and the file comment.
+     * Set entry comment.
      *
-     * @return string
+     * @param string $entryName
+     * @param string|null $comment
+     * @return ZipFile
+     * @throws ZipNotFoundEntry
      */
-    public function getCharset()
+    public function setEntryComment($entryName, $comment = null)
     {
-        return $this->charset;
-    }
-
-    /**
-     * Returns the file length of this ZIP file in bytes.
-     *
-     * @return int
-     */
-    public function length()
-    {
-        return $this->length;
+        $this->centralDirectory->setEntryComment($entryName, $comment);
+        return $this;
     }
 
     /**
@@ -578,15 +272,10 @@ class ZipFile implements \Countable, \ArrayAccess, \Iterator, ZipConstants
      */
     public function getEntryInfo($entryName)
     {
-        if ($entryName instanceof ZipEntry) {
-            $entryName = $entryName->getName();
+        if (!($entryName instanceof ZipEntry)) {
+            $entryName = $this->centralDirectory->getEntry($entryName);
         }
-        if (!isset($this->entries[$entryName])) {
-            throw new ZipNotFoundEntry('Zip entry ' . $entryName . ' not found');
-        }
-        $entry = $this->entries[$entryName];
-
-        return new ZipInfo($entry);
+        return new ZipInfo($entryName);
     }
 
     /**
@@ -596,7 +285,7 @@ class ZipFile implements \Countable, \ArrayAccess, \Iterator, ZipConstants
      */
     public function getAllInfo()
     {
-        return array_map([$this, 'getEntryInfo'], $this->entries);
+        return array_map([$this, 'getEntryInfo'], $this->centralDirectory->getEntries());
     }
 
     /**
@@ -605,16 +294,13 @@ class ZipFile implements \Countable, \ArrayAccess, \Iterator, ZipConstants
      * Extract the complete archive or the given files to the specified destination.
      *
      * @param string $destination Location where to extract the files.
-     * @param array $entries The entries to extract. It accepts
-     *                       either a single entry name or an array of names.
-     * @return bool
+     * @param array|string|null $entries The entries to extract. It accepts either
+     *                                   a single entry name or an array of names.
+     * @return ZipFile
      * @throws ZipException
      */
     public function extractTo($destination, $entries = null)
     {
-        if ($this->entries === null) {
-            throw new ZipException("Zip entries not initial");
-        }
         if (!file_exists($destination)) {
             throw new ZipException("Destination " . $destination . " not found");
         }
@@ -633,20 +319,23 @@ class ZipFile implements \Countable, \ArrayAccess, \Iterator, ZipConstants
                 $entries = (array)$entries;
             }
             if (is_array($entries)) {
+                $entries = array_unique($entries);
                 $flipEntries = array_flip($entries);
-                $zipEntries = array_filter($this->entries, function ($zipEntry) use ($flipEntries) {
-                    /**
-                     * @var ZipEntry $zipEntry
-                     */
-                    return isset($flipEntries[$zipEntry->getName()]);
-                });
+                $zipEntries = array_filter(
+                    $this->centralDirectory->getEntries(),
+                    function ($zipEntry) use ($flipEntries) {
+                        /**
+                         * @var ZipEntry $zipEntry
+                         */
+                        return isset($flipEntries[$zipEntry->getName()]);
+                    }
+                );
             }
         } else {
-            $zipEntries = $this->entries;
+            $zipEntries = $this->centralDirectory->getEntries();
         }
 
-        $extract = 0;
-        foreach ($zipEntries AS $entry) {
+        foreach ($zipEntries as $entry) {
             $file = $destination . DIRECTORY_SEPARATOR . $entry->getName();
             if ($entry->isDirectory()) {
                 if (!is_dir($file)) {
@@ -659,135 +348,776 @@ class ZipFile implements \Countable, \ArrayAccess, \Iterator, ZipConstants
                 continue;
             }
             $dir = dirname($file);
-            if (!file_exists($dir)) {
+            if (!is_dir($dir)) {
                 if (!mkdir($dir, 0755, true)) {
                     throw new ZipException("Can not create dir " . $dir);
                 }
                 chmod($dir, 0755);
-                touch($file, $entry->getTime());
+                touch($dir, $entry->getTime());
             }
-            if (file_put_contents($file, $this->getEntryContent($entry->getName())) === null) {
-                return false;
+            if (file_put_contents($file, $entry->getEntryContent()) === false) {
+                throw new ZipException('Can not extract file ' . $entry->getName());
             }
             touch($file, $entry->getTime());
-            $extract++;
         }
-        return $extract > 0;
+        return $this;
     }
 
     /**
-     * Returns an string content of the given entry.
+     * Add entry from the string.
      *
-     * @param string $entryName
-     * @return string|null
+     * @param string $localName Zip entry name.
+     * @param string $contents String contents.
+     * @param int|null $compressionMethod Compression method.
+     *                 Use ZipFile::METHOD_STORED, ZipFile::METHOD_DEFLATED or ZipFile::METHOD_BZIP2.
+     *                 If null, then auto choosing method.
+     * @return ZipFile
+     * @throws InvalidArgumentException If incorrect data or entry name.
+     * @throws ZipUnsupportMethod
+     * @see ZipFile::METHOD_STORED
+     * @see ZipFile::METHOD_DEFLATED
+     * @see ZipFile::METHOD_BZIP2
+     */
+    public function addFromString($localName, $contents, $compressionMethod = null)
+    {
+        if (null === $contents) {
+            throw new InvalidArgumentException("Contents is null");
+        }
+        $localName = (string)$localName;
+        if (null === $localName || 0 === strlen($localName)) {
+            throw new InvalidArgumentException("Incorrect entry name " . $localName);
+        }
+        $contents = (string)$contents;
+        $length = strlen($contents);
+        if (null === $compressionMethod) {
+            if ($length >= 1024) {
+                $compressionMethod = self::METHOD_DEFLATED;
+            } else {
+                $compressionMethod = self::METHOD_STORED;
+            }
+        } elseif (!in_array($compressionMethod, self::$allowCompressionMethods, true)) {
+            throw new ZipUnsupportMethod('Unsupported method ' . $compressionMethod);
+        }
+        $externalAttributes = 0100644 << 16;
+
+        $entry = new ZipNewStringEntry($contents);
+        $entry->setName($localName);
+        $entry->setMethod($compressionMethod);
+        $entry->setTime(time());
+        $entry->setExternalAttributes($externalAttributes);
+
+        $this->centralDirectory->putInModified($localName, $entry);
+        return $this;
+    }
+
+    /**
+     * Add entry from the file.
+     *
+     * @param string $filename Destination file.
+     * @param string|null $localName Zip Entry name.
+     * @param int|null $compressionMethod Compression method.
+     *                 Use ZipFile::METHOD_STORED, ZipFile::METHOD_DEFLATED or ZipFile::METHOD_BZIP2.
+     *                 If null, then auto choosing method.
+     * @return ZipFile
+     * @throws InvalidArgumentException
+     * @throws ZipUnsupportMethod
+     * @see ZipFile::METHOD_STORED
+     * @see ZipFile::METHOD_DEFLATED
+     * @see ZipFile::METHOD_BZIP2
+     */
+    public function addFile($filename, $localName = null, $compressionMethod = null)
+    {
+        if (null === $filename) {
+            throw new InvalidArgumentException("Filename is null");
+        }
+        if (!is_file($filename)) {
+            throw new InvalidArgumentException("File $filename is not exists");
+        }
+
+        if (null === $compressionMethod) {
+            if (function_exists('mime_content_type')) {
+                $mimeType = @mime_content_type($filename);
+                $type = strtok($mimeType, '/');
+                if ('image' === $type) {
+                    $compressionMethod = self::METHOD_STORED;
+                } elseif ('text' === $type && filesize($filename) < 150) {
+                    $compressionMethod = self::METHOD_STORED;
+                } else {
+                    $compressionMethod = self::METHOD_DEFLATED;
+                }
+            } elseif (@filesize($filename) >= 1024) {
+                $compressionMethod = self::METHOD_DEFLATED;
+            } else {
+                $compressionMethod = self::METHOD_STORED;
+            }
+        } elseif (!in_array($compressionMethod, self::$allowCompressionMethods, true)) {
+            throw new ZipUnsupportMethod('Unsupported method ' . $compressionMethod);
+        }
+
+        if (!($handle = @fopen($filename, 'rb'))) {
+            throw new InvalidArgumentException('File ' . $filename . ' can not open.');
+        }
+        if (null === $localName) {
+            $localName = basename($filename);
+        }
+        $this->addFromStream($handle, $localName, $compressionMethod);
+        return $this;
+    }
+
+    /**
+     * Add entry from the stream.
+     *
+     * @param resource $stream Stream resource.
+     * @param string $localName Zip Entry name.
+     * @param int|null $compressionMethod Compression method.
+     *                 Use ZipFile::METHOD_STORED, ZipFile::METHOD_DEFLATED or ZipFile::METHOD_BZIP2.
+     *                 If null, then auto choosing method.
+     * @return ZipFile
+     * @throws InvalidArgumentException
+     * @throws ZipUnsupportMethod
+     * @see ZipFile::METHOD_STORED
+     * @see ZipFile::METHOD_DEFLATED
+     * @see ZipFile::METHOD_BZIP2
+     */
+    public function addFromStream($stream, $localName, $compressionMethod = null)
+    {
+        if (!is_resource($stream)) {
+            throw new InvalidArgumentException("stream is not resource");
+        }
+        $localName = (string)$localName;
+        if (empty($localName)) {
+            throw new InvalidArgumentException("Incorrect entry name " . $localName);
+        }
+        $fstat = fstat($stream);
+        $length = $fstat['size'];
+        if (null === $compressionMethod) {
+            if ($length >= 1024) {
+                $compressionMethod = self::METHOD_DEFLATED;
+            } else {
+                $compressionMethod = self::METHOD_STORED;
+            }
+        } elseif (!in_array($compressionMethod, self::$allowCompressionMethods, true)) {
+            throw new ZipUnsupportMethod('Unsupported method ' . $compressionMethod);
+        }
+
+        $mode = sprintf('%o', $fstat['mode']);
+        $externalAttributes = (octdec($mode) & 0xffff) << 16;
+
+        $entry = new ZipNewStreamEntry($stream);
+        $entry->setName($localName);
+        $entry->setMethod($compressionMethod);
+        $entry->setTime(time());
+        $entry->setExternalAttributes($externalAttributes);
+
+        $this->centralDirectory->putInModified($localName, $entry);
+        return $this;
+    }
+
+    /**
+     * Add an empty directory in the zip archive.
+     *
+     * @param string $dirName
+     * @return ZipFile
+     * @throws InvalidArgumentException
+     */
+    public function addEmptyDir($dirName)
+    {
+        $dirName = (string)$dirName;
+        if (strlen($dirName) === 0) {
+            throw new InvalidArgumentException("DirName empty");
+        }
+        $dirName = rtrim($dirName, '/') . '/';
+        $externalAttributes = 040755 << 16;
+
+        $entry = new ZipNewEmptyDirEntry();
+        $entry->setName($dirName);
+        $entry->setTime(time());
+        $entry->setMethod(self::METHOD_STORED);
+        $entry->setSize(0);
+        $entry->setCompressedSize(0);
+        $entry->setCrc(0);
+        $entry->setExternalAttributes($externalAttributes);
+
+        $this->centralDirectory->putInModified($dirName, $entry);
+        return $this;
+    }
+
+    /**
+     * Add array data to archive.
+     * Keys is local names.
+     * Values is contents.
+     *
+     * @param array $mapData Associative array for added to zip.
+     */
+    public function addAll(array $mapData)
+    {
+        foreach ($mapData as $localName => $content) {
+            $this[$localName] = $content;
+        }
+    }
+
+    /**
+     * Add directory not recursively to the zip archive.
+     *
+     * @param string $inputDir Input directory
+     * @param string $localPath Add files to this directory, or the root.
+     * @param int|null $compressionMethod Compression method.
+     *                 Use ZipFile::METHOD_STORED, ZipFile::METHOD_DEFLATED or ZipFile::METHOD_BZIP2.
+     *                 If null, then auto choosing method.
+     * @return ZipFile
+     * @throws InvalidArgumentException
+     */
+    public function addDir($inputDir, $localPath = "/", $compressionMethod = null)
+    {
+        $inputDir = (string)$inputDir;
+        if (null === $inputDir || strlen($inputDir) === 0) {
+            throw new InvalidArgumentException('Input dir empty');
+        }
+        if (!is_dir($inputDir)) {
+            throw new InvalidArgumentException('Directory ' . $inputDir . ' can\'t exists');
+        }
+        $inputDir = rtrim($inputDir, '/\\') . DIRECTORY_SEPARATOR;
+
+        $directoryIterator = new \DirectoryIterator($inputDir);
+        return $this->addFilesFromIterator($directoryIterator, $localPath, $compressionMethod);
+    }
+
+    /**
+     * Add recursive directory to the zip archive.
+     *
+     * @param string $inputDir Input directory
+     * @param string $localPath Add files to this directory, or the root.
+     * @param int|null $compressionMethod Compression method.
+     *                 Use ZipFile::METHOD_STORED, ZipFile::METHOD_DEFLATED or ZipFile::METHOD_BZIP2.
+     *                 If null, then auto choosing method.
+     * @return ZipFile
+     * @throws InvalidArgumentException
+     * @throws ZipUnsupportMethod
+     * @see ZipFile::METHOD_STORED
+     * @see ZipFile::METHOD_DEFLATED
+     * @see ZipFile::METHOD_BZIP2
+     */
+    public function addDirRecursive($inputDir, $localPath = "/", $compressionMethod = null)
+    {
+        $inputDir = (string)$inputDir;
+        if (null === $inputDir || strlen($inputDir) === 0) {
+            throw new InvalidArgumentException('Input dir empty');
+        }
+        if (!is_dir($inputDir)) {
+            throw new InvalidArgumentException('Directory ' . $inputDir . ' can\'t exists');
+        }
+        $inputDir = rtrim($inputDir, '/\\') . DIRECTORY_SEPARATOR;
+
+        $directoryIterator = new \RecursiveDirectoryIterator($inputDir);
+        return $this->addFilesFromIterator($directoryIterator, $localPath, $compressionMethod);
+    }
+
+    /**
+     * Add directories from directory iterator.
+     *
+     * @param \Iterator $iterator Directory iterator.
+     * @param string $localPath Add files to this directory, or the root.
+     * @param int|null $compressionMethod Compression method.
+     *                 Use ZipFile::METHOD_STORED, ZipFile::METHOD_DEFLATED or ZipFile::METHOD_BZIP2.
+     *                 If null, then auto choosing method.
+     * @return ZipFile
+     * @throws InvalidArgumentException
+     * @throws ZipUnsupportMethod
+     * @see ZipFile::METHOD_STORED
+     * @see ZipFile::METHOD_DEFLATED
+     * @see ZipFile::METHOD_BZIP2
+     */
+    public function addFilesFromIterator(
+        \Iterator $iterator,
+        $localPath = '/',
+        $compressionMethod = null
+    )
+    {
+        $localPath = (string)$localPath;
+        if (null !== $localPath && 0 !== strlen($localPath)) {
+            $localPath = rtrim($localPath, '/');
+        } else {
+            $localPath = "";
+        }
+
+        $iterator = $iterator instanceof \RecursiveIterator ?
+            new \RecursiveIteratorIterator($iterator) :
+            new \IteratorIterator($iterator);
+        /**
+         * @var string[] $files
+         * @var string $path
+         */
+        $files = [];
+        foreach ($iterator as $file) {
+            if ($file instanceof \SplFileInfo) {
+                if ('..' === $file->getBasename()) {
+                    continue;
+                }
+                if ('.' === $file->getBasename()) {
+                    $files[] = dirname($file->getPathname());
+                } else {
+                    $files[] = $file->getPathname();
+                }
+            }
+        }
+        if (empty($files)) {
+            return $this;
+        }
+
+        natcasesort($files);
+        $path = array_shift($files);
+        foreach ($files as $file) {
+            $relativePath = str_replace($path, $localPath, $file);
+            $relativePath = ltrim($relativePath, '/');
+            if (is_dir($file)) {
+                FilesUtil::isEmptyDir($file) && $this->addEmptyDir($relativePath);
+            } elseif (is_file($file)) {
+                $this->addFile($file, $relativePath, $compressionMethod);
+            }
+        }
+        return $this;
+    }
+
+    /**
+     * Add files from glob pattern.
+     *
+     * @param string $inputDir Input directory
+     * @param string $globPattern Glob pattern.
+     * @param string|null $localPath Add files to this directory, or the root.
+     * @param int|null $compressionMethod Compression method.
+     *                 Use ZipFile::METHOD_STORED, ZipFile::METHOD_DEFLATED or ZipFile::METHOD_BZIP2.
+     *                 If null, then auto choosing method.
+     * @return ZipFile
+     * @throws InvalidArgumentException
+     * @sse https://en.wikipedia.org/wiki/Glob_(programming) Glob pattern syntax
+     */
+    public function addFilesFromGlob($inputDir, $globPattern, $localPath = '/', $compressionMethod = null)
+    {
+        return $this->addGlob($inputDir, $globPattern, $localPath, false, $compressionMethod);
+    }
+
+    /**
+     * Add files recursively from glob pattern.
+     *
+     * @param string $inputDir Input directory
+     * @param string $globPattern Glob pattern.
+     * @param string|null $localPath Add files to this directory, or the root.
+     * @param int|null $compressionMethod Compression method.
+     *                 Use ZipFile::METHOD_STORED, ZipFile::METHOD_DEFLATED or ZipFile::METHOD_BZIP2.
+     *                 If null, then auto choosing method.
+     * @return ZipFile
+     * @throws InvalidArgumentException
+     * @sse https://en.wikipedia.org/wiki/Glob_(programming) Glob pattern syntax
+     */
+    public function addFilesFromGlobRecursive($inputDir, $globPattern, $localPath = '/', $compressionMethod = null)
+    {
+        return $this->addGlob($inputDir, $globPattern, $localPath, true, $compressionMethod);
+    }
+
+    /**
+     * Add files from glob pattern.
+     *
+     * @param string $inputDir Input directory
+     * @param string $globPattern Glob pattern.
+     * @param string|null $localPath Add files to this directory, or the root.
+     * @param bool $recursive Recursive search.
+     * @param int|null $compressionMethod Compression method.
+     *                 Use ZipFile::METHOD_STORED, ZipFile::METHOD_DEFLATED or ZipFile::METHOD_BZIP2.
+     *                 If null, then auto choosing method.
+     * @return ZipFile
+     * @throws InvalidArgumentException
+     * @sse https://en.wikipedia.org/wiki/Glob_(programming) Glob pattern syntax
+     */
+    private function addGlob(
+        $inputDir,
+        $globPattern,
+        $localPath = '/',
+        $recursive = true,
+        $compressionMethod = null
+    )
+    {
+        $inputDir = (string)$inputDir;
+        if (null === $inputDir || 0 === strlen($inputDir)) {
+            throw new InvalidArgumentException('Input dir empty');
+        }
+        if (!is_dir($inputDir)) {
+            throw new InvalidArgumentException('Directory ' . $inputDir . ' can\'t exists');
+        }
+        $globPattern = (string)$globPattern;
+        if (empty($globPattern)) {
+            throw new InvalidArgumentException("glob pattern empty");
+        }
+
+        $inputDir = rtrim($inputDir, '/\\') . DIRECTORY_SEPARATOR;
+        $globPattern = $inputDir . $globPattern;
+
+        $filesFound = FilesUtil::globFileSearch($globPattern, GLOB_BRACE, $recursive);
+        if (false === $filesFound || empty($filesFound)) {
+            return $this;
+        }
+        if (!empty($localPath) && is_string($localPath)) {
+            $localPath = rtrim($localPath, '/') . '/';
+        } else {
+            $localPath = "/";
+        }
+
+        /**
+         * @var string $file
+         */
+        foreach ($filesFound as $file) {
+            $filename = str_replace($inputDir, $localPath, $file);
+            $filename = ltrim($filename, '/');
+            if (is_dir($file)) {
+                FilesUtil::isEmptyDir($file) && $this->addEmptyDir($filename);
+            } elseif (is_file($file)) {
+                $this->addFile($file, $filename, $compressionMethod);
+            }
+        }
+        return $this;
+    }
+
+    /**
+     * Add files from regex pattern.
+     *
+     * @param string $inputDir Search files in this directory.
+     * @param string $regexPattern Regex pattern.
+     * @param string|null $localPath Add files to this directory, or the root.
+     * @param int|null $compressionMethod Compression method.
+     *                 Use ZipFile::METHOD_STORED, ZipFile::METHOD_DEFLATED or ZipFile::METHOD_BZIP2.
+     *                 If null, then auto choosing method.
+     * @return ZipFile
+     * @internal param bool $recursive Recursive search.
+     */
+    public function addFilesFromRegex($inputDir, $regexPattern, $localPath = "/", $compressionMethod = null)
+    {
+        return $this->addRegex($inputDir, $regexPattern, $localPath, false, $compressionMethod);
+    }
+
+    /**
+     * Add files recursively from regex pattern.
+     *
+     * @param string $inputDir Search files in this directory.
+     * @param string $regexPattern Regex pattern.
+     * @param string|null $localPath Add files to this directory, or the root.
+     * @param int|null $compressionMethod Compression method.
+     *                 Use ZipFile::METHOD_STORED, ZipFile::METHOD_DEFLATED or ZipFile::METHOD_BZIP2.
+     *                 If null, then auto choosing method.
+     * @return ZipFile
+     * @internal param bool $recursive Recursive search.
+     */
+    public function addFilesFromRegexRecursive($inputDir, $regexPattern, $localPath = "/", $compressionMethod = null)
+    {
+        return $this->addRegex($inputDir, $regexPattern, $localPath, true, $compressionMethod);
+    }
+
+
+    /**
+     * Add files from regex pattern.
+     *
+     * @param string $inputDir Search files in this directory.
+     * @param string $regexPattern Regex pattern.
+     * @param string|null $localPath Add files to this directory, or the root.
+     * @param bool $recursive Recursive search.
+     * @param int|null $compressionMethod Compression method.
+     *                 Use ZipFile::METHOD_STORED, ZipFile::METHOD_DEFLATED or ZipFile::METHOD_BZIP2.
+     *                 If null, then auto choosing method.
+     * @return ZipFile
+     * @throws InvalidArgumentException
+     */
+    private function addRegex(
+        $inputDir,
+        $regexPattern,
+        $localPath = "/",
+        $recursive = true,
+        $compressionMethod = null
+    )
+    {
+        $regexPattern = (string)$regexPattern;
+        if (empty($regexPattern)) {
+            throw new InvalidArgumentException("regex pattern empty");
+        }
+        $inputDir = (string)$inputDir;
+        if (null === $inputDir || 0 === strlen($inputDir)) {
+            throw new InvalidArgumentException('Input dir empty');
+        }
+        if (!is_dir($inputDir)) {
+            throw new InvalidArgumentException('Directory ' . $inputDir . ' can\'t exists');
+        }
+        $inputDir = rtrim($inputDir, '/\\') . DIRECTORY_SEPARATOR;
+
+        $files = FilesUtil::regexFileSearch($inputDir, $regexPattern, $recursive);
+        if (false === $files || empty($files)) {
+            return $this;
+        }
+        if (!empty($localPath) && is_string($localPath)) {
+            $localPath = rtrim($localPath, '/') . '/';
+        } else {
+            $localPath = "/";
+        }
+        $inputDir = rtrim($inputDir, '/\\') . DIRECTORY_SEPARATOR;
+
+        /**
+         * @var string $file
+         */
+        foreach ($files as $file) {
+            $filename = str_replace($inputDir, $localPath, $file);
+            $filename = ltrim($filename, '/');
+            if (is_dir($file)) {
+                FilesUtil::isEmptyDir($file) && $this->addEmptyDir($filename);
+            } elseif (is_file($file)) {
+                $this->addFile($file, $filename, $compressionMethod);
+            }
+        }
+        return $this;
+    }
+
+    /**
+     * Rename the entry.
+     *
+     * @param string $oldName Old entry name.
+     * @param string $newName New entry name.
+     * @return ZipFile
+     * @throws InvalidArgumentException
+     * @throws ZipNotFoundEntry
+     */
+    public function rename($oldName, $newName)
+    {
+        if (null === $oldName || null === $newName) {
+            throw new InvalidArgumentException("name is null");
+        }
+        $this->centralDirectory->rename($oldName, $newName);
+        return $this;
+    }
+
+    /**
+     * Delete entry by name.
+     *
+     * @param string $entryName Zip Entry name.
+     * @return ZipFile
+     * @throws ZipNotFoundEntry If entry not found.
+     */
+    public function deleteFromName($entryName)
+    {
+        $entryName = (string)$entryName;
+        $this->centralDirectory->deleteEntry($entryName);
+        return $this;
+    }
+
+    /**
+     * Delete entries by glob pattern.
+     *
+     * @param string $globPattern Glob pattern
+     * @return ZipFile
+     * @throws InvalidArgumentException
+     * @sse https://en.wikipedia.org/wiki/Glob_(programming) Glob pattern syntax
+     */
+    public function deleteFromGlob($globPattern)
+    {
+        if (null === $globPattern || !is_string($globPattern) || empty($globPattern)) {
+            throw new InvalidArgumentException("Glob pattern is empty");
+        }
+        $globPattern = '~' . FilesUtil::convertGlobToRegEx($globPattern) . '~si';
+        $this->deleteFromRegex($globPattern);
+        return $this;
+    }
+
+    /**
+     * Delete entries by regex pattern.
+     *
+     * @param string $regexPattern Regex pattern
+     * @return ZipFile
+     * @throws InvalidArgumentException
+     */
+    public function deleteFromRegex($regexPattern)
+    {
+        if (null === $regexPattern || !is_string($regexPattern) || empty($regexPattern)) {
+            throw new InvalidArgumentException("Regex pattern is empty.");
+        }
+        $this->centralDirectory->deleteEntriesFromRegex($regexPattern);
+        return $this;
+    }
+
+    /**
+     * Delete all entries
+     * @return ZipFile
+     */
+    public function deleteAll()
+    {
+        $this->centralDirectory->deleteAll();
+        return $this;
+    }
+
+    /**
+     * Set compression level for new entries.
+     *
+     * @param int $compressionLevel
+     * @see ZipFile::LEVEL_DEFAULT_COMPRESSION
+     * @see ZipFile::LEVEL_BEST_SPEED
+     * @see ZipFile::LEVEL_BEST_COMPRESSION
+     */
+    public function setCompressionLevel($compressionLevel = self::LEVEL_DEFAULT_COMPRESSION)
+    {
+        $this->centralDirectory->setCompressionLevel($compressionLevel);
+    }
+
+    /**
+     * @param int|null $align
+     */
+    public function setZipAlign($align = null)
+    {
+        $this->centralDirectory->setZipAlign($align);
+    }
+
+    /**
+     * Set password for all entries for update.
+     *
+     * @param string $password If password null then encryption clear
+     * @param int $encryptionMethod Encryption method
+     * @return ZipFile
+     */
+    public function withNewPassword($password, $encryptionMethod = self::ENCRYPTION_METHOD_WINZIP_AES)
+    {
+        $this->centralDirectory->setNewPassword($password, $encryptionMethod);
+        return $this;
+    }
+
+    /**
+     * Remove password for all entries for update.
+     * @return ZipFile
+     */
+    public function withoutPassword()
+    {
+        $this->centralDirectory->setNewPassword(null);
+        return $this;
+    }
+
+    /**
+     * Save as file.
+     *
+     * @param string $filename Output filename
+     * @throws InvalidArgumentException
      * @throws ZipException
      */
-    public function getEntryContent($entryName)
+    public function saveAsFile($filename)
     {
-        if (!isset($this->entries[$entryName])) {
-            throw new ZipNotFoundEntry('Zip entry ' . $entryName . ' not found');
+        $filename = (string)$filename;
+
+        $tempFilename = $filename . '.temp' . uniqid();
+        if (!($handle = @fopen($tempFilename, 'w+b'))) {
+            throw new InvalidArgumentException("File " . $tempFilename . ' can not open from write.');
         }
-        $entry = $this->entries[$entryName];
+        $this->saveAsStream($handle);
 
-        $pos = $entry->getOffset();
-        assert(ZipEntry::UNKNOWN !== $pos);
-        $startPos = $pos = $this->mapper->map($pos);
-        fseek($this->inputStream, $pos, SEEK_SET);
-        $localFileHeaderSig = current(unpack('V', fread($this->inputStream, 4)));
-        if (self::LOCAL_FILE_HEADER_SIG !== $localFileHeaderSig) {
-            throw new ZipException($entry->getName() . " (expected Local File Header)");
+        if (!@rename($tempFilename, $filename)) {
+            throw new ZipException('Can not move ' . $tempFilename . ' to ' . $filename);
         }
-        fseek($this->inputStream, $pos + self::LOCAL_FILE_HEADER_FILE_NAME_LENGTH_POS, SEEK_SET);
-        $unpack = unpack('vfileLen/vextraLen', fread($this->inputStream, 4));
-        $pos += self::LOCAL_FILE_HEADER_MIN_LEN + $unpack['fileLen'] + $unpack['extraLen'];
+    }
 
-        assert(ZipEntry::UNKNOWN !== $entry->getCrc());
-
-        $check = $entry->isEncrypted();
-        $method = $entry->getMethod();
-
-        $password = $entry->getPassword();
-        if ($entry->isEncrypted() && empty($password)) {
-            throw new ZipException("Not set password");
+    /**
+     * Save as stream.
+     *
+     * @param resource $handle Output stream resource
+     * @throws ZipException
+     */
+    public function saveAsStream($handle)
+    {
+        if (!is_resource($handle)) {
+            throw new InvalidArgumentException('handle is not resource');
         }
-        // Strong Encryption Specification - WinZip AES
-        if ($entry->isEncrypted() && ZipEntry::WINZIP_AES === $method) {
-            fseek($this->inputStream, $pos, SEEK_SET);
-            $winZipAesEngine = new WinZipAesEngine($entry);
-            $content = $winZipAesEngine->decrypt($this->inputStream);
-            // Disable redundant CRC-32 check.
-            $check = false;
+        ftruncate($handle, 0);
+        $this->centralDirectory->writeArchive($handle);
+        fclose($handle);
+    }
 
-            /**
-             * @var WinZipAesEntryExtraField $field
-             */
-            $field = $entry->getExtraField(WinZipAesEntryExtraField::getHeaderId());
-            $method = $field->getMethod();
-            $entry->setEncryptionMethod(ZipEntry::ENCRYPTION_METHOD_WINZIP_AES);
-        } else {
-            // Get raw entry content
-            $content = stream_get_contents($this->inputStream, $entry->getCompressedSize(), $pos);
-
-            // Traditional PKWARE Decryption
-            if ($entry->isEncrypted()) {
-                $zipCryptoEngine = new TraditionalPkwareEncryptionEngine($entry);
-                $content = $zipCryptoEngine->decrypt($content);
-
-                $entry->setEncryptionMethod(ZipEntry::ENCRYPTION_METHOD_TRADITIONAL);
-            }
+    /**
+     * Output .ZIP archive as attachment.
+     * Die after output.
+     *
+     * @param string $outputFilename
+     * @param string|null $mimeType
+     * @throws InvalidArgumentException
+     */
+    public function outputAsAttachment($outputFilename, $mimeType = null)
+    {
+        $outputFilename = (string)$outputFilename;
+        if (strlen($outputFilename) === 0) {
+            throw new InvalidArgumentException("Output filename is empty.");
         }
-        if ($check) {
-            // Check CRC32 in the Local File Header or Data Descriptor.
-            $localCrc = null;
-            if ($entry->getGeneralPurposeBitFlag(ZipEntry::GPBF_DATA_DESCRIPTOR)) {
-                // The CRC32 is in the Data Descriptor after the compressed
-                // size.
-                // Note the Data Descriptor's Signature is optional:
-                // All newer apps should write it (and so does TrueVFS),
-                // but older apps might not.
-                fseek($this->inputStream, $pos + $entry->getCompressedSize(), SEEK_SET);
-                $localCrc = current(unpack('V', fread($this->inputStream, 4)));
-                if (self::DATA_DESCRIPTOR_SIG === $localCrc) {
-                    $localCrc = current(unpack('V', fread($this->inputStream, 4)));
-                }
+        if (empty($mimeType) || !is_string($mimeType)) {
+            $ext = strtolower(pathinfo($outputFilename, PATHINFO_EXTENSION));
+
+            if (!empty($ext) && isset(self::$defaultMimeTypes[$ext])) {
+                $mimeType = self::$defaultMimeTypes[$ext];
             } else {
-                fseek($this->inputStream, $startPos + 14, SEEK_SET);
-                // The CRC32 in the Local File Header.
-                $localCrc = current(unpack('V', fread($this->inputStream, 4)));
-            }
-            if ($entry->getCrc() !== $localCrc) {
-                throw new Crc32Exception($entry->getName(), $entry->getCrc(), $localCrc);
+                $mimeType = self::$defaultMimeTypes['zip'];
             }
         }
+        $outputFilename = basename($outputFilename);
 
-        switch ($method) {
-            case ZipEntry::METHOD_STORED:
-                break;
-            case ZipEntry::METHOD_DEFLATED:
-                $content = gzinflate($content);
-                break;
-            case ZipEntry::METHOD_BZIP2:
-                if (!extension_loaded('bz2')) {
-                    throw new ZipException('Extension bzip2 not install');
-                }
-                $content = bzdecompress($content);
-                break;
-            default:
-                throw new ZipUnsupportMethod($entry->getName()
-                    . " (compression method "
-                    . $method
-                    . " is not supported)");
+        $content = $this->outputAsString();
+        $this->close();
+
+        header("Content-Type: " . $mimeType);
+        header("Content-Disposition: attachment; filename=" . rawurlencode($outputFilename));
+        header("Content-Length: " . strlen($content));
+        exit($content);
+    }
+
+    /**
+     * Returns the zip archive as a string.
+     * @return string
+     * @throws InvalidArgumentException
+     */
+    public function outputAsString()
+    {
+        if (!($handle = fopen('php://memory', 'w+b'))) {
+            throw new InvalidArgumentException("Memory can not open from write.");
         }
-        if ($check) {
-            $localCrc = crc32($content);
-            if ($entry->getCrc() !== $localCrc) {
-                if ($entry->isEncrypted()) {
-                    throw new ZipCryptoException("Wrong password");
-                }
-                throw new Crc32Exception($entry->getName(), $entry->getCrc(), $localCrc);
-            }
-        }
+        $this->centralDirectory->writeArchive($handle);
+        rewind($handle);
+        $content = stream_get_contents($handle);
+        fclose($handle);
         return $content;
+    }
+
+    /**
+     * Rewrite and reopen zip archive.
+     * @return ZipFile
+     * @throws ZipException
+     */
+    public function rewrite()
+    {
+        if (null === $this->inputStream) {
+            throw new ZipException('input stream is null');
+        }
+        $meta = stream_get_meta_data($this->inputStream);
+        $content = $this->outputAsString();
+        $this->close();
+        if ('plainfile' === $meta['wrapper_type']) {
+            if (file_put_contents($meta['uri'], $content) === false) {
+                throw new ZipException("Can not overwrite the zip file in the {$meta['uri']} file.");
+            }
+            if (!($handle = @fopen($meta['uri'], 'rb'))) {
+                throw new ZipException("File {$meta['uri']} can't open.");
+            }
+            return $this->openFromStream($handle);
+        }
+        return $this->openFromString($content);
+    }
+
+    /**
+     * Close zip archive and release input stream.
+     */
+    public function close()
+    {
+        if (null !== $this->inputStream) {
+            fclose($this->inputStream);
+            $this->inputStream = null;
+        }
+        if (null !== $this->centralDirectory) {
+            $this->centralDirectory->release();
+            $this->centralDirectory = null;
+        }
     }
 
     /**
@@ -799,19 +1129,6 @@ class ZipFile implements \Countable, \ArrayAccess, \Iterator, ZipConstants
     }
 
     /**
-     * Close zip archive and release input stream.
-     */
-    public function close()
-    {
-        $this->length = null;
-
-        if ($this->inputStream !== null) {
-            fclose($this->inputStream);
-            $this->inputStream = null;
-        }
-    }
-
-    /**
      * Whether a offset exists
      * @link http://php.net/manual/en/arrayaccess.offsetexists.php
      * @param string $entryName An offset to check for.
@@ -820,7 +1137,7 @@ class ZipFile implements \Countable, \ArrayAccess, \Iterator, ZipConstants
      */
     public function offsetExists($entryName)
     {
-        return isset($this->entries[$entryName]);
+        return isset($this->centralDirectory->getEntries()[$entryName]);
     }
 
     /**
@@ -828,22 +1145,47 @@ class ZipFile implements \Countable, \ArrayAccess, \Iterator, ZipConstants
      * @link http://php.net/manual/en/arrayaccess.offsetget.php
      * @param string $entryName The offset to retrieve.
      * @return string|null
+     * @throws ZipNotFoundEntry
      */
     public function offsetGet($entryName)
     {
-        return $this->offsetExists($entryName) ? $this->getEntryContent($entryName) : null;
+        return $this->centralDirectory->getEntry($entryName)->getEntryContent();
     }
 
     /**
      * Offset to set
      * @link http://php.net/manual/en/arrayaccess.offsetset.php
      * @param string $entryName The offset to assign the value to.
-     * @param mixed $value The value to set.
-     * @throws ZipUnsupportMethod
+     * @param mixed $contents The value to set.
+     * @throws InvalidArgumentException
+     * @see ZipFile::addFromString
+     * @see ZipFile::addEmptyDir
+     * @see ZipFile::addFile
+     * @see ZipFile::addFilesFromIterator
      */
-    public function offsetSet($entryName, $value)
+    public function offsetSet($entryName, $contents)
     {
-        throw new ZipUnsupportMethod('Zip-file is read-only. This operation is prohibited.');
+        if (null === $entryName) {
+            throw new InvalidArgumentException('entryName is null');
+        }
+        $entryName = (string)$entryName;
+        if (strlen($entryName) === 0) {
+            throw new InvalidArgumentException('entryName is empty');
+        }
+        if ($contents instanceof \SplFileInfo) {
+            if ($contents instanceof \DirectoryIterator) {
+                $this->addFilesFromIterator($contents, $entryName);
+                return;
+            }
+            $this->addFile($contents->getPathname(), $entryName);
+            return;
+        }
+        $contents = (string)$contents;
+        if ('/' === $entryName[strlen($entryName) - 1]) {
+            $this->addEmptyDir($entryName);
+        } else {
+            $this->addFromString($entryName, $contents);
+        }
     }
 
     /**
@@ -854,7 +1196,7 @@ class ZipFile implements \Countable, \ArrayAccess, \Iterator, ZipConstants
      */
     public function offsetUnset($entryName)
     {
-        throw new ZipUnsupportMethod('Zip-file is read-only. This operation is prohibited.');
+        $this->deleteFromName($entryName);
     }
 
     /**
@@ -876,7 +1218,7 @@ class ZipFile implements \Countable, \ArrayAccess, \Iterator, ZipConstants
      */
     public function next()
     {
-        next($this->entries);
+        next($this->centralDirectory->getEntries());
     }
 
     /**
@@ -887,7 +1229,7 @@ class ZipFile implements \Countable, \ArrayAccess, \Iterator, ZipConstants
      */
     public function key()
     {
-        return key($this->entries);
+        return key($this->centralDirectory->getEntries());
     }
 
     /**
@@ -910,6 +1252,6 @@ class ZipFile implements \Countable, \ArrayAccess, \Iterator, ZipConstants
      */
     public function rewind()
     {
-        reset($this->entries);
+        reset($this->centralDirectory->getEntries());
     }
 }
