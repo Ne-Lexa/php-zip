@@ -22,8 +22,8 @@ Table of contents
   + [ZipAlign Usage](#Documentation-ZipAlign-Usage)
   + [Save Zip File or Output](#Documentation-Save-Or-Output-Entries)
   + [Close Zip Archive](#Documentation-Close-Zip-Archive)
-- [Running Tests]("#Running-Tests")
-- [Upgrade version 2 to version 3]("#Upgrade")
+- [Running Tests](#Running-Tests)
+- [Upgrade version 2 to version 3](#Upgrade)
 
 ### <a name="Features"></a> Features
 - Opening and unzipping zip files.
