@@ -96,7 +96,7 @@ class ZipReadEntry extends ZipAbstractEntry
         $this->setPlatform($data['versionMadeBy'] >> 8);
         $this->setGeneralPurposeBitFlags($data['gpbf']);
         $this->setMethod($data['rawMethod']);
-        $this->setTime($data['rawTime']);
+        $this->setDosTime($data['rawTime']);
         $this->setCrc($data['rawCrc']);
         $this->setCompressedSize($data['rawCompressedSize']);
         $this->setSize($data['rawSize']);
@@ -282,7 +282,7 @@ class ZipReadEntry extends ZipAbstractEntry
                 $this->getMethod(),
                 // last mod file time              2 bytes
                 // last mod file date              2 bytes
-                $this->getTime(),
+                $this->getDosTime(),
                 // crc-32                          4 bytes
                 $dd ? 0 : $this->getCrc(),
                 // compressed size                 4 bytes

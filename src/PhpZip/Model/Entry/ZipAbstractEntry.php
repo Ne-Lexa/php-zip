@@ -485,7 +485,7 @@ abstract class ZipAbstractEntry implements ZipEntry
         if (!$this->isInit(self::BIT_DATE_TIME)) {
             return self::UNKNOWN;
         }
-        return DateTimeConverter::toUnixTimestamp($this->dosTime & 0xffffffff);
+        return DateTimeConverter::toUnixTimestamp($this->getDosTime());
     }
 
     /**
@@ -504,6 +504,30 @@ abstract class ZipAbstractEntry implements ZipEntry
         }
         $this->setInit(self::BIT_DATE_TIME, $known);
         return $this;
+    }
+
+    /**
+     * Get Dos Time
+     *
+     * @return int
+     */
+    public function getDosTime()
+    {
+        return $this->dosTime & 0xffffffff;
+    }
+
+    /**
+     * Set Dos Time
+     * @param int $dosTime
+     * @throws ZipException
+     */
+    public function setDosTime($dosTime)
+    {
+        if (0x00000000 > $dosTime || $dosTime > 0xffffffff) {
+            throw new ZipException('DosTime out of range');
+        }
+        $this->dosTime = $dosTime;
+        $this->setInit(self::BIT_DATE_TIME, true);
     }
 
     /**
