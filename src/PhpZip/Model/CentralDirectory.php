@@ -167,6 +167,18 @@ class CentralDirectory
     }
 
     /**
+     * @param string $entryName
+     * @return ZipEntry
+     * @throws ZipNotFoundEntry
+     */
+    public function getModifiedEntry($entryName){
+        if (!isset($this->modifiedEntries[$entryName])) {
+            throw new ZipNotFoundEntry('Zip modified entry ' . $entryName . ' not found');
+        }
+        return $this->modifiedEntries[$entryName];
+    }
+
+    /**
      * @return EndOfCentralDirectory
      */
     public function getEndOfCentralDirectory()
@@ -420,7 +432,7 @@ class CentralDirectory
                 // compression method              2 bytes
                 $entry->getMethod(),
                 // last mod file datetime          4 bytes
-                $entry->getTime(),
+                $entry->getDosTime(),
                 // crc-32                          4 bytes
                 $entry->getCrc(),
                 // compressed size                 4 bytes

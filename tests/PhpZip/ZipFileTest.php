@@ -447,7 +447,8 @@ class ZipFileTest extends ZipTestCase
         $zipFile->close();
     }
 
-    public function testDeleteNewEntry(){
+    public function testDeleteNewEntry()
+    {
         $zipFile = new ZipFile();
         $zipFile['entry1'] = '';
         $zipFile['entry2'] = '';
@@ -466,7 +467,8 @@ class ZipFileTest extends ZipTestCase
      * @expectedException \PhpZip\Exception\ZipNotFoundEntry
      * @expectedExceptionMessage Not found entry entry
      */
-    public function testDeleteFromNameNotFoundEntry(){
+    public function testDeleteFromNameNotFoundEntry()
+    {
         $zipFile = new ZipFile();
         $zipFile->deleteFromName('entry');
     }
@@ -790,17 +792,19 @@ class ZipFileTest extends ZipTestCase
      * @expectedException \PhpZip\Exception\InvalidArgumentException
      * @expectedExceptionMessage Invalid compression level. Minimum level -1. Maximum level 9
      */
-    public function testSetInvalidCompressionLevel(){
+    public function testSetInvalidCompressionLevel()
+    {
         $zipFile = new ZipFile();
         $zipFile->setCompressionLevel(-2);
     }
 
     /**
-    /**
+     * /**
      * @expectedException \PhpZip\Exception\InvalidArgumentException
      * @expectedExceptionMessage Invalid compression level. Minimum level -1. Maximum level 9
      */
-    public function testSetInvalidCompressionLevel2(){
+    public function testSetInvalidCompressionLevel2()
+    {
         $zipFile = new ZipFile();
         $zipFile->setCompressionLevel(10);
     }
@@ -817,11 +821,6 @@ class ZipFileTest extends ZipTestCase
             'test empty/dir' => null,
         ];
 
-        $extractPath = sys_get_temp_dir() . '/zipExtract' . uniqid();
-        if (!is_dir($extractPath)) {
-            mkdir($extractPath, 0755, true);
-        }
-
         $zipFile = new ZipFile();
         foreach ($entries as $entryName => $value) {
             if ($value === null) {
@@ -833,10 +832,12 @@ class ZipFileTest extends ZipTestCase
         $zipFile->saveAsFile($this->outputFilename);
         $zipFile->close();
 
+        self::assertTrue(mkdir($this->outputDirname, 0755, true));
+
         $zipFile->openFile($this->outputFilename);
-        $zipFile->extractTo($extractPath);
+        $zipFile->extractTo($this->outputDirname);
         foreach ($entries as $entryName => $value) {
-            $fullExtractedFilename = $extractPath . DIRECTORY_SEPARATOR . $entryName;
+            $fullExtractedFilename = $this->outputDirname . DIRECTORY_SEPARATOR . $entryName;
             if ($value === null) {
                 self::assertTrue(is_dir($fullExtractedFilename));
                 self::assertTrue(FilesUtil::isEmptyDir($fullExtractedFilename));
@@ -847,8 +848,6 @@ class ZipFileTest extends ZipTestCase
             }
         }
         $zipFile->close();
-
-        FilesUtil::removeDir($extractPath);
     }
 
     /**
@@ -876,11 +875,7 @@ class ZipFileTest extends ZipTestCase
             'test empty/dir2/'
         ];
 
-        $extractPath = sys_get_temp_dir() . '/zipExtractTest';
-        if (is_dir($extractPath)) {
-            FilesUtil::removeDir($extractPath);
-        }
-        self::assertTrue(mkdir($extractPath, 0755, true));
+        self::assertTrue(mkdir($this->outputDirname, 0755, true));
 
         $zipFile = new ZipFile();
         $zipFile->addAll($entries);
@@ -888,10 +883,10 @@ class ZipFileTest extends ZipTestCase
         $zipFile->close();
 
         $zipFile->openFile($this->outputFilename);
-        $zipFile->extractTo($extractPath, $extractEntries);
+        $zipFile->extractTo($this->outputDirname, $extractEntries);
 
         foreach ($entries as $entryName => $value) {
-            $fullExtractFilename = $extractPath . DIRECTORY_SEPARATOR . $entryName;
+            $fullExtractFilename = $this->outputDirname . DIRECTORY_SEPARATOR . $entryName;
             if (in_array($entryName, $extractEntries)) {
                 if ($value === null) {
                     self::assertTrue(is_dir($fullExtractFilename));
@@ -909,12 +904,11 @@ class ZipFileTest extends ZipTestCase
                 }
             }
         }
-        self::assertFalse(is_file($extractPath . DIRECTORY_SEPARATOR . 'test/test/test.txt'));
-        $zipFile->extractTo($extractPath, 'test/test/test.txt');
-        self::assertTrue(is_file($extractPath . DIRECTORY_SEPARATOR . 'test/test/test.txt'));
+        self::assertFalse(is_file($this->outputDirname . DIRECTORY_SEPARATOR . 'test/test/test.txt'));
+        $zipFile->extractTo($this->outputDirname, 'test/test/test.txt');
+        self::assertTrue(is_file($this->outputDirname . DIRECTORY_SEPARATOR . 'test/test/test.txt'));
 
         $zipFile->close();
-        FilesUtil::removeDir($extractPath);
     }
 
     /**
@@ -958,15 +952,11 @@ class ZipFileTest extends ZipTestCase
         $zipFile->saveAsFile($this->outputFilename);
         $zipFile->close();
 
-        $extractPath = sys_get_temp_dir() . '/zipExtractTest';
-        if (is_dir($extractPath)) {
-            FilesUtil::removeDir($extractPath);
-        }
-        self::assertTrue(mkdir($extractPath, 0444, true));
-        self::assertTrue(chmod($extractPath, 0444));
+        self::assertTrue(mkdir($this->outputDirname, 0444, true));
+        self::assertTrue(chmod($this->outputDirname, 0444));
 
         $zipFile->openFile($this->outputFilename);
-        $zipFile->extractTo($extractPath);
+        $zipFile->extractTo($this->outputDirname);
     }
 
     /**
@@ -1059,7 +1049,8 @@ class ZipFileTest extends ZipTestCase
      * @expectedException \PhpZip\Exception\ZipException
      * @expectedExceptionMessage Invalid encryption method
      */
-    public function testSetEncryptionMethodInvalid(){
+    public function testSetEncryptionMethodInvalid()
+    {
         $zipFile = new ZipFile();
         $encryptionMethod = 9999;
         $zipFile->withNewPassword('pass', $encryptionMethod);
@@ -1539,14 +1530,10 @@ class ZipFileTest extends ZipTestCase
      */
     public function testSaveAsFileNotWritable()
     {
-        $this->outputFilename = sys_get_temp_dir() . '/zipExtractTest';
-        if (is_dir($this->outputFilename)) {
-            FilesUtil::removeDir($this->outputFilename);
-        }
-        self::assertTrue(mkdir($this->outputFilename, 0444, true));
-        self::assertTrue(chmod($this->outputFilename, 0444));
+        self::assertTrue(mkdir($this->outputDirname, 0444, true));
+        self::assertTrue(chmod($this->outputDirname, 0444));
 
-        $this->outputFilename .= '/' . uniqid() . '.zip';
+        $this->outputFilename = $this->outputDirname . DIRECTORY_SEPARATOR . basename($this->outputFilename);
 
         $zipFile = new ZipFile();
         $zipFile->saveAsFile($this->outputFilename);
@@ -1699,7 +1686,8 @@ class ZipFileTest extends ZipTestCase
      * @expectedException \PhpZip\Exception\ZipNotFoundEntry
      * @expectedExceptionMessage Zip entry bad entry name not found
      */
-    public function testNotFoundEntry(){
+    public function testNotFoundEntry()
+    {
         $zipFile = new ZipFile();
         $zipFile['bad entry name'];
     }
@@ -1761,7 +1749,8 @@ class ZipFileTest extends ZipTestCase
      * @expectedException \PhpZip\Exception\ZipException
      * @expectedExceptionMessage input stream is null
      */
-    public function testRewriteNullStream(){
+    public function testRewriteNullStream()
+    {
         $zipFile = new ZipFile();
         $zipFile->rewrite();
     }

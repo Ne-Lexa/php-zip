@@ -282,6 +282,20 @@ interface ZipEntry
     public function setTime($unixTimestamp);
 
     /**
+     * Get Dos Time
+     *
+     * @return int
+     */
+    public function getDosTime();
+
+    /**
+     * Set Dos Time
+     * @param int $dosTime
+     * @throws ZipException
+     */
+    public function setDosTime($dosTime);
+
+    /**
      * Returns the external file attributes.
      *
      * @return int The external file attributes.
