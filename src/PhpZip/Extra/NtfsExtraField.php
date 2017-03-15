@@ -86,7 +86,7 @@ class NtfsExtraField extends ExtraField
             fseek($handle, $off, SEEK_SET);
 
             $unpack = unpack('vtag/vsizeAttr', fread($handle, 4));
-            if ($unpack['sizeAttr'] === 24) {
+            if (24 === $unpack['sizeAttr']) {
                 $tagData = fread($handle, $unpack['sizeAttr']);
 
                 $this->mtime = PackUtil::unpackLongLE(substr($tagData, 0, 8)) / 10000000 - 11644473600;
@@ -110,7 +110,7 @@ class NtfsExtraField extends ExtraField
      */
     public function writeTo($handle, $off)
     {
-        if ($this->mtime !== null && $this->atime !== null && $this->ctime !== null) {
+        if (null !== $this->mtime && null !== $this->atime && null !== $this->ctime) {
             fseek($handle, $off, SEEK_SET);
             fwrite($handle, pack('Vvv', 0, 1, 8 * 3 + strlen($this->rawData)));
             $mtimeLong = ($this->mtime + 11644473600) * 10000000;

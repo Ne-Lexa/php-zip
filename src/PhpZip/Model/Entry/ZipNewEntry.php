@@ -240,7 +240,7 @@ abstract class ZipNewEntry extends ZipAbstractEntry
             fwrite($outputStream, str_repeat(chr(0), $padding));
         }
 
-        if ($entryContent !== null) {
+        if (null !== $entryContent) {
             fwrite($outputStream, $entryContent);
         }
 

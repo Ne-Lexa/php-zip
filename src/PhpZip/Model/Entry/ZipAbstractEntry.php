@@ -168,8 +168,7 @@ abstract class ZipAbstractEntry implements ZipEntry
         if (0x0000 > $length || $length > 0xffff) {
             throw new ZipException('Illegal zip entry name parameter');
         }
-        $encoding = mb_detect_encoding($this->name, "ASCII, UTF-8", true);
-        $this->setGeneralPurposeBitFlag(self::GPBF_UTF8, $encoding === 'UTF-8');
+        $this->setGeneralPurposeBitFlag(self::GPBF_UTF8, true);
         $this->name = $name;
         return $this;
     }
@@ -792,10 +791,7 @@ abstract class ZipAbstractEntry implements ZipEntry
                 throw new ZipException("Comment too long");
             }
         }
-        $encoding = mb_detect_encoding($this->name, "ASCII, UTF-8", true);
-        if ($encoding === 'UTF-8') {
-            $this->setGeneralPurposeBitFlag(self::GPBF_UTF8, true);
-        }
+        $this->setGeneralPurposeBitFlag(self::GPBF_UTF8, true);
         $this->comment = $comment;
         return $this;
     }
@@ -853,7 +849,7 @@ abstract class ZipAbstractEntry implements ZipEntry
     public function setPassword($password, $encryptionMethod = null)
     {
         $this->password = $password;
-        if ($encryptionMethod !== null) {
+        if (null !== $encryptionMethod) {
             $this->setEncryptionMethod($encryptionMethod);
         }
         $this->setEncrypted(!empty($this->password));

@@ -224,7 +224,7 @@ class CentralDirectory
      */
     public function setZipAlign($zipAlign = null)
     {
-        if ($zipAlign === null) {
+        if (null === $zipAlign) {
             $this->zipAlign = null;
             return;
         }
@@ -331,7 +331,7 @@ class CentralDirectory
             if (isset($this->modifiedEntries[$entryName])) continue;
 
             if (
-                ($this->password !== null || $this->clearPassword) &&
+                (null !== $this->password || $this->clearPassword) &&
                 $entry->isEncrypted() &&
                 $entry->getPassword() !== null &&
                 (
@@ -359,7 +359,7 @@ class CentralDirectory
             if (null === $outputEntry) { // remove marked entry
                 unset($memoryEntriesResult[$entryName]);
             } else {
-                if ($this->password !== null) {
+                if (null !== $this->password) {
                     $outputEntry->setPassword($this->password, $this->encryptionMethod);
                 }
                 $memoryEntriesResult[$entryName] = $outputEntry;

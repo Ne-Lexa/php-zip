@@ -45,7 +45,7 @@ abstract class ExtraField implements ExtraFieldHeader
         if (isset(self::getRegistry()[$headerId])) {
             $extraClassName = self::getRegistry()[$headerId];
             $extraField = new $extraClassName;
-            if ($headerId !== $extraField::getHeaderId()) {
+            if ($extraField::getHeaderId() !== $headerId) {
                 throw new ZipException('Runtime error support headerId ' . $headerId);
             }
         } else {
@@ -61,7 +61,7 @@ abstract class ExtraField implements ExtraFieldHeader
      */
     private static function getRegistry()
     {
-        if (self::$registry === null) {
+        if (null === self::$registry) {
             self::$registry[WinZipAesEntryExtraField::getHeaderId()] = WinZipAesEntryExtraField::class;
             self::$registry[NtfsExtraField::getHeaderId()] = NtfsExtraField::class;
         }

@@ -193,7 +193,7 @@ class ZipInfo
         $ctime = null;
 
         $field = $entry->getExtraField(NtfsExtraField::getHeaderId());
-        if ($field !== null && $field instanceof NtfsExtraField) {
+        if (null !== $field && $field instanceof NtfsExtraField) {
             /**
              * @var NtfsExtraField $field
              */
@@ -311,7 +311,7 @@ class ZipInfo
             if ($entry->getMethod() === ZipEntry::METHOD_WINZIP_AES) {
                 $field = $entry->getExtraField(WinZipAesEntryExtraField::getHeaderId());
                 $return = ucfirst(self::$valuesCompressionMethod[$entry->getMethod()]);
-                if ($field !== null) {
+                if (null !== $field) {
                     /**
                      * @var WinZipAesEntryExtraField $field
                      */

@@ -47,7 +47,7 @@ class ZipNewStreamEntry extends ZipNewEntry
      */
     function __destruct()
     {
-        if ($this->stream !== null) {
+        if (null !== $this->stream) {
             fclose($this->stream);
             $this->stream = null;
         }

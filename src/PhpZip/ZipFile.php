@@ -356,7 +356,7 @@ class ZipFile implements \Countable, \ArrayAccess, \Iterator
                 touch($dir, $entry->getTime());
             }
             if (file_put_contents($file, $entry->getEntryContent()) === false) {
-                throw new ZipException('Can not extract file '.$entry->getName());
+                throw new ZipException('Can not extract file ' . $entry->getName());
             }
             touch($file, $entry->getTime());
         }
@@ -427,7 +427,7 @@ class ZipFile implements \Countable, \ArrayAccess, \Iterator
      */
     public function addFile($filename, $localName = null, $compressionMethod = null)
     {
-        if ($filename === null) {
+        if (null === $filename) {
             throw new InvalidArgumentException("Filename is null");
         }
         if (!is_file($filename)) {
@@ -438,9 +438,9 @@ class ZipFile implements \Countable, \ArrayAccess, \Iterator
             if (function_exists('mime_content_type')) {
                 $mimeType = @mime_content_type($filename);
                 $type = strtok($mimeType, '/');
-                if ($type === 'image') {
+                if ('image' === $type) {
                     $compressionMethod = self::METHOD_STORED;
-                } elseif ($type === 'text' && filesize($filename) < 150) {
+                } elseif ('text' === $type && filesize($filename) < 150) {
                     $compressionMethod = self::METHOD_STORED;
                 } else {
                     $compressionMethod = self::METHOD_DEFLATED;
@@ -457,7 +457,7 @@ class ZipFile implements \Countable, \ArrayAccess, \Iterator
         if (!($handle = @fopen($filename, 'rb'))) {
             throw new InvalidArgumentException('File ' . $filename . ' can not open.');
         }
-        if ($localName === null) {
+        if (null === $localName) {
             $localName = basename($filename);
         }
         $this->addFromStream($handle, $localName, $compressionMethod);
@@ -570,7 +570,7 @@ class ZipFile implements \Countable, \ArrayAccess, \Iterator
     public function addDir($inputDir, $localPath = "/", $compressionMethod = null)
     {
         $inputDir = (string)$inputDir;
-        if ($inputDir === null || strlen($inputDir) === 0) {
+        if (null === $inputDir || strlen($inputDir) === 0) {
             throw new InvalidArgumentException('Input dir empty');
         }
         if (!is_dir($inputDir)) {
@@ -600,7 +600,7 @@ class ZipFile implements \Countable, \ArrayAccess, \Iterator
     public function addDirRecursive($inputDir, $localPath = "/", $compressionMethod = null)
     {
         $inputDir = (string)$inputDir;
-        if ($inputDir === null || strlen($inputDir) === 0) {
+        if (null === $inputDir || strlen($inputDir) === 0) {
             throw new InvalidArgumentException('Input dir empty');
         }
         if (!is_dir($inputDir)) {
@@ -660,7 +660,7 @@ class ZipFile implements \Countable, \ArrayAccess, \Iterator
                 }
             }
         }
-        if(empty($files)){
+        if (empty($files)) {
             return $this;
         }
 
@@ -752,7 +752,7 @@ class ZipFile implements \Countable, \ArrayAccess, \Iterator
         $globPattern = $inputDir . $globPattern;
 
         $filesFound = FilesUtil::globFileSearch($globPattern, GLOB_BRACE, $recursive);
-        if ($filesFound === false || empty($filesFound)) {
+        if (false === $filesFound || empty($filesFound)) {
             return $this;
         }
         if (!empty($localPath) && is_string($localPath)) {
@@ -846,7 +846,7 @@ class ZipFile implements \Countable, \ArrayAccess, \Iterator
         $inputDir = rtrim($inputDir, '/\\') . DIRECTORY_SEPARATOR;
 
         $files = FilesUtil::regexFileSearch($inputDir, $regexPattern, $recursive);
-        if ($files === false || empty($files)) {
+        if (false === $files || empty($files)) {
             return $this;
         }
         if (!empty($localPath) && is_string($localPath)) {
@@ -882,7 +882,7 @@ class ZipFile implements \Countable, \ArrayAccess, \Iterator
      */
     public function rename($oldName, $newName)
     {
-        if ($oldName === null || $newName === null) {
+        if (null === $oldName || null === $newName) {
             throw new InvalidArgumentException("name is null");
         }
         $this->centralDirectory->rename($oldName, $newName);
@@ -913,7 +913,7 @@ class ZipFile implements \Countable, \ArrayAccess, \Iterator
      */
     public function deleteFromGlob($globPattern)
     {
-        if ($globPattern === null || !is_string($globPattern) || empty($globPattern)) {
+        if (null === $globPattern || !is_string($globPattern) || empty($globPattern)) {
             throw new InvalidArgumentException("Glob pattern is empty");
         }
         $globPattern = '~' . FilesUtil::convertGlobToRegEx($globPattern) . '~si';
@@ -930,7 +930,7 @@ class ZipFile implements \Countable, \ArrayAccess, \Iterator
      */
     public function deleteFromRegex($regexPattern)
     {
-        if ($regexPattern === null || !is_string($regexPattern) || empty($regexPattern)) {
+        if (null === $regexPattern || !is_string($regexPattern) || empty($regexPattern)) {
             throw new InvalidArgumentException("Regex pattern is empty.");
         }
         $this->centralDirectory->deleteEntriesFromRegex($regexPattern);
@@ -1087,13 +1087,13 @@ class ZipFile implements \Countable, \ArrayAccess, \Iterator
      */
     public function rewrite()
     {
-        if($this->inputStream === null){
+        if (null === $this->inputStream) {
             throw new ZipException('input stream is null');
         }
         $meta = stream_get_meta_data($this->inputStream);
         $content = $this->outputAsString();
         $this->close();
-        if ($meta['wrapper_type'] === 'plainfile') {
+        if ('plainfile' === $meta['wrapper_type']) {
             if (file_put_contents($meta['uri'], $content) === false) {
                 throw new ZipException("Can not overwrite the zip file in the {$meta['uri']} file.");
             }
@@ -1110,11 +1110,11 @@ class ZipFile implements \Countable, \ArrayAccess, \Iterator
      */
     public function close()
     {
-        if ($this->inputStream !== null) {
+        if (null !== $this->inputStream) {
             fclose($this->inputStream);
             $this->inputStream = null;
         }
-        if ($this->centralDirectory !== null) {
+        if (null !== $this->centralDirectory) {
             $this->centralDirectory->release();
             $this->centralDirectory = null;
         }
@@ -1165,7 +1165,7 @@ class ZipFile implements \Countable, \ArrayAccess, \Iterator
      */
     public function offsetSet($entryName, $contents)
     {
-        if ($entryName === null) {
+        if (null === $entryName) {
             throw new InvalidArgumentException('entryName is null');
         }
         $entryName = (string)$entryName;
@@ -1181,7 +1181,7 @@ class ZipFile implements \Countable, \ArrayAccess, \Iterator
             return;
         }
         $contents = (string)$contents;
-        if ($entryName[strlen($entryName) - 1] === '/') {
+        if ('/' === $entryName[strlen($entryName) - 1]) {
             $this->addEmptyDir($entryName);
         } else {
             $this->addFromString($entryName, $contents);

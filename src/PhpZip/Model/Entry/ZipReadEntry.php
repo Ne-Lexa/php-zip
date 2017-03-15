@@ -118,7 +118,7 @@ class ZipReadEntry extends ZipAbstractEntry
      */
     public function getEntryContent()
     {
-        if ($this->entryContent === null) {
+        if (null === $this->entryContent) {
             if ($this->isDirectory()) {
                 $this->entryContent = null;
                 return $this->entryContent;
@@ -319,7 +319,7 @@ class ZipReadEntry extends ZipAbstractEntry
 
     function __destruct()
     {
-        if ($this->entryContent !== null && is_resource($this->entryContent)) {
+        if (null !== $this->entryContent && is_resource($this->entryContent)) {
             fclose($this->entryContent);
         }
     }

@@ -213,7 +213,7 @@ class TraditionalPkwareEncryptionEngine implements CryptoEngine
      */
     private function encryptData($content)
     {
-        if ($content === null) {
+        if (null === $content) {
             throw new ZipCryptoException('content is null');
         }
         $buff = '';

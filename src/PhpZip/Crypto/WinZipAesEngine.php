@@ -119,7 +119,7 @@ class WinZipAesEngine implements CryptoEngine
         $content = substr($content, $start, $size);
         $mac = hash_hmac('sha1', $content, $sha1MacParam, true);
 
-        if ($authenticationCode !== substr($mac, 0, 10)) {
+        if (substr($mac, 0, 10) !== $authenticationCode) {
             throw new ZipAuthenticationException($this->entry->getName() .
                 " (authenticated WinZip AES entry content has been tampered with)");
         }
@@ -143,7 +143,7 @@ class WinZipAesEngine implements CryptoEngine
         for ($i = 0; $i < $numOfBlocks; ++$i) {
             for ($j = 0; $j < 16; ++$j) {
                 $n = ord($iv[$j]);
-                if (++$n === 0x100) {
+                if (0x100 === ++$n) {
                     // overflow, set this one to 0, increment next
                     $iv[$j] = chr(0);
                 } else {
