@@ -68,7 +68,7 @@ class ZipFile implements \Countable, \ArrayAccess, \Iterator
      * Allow compression methods.
      * @var int[]
      */
-    private static $allowCompressionMethods = [
+    protected static $allowCompressionMethods = [
         self::METHOD_STORED,
         self::METHOD_DEFLATED,
         self::METHOD_BZIP2
@@ -78,18 +78,18 @@ class ZipFile implements \Countable, \ArrayAccess, \Iterator
      *
      * @var resource
      */
-    private $inputStream;
+    protected $inputStream;
 
     /**
      * @var CentralDirectory
      */
-    private $centralDirectory;
+    protected $centralDirectory;
     /**
      * Default mime types.
      *
      * @var array
      */
-    private static $defaultMimeTypes = [
+    protected static $defaultMimeTypes = [
         'zip' => 'application/zip',
         'apk' => 'application/vnd.android.package-archive',
         'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
