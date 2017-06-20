@@ -1,5 +1,5 @@
 {
-  "name": "nelexa/zip",
+  "name": "bubba-h57zip",
   "description": "Zip files CRUD. Open, create, update, extract and get info tool. Supports appending to existing ZIP files, WinZip AES encryption, Traditional PKWARE Encryption, ZipAlign tool, BZIP2 compression, external file attributes and ZIP64 extensions. Alternative ZipArchive. It does not require php-zip extension.",
   "type": "library",
   "keywords": [
@@ -19,6 +19,11 @@
     {
       "name": "Ne-Lexa",
       "email": "alexey@nelexa.ru",
+      "role": "Developer"
+    },
+    {
+      "name": "Bubba",
+      "email": "bubba@hines57.com",
       "role": "Developer"
     }
   ],
