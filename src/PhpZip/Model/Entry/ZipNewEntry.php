@@ -258,7 +258,7 @@ abstract class ZipNewEntry extends ZipAbstractEntry
             } else {
                 fwrite($outputStream, pack('VV', $this->getCompressedSize(), $this->getSize()));
             }
-        } elseif ($this->getCompressedSize() !== $compressedSize) {
+        } elseif ($this->getCompressedSize() != $compressedSize) {
             throw new ZipException($this->getName()
                 . " (expected compressed entry size of "
                 . $this->getCompressedSize() . " bytes, but is actually " . $compressedSize . " bytes)");
