@@ -1,4 +1,5 @@
 <?php
+
 namespace PhpZip\Model\Entry;
 
 use PhpZip\Exception\InvalidArgumentException;
@@ -257,6 +258,7 @@ abstract class ZipAbstractEntry implements ZipEntry
     public function setCompressedSize($compressedSize)
     {
         if (self::UNKNOWN != $compressedSize) {
+            $compressedSize = sprintf('%u', $compressedSize);
             if (0 > $compressedSize || $compressedSize > 0x7fffffffffffffff) {
                 throw new ZipException("Compressed size out of range - " . $this->name);
             }
@@ -285,6 +287,7 @@ abstract class ZipAbstractEntry implements ZipEntry
     public function setSize($size)
     {
         if (self::UNKNOWN != $size) {
+            $size = sprintf('%u', $size);
             if (0 > $size || $size > 0x7fffffffffffffff) {
                 throw new ZipException("Uncompressed Size out of range - " . $this->name);
             }
@@ -310,6 +313,7 @@ abstract class ZipAbstractEntry implements ZipEntry
      */
     public function setOffset($offset)
     {
+        $offset = sprintf('%u', $offset);
         if (0 > $offset || $offset > 0x7fffffffffffffff) {
             throw new ZipException("Offset out of range - " . $this->name);
         }
@@ -523,6 +527,7 @@ abstract class ZipAbstractEntry implements ZipEntry
      */
     public function setDosTime($dosTime)
     {
+        $dosTime = sprintf('%u', $dosTime);
         if (0x00000000 > $dosTime || $dosTime > 0xffffffff) {
             throw new ZipException('DosTime out of range');
         }
@@ -554,6 +559,7 @@ abstract class ZipAbstractEntry implements ZipEntry
     {
         $known = self::UNKNOWN != $externalAttributes;
         if ($known) {
+            $externalAttributes = sprintf('%u', $externalAttributes);
             if (0x00000000 > $externalAttributes || $externalAttributes > 0xffffffff) {
                 throw new ZipException("external file attributes out of range - " . $this->name);
             }
@@ -847,6 +853,7 @@ abstract class ZipAbstractEntry implements ZipEntry
      */
     public function setCrc($crc)
     {
+        $crc = sprintf('%u', $crc);
         if (0x00000000 > $crc || $crc > 0xffffffff) {
             throw new ZipException("CRC-32 out of range - " . $this->name);
         }
