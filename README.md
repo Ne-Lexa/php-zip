@@ -6,7 +6,6 @@
 [![Latest Stable Version](https://poser.pugx.org/nelexa/zip/v/stable)](https://packagist.org/packages/nelexa/zip)
 [![Total Downloads](https://poser.pugx.org/nelexa/zip/downloads)](https://packagist.org/packages/nelexa/zip)
 [![Minimum PHP Version](http://img.shields.io/badge/php%2064bit-%3E%3D%205.5-8892BF.svg)](https://php.net/)
-[![Test Coverage](https://codeclimate.com/github/Ne-Lexa/php-zip/badges/coverage.svg)](https://codeclimate.com/github/Ne-Lexa/php-zip/coverage)
 [![License](https://poser.pugx.org/nelexa/zip/license)](https://packagist.org/packages/nelexa/zip)
 
 Table of contents
