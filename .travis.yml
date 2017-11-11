@@ -12,10 +12,6 @@ cache:
     - vendor
     - $HOME/.composer/cache
 
-addons:
-  code_climate:
-    repo_token: 486a09d58d663450146c53c81c6c64938bcf3bb0b7c8ddebdc125fe97c18213a
-
 install:
   - travis_retry composer self-update && composer --version
   - travis_retry composer install --prefer-dist --no-interaction
@@ -25,8 +21,4 @@ before_script:
 
 script:
   - composer validate --no-check-lock
-  - vendor/bin/phpunit -v -c bootstrap.xml --coverage-clover build/logs/clover.xml
-
-after_success:
-  - vendor/bin/test-reporter
-
+  - vendor/bin/phpunit -v -c bootstrap.xml

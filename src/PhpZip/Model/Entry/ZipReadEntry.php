@@ -151,7 +151,10 @@ class ZipReadEntry extends ZipAbstractEntry
             fseek($this->inputStream, $pos);
 
             // Get raw entry content
-            $content = fread($this->inputStream, $this->getCompressedSize());
+            $content = '';
+            if ($this->getCompressedSize() > 0) {
+                $content = fread($this->inputStream, $this->getCompressedSize());
+            }
 
             // Strong Encryption Specification - WinZip AES
             if ($this->isEncrypted()) {
