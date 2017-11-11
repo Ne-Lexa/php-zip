@@ -1,4 +1,5 @@
 <?php
+
 namespace PhpZip;
 
 use PhpZip\Exception\ZipAuthenticationException;
@@ -1809,6 +1810,19 @@ class ZipFileTest extends ZipTestCase
         $result = self::doZipAlignVerify($this->outputFilename);
         // check not zip align
         self::assertTrue($result);
+    }
+
+    public function testEmptyContents()
+    {
+        $zipFile = new ZipFile();
+        $contents = '';
+        $zipFile->addFromString('file', $contents);
+        $zipFile->saveAsFile($this->outputFilename);
+        $zipFile->close();
+
+        $zipFile->openFile($this->outputFilename);
+        self::assertEquals($zipFile['file'], $contents);
+        $zipFile->close();
     }
 
     /**

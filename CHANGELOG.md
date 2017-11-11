@@ -1,3 +1,6 @@
+## 3.0.3 (2017-11-11)
+Fix bug issue #8 - Error if the file is empty.
+
 ## 3.0.0 (2017-03-15)
 Merge `ZipOutputFile` with ZipFile and optimize the zip archive update.
 
