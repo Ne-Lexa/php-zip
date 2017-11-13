@@ -585,7 +585,7 @@ $zipFile->setArchiveComment($commentArchive);
 ```php
 $zipFile->setEntryComment($entryName, $comment);
 ```
-<a name="Documentation-ZipFile-matcher"></a> - selecting entries in the archive to perform operations on them.
+<a name="Documentation-ZipFile-matcher"></a> **ZipFile::matcher** - selecting entries in the archive to perform operations on them.
 ```php
 $matcher = $zipFile->matcher();
 ```
