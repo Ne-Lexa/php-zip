@@ -1,4 +1,5 @@
 <?php
+
 namespace PhpZip\Exception;
 
 /**
@@ -10,5 +11,4 @@ namespace PhpZip\Exception;
  */
 class ZipCryptoException extends ZipException
 {
-
 }

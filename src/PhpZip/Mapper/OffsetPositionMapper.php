@@ -1,4 +1,5 @@
 <?php
+
 namespace PhpZip\Mapper;
 
 /**
@@ -19,7 +20,7 @@ class OffsetPositionMapper extends PositionMapper
      */
     public function __construct($offset)
     {
-        $this->offset = $offset;
+        $this->offset = (int)$offset;
     }
 
     /**

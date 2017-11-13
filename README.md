@@ -1,13 +1,14 @@
 `PhpZip`
 ========
-`PhpZip` - php library for manipulating zip archives.
+`PhpZip` is a php-library for extended work with ZIP-archives.
 
 [![Build Status](https://travis-ci.org/Ne-Lexa/php-zip.svg?branch=master)](https://travis-ci.org/Ne-Lexa/php-zip)
 [![Latest Stable Version](https://poser.pugx.org/nelexa/zip/v/stable)](https://packagist.org/packages/nelexa/zip)
 [![Total Downloads](https://poser.pugx.org/nelexa/zip/downloads)](https://packagist.org/packages/nelexa/zip)
-[![Minimum PHP Version](http://img.shields.io/badge/php%2064bit-%3E%3D%205.5-8892BF.svg)](https://php.net/)
-[![Test Coverage](https://codeclimate.com/github/Ne-Lexa/php-zip/badges/coverage.svg)](https://codeclimate.com/github/Ne-Lexa/php-zip/coverage)
+[![Minimum PHP Version](http://img.shields.io/badge/php-%3E%3D%205.5-8892BF.svg)](https://php.net/)
 [![License](https://poser.pugx.org/nelexa/zip/license)](https://packagist.org/packages/nelexa/zip)
+
+[Russian Documentation](README.RU.md)
 
 Table of contents
 -----------------
@@ -15,120 +16,213 @@ Table of contents
 - [Requirements](#Requirements)
 - [Installation](#Installation)
 - [Examples](#Examples)
+- [Glossary](#Glossary)
 - [Documentation](#Documentation)
-  + [Open Zip Archive](#Documentation-Open-Zip-Archive)
-  + [Get Zip Entries](#Documentation-Open-Zip-Entries)
-  + [Add Zip Entries](#Documentation-Add-Zip-Entries)
-  + [ZipAlign Usage](#Documentation-ZipAlign-Usage)
-  + [Save Zip File or Output](#Documentation-Save-Or-Output-Entries)
-  + [Close Zip Archive](#Documentation-Close-Zip-Archive)
-- [Running Tests](#Running-Tests)
-- [Upgrade version 2 to version 3](#Upgrade)
+  + [Overview of methods of the class `\PhpZip\ZipFile`](#Documentation-Overview)
+  + [Creation/Opening of ZIP-archive](#Documentation-Open-Zip-Archive)
+  + [Reading entries from the archive](#Documentation-Open-Zip-Entries)
+  + [Iterating entries](#Documentation-Zip-Iterate)
+  + [Getting information about entries](#Documentation-Zip-Info)
+  + [Adding entries to the archive](#Documentation-Add-Zip-Entries)
+  + [Deleting entries from the archive](#Documentation-Remove-Zip-Entries)
+  + [Working with entries and archive](#Documentation-Entries)
+  + [Working with passwords](#Documentation-Password)
+  + [zipalign - alignment tool for Android (APK) files](#Documentation-ZipAlign-Usage)
+  + [Undo changes](#Documentation-Unchanged)
+  + [Saving a file or output to a browser](#Documentation-Save-Or-Output-Entries)
+  + [Closing the archive](#Documentation-Close-Zip-Archive)
+- [Running the tests](#Running-Tests)
+- [Upgrade](#Upgrade)
+  + [Upgrade version 2 to version 3.0](#Upgrade-v2-to-v3)
 
 ### <a name="Features"></a> Features
 - Opening and unzipping zip files.
-- Create zip files.
-- Update zip files.
+- Creating ZIP-archives.
+- Modifying ZIP archives.
 - Pure php (not require extension `php-zip` and class `\ZipArchive`).
-- Output the modified archive as a string or output to the browser without saving the result to disk.
-- Support archive comment and entries comments.
-- Get info of zip entries.
-- Support zip password for PHP 5.5, include update and remove password.
-- Support encryption method `Traditional PKWARE Encryption (ZipCrypto)` and `WinZIP AES Encryption`.
-- Support `ZIP64` (size > 4 GiB or files > 65535 in a .ZIP archive).
-- Support archive alignment functional [`zipalign`](https://developer.android.com/studio/command-line/zipalign.html).
+- It supports saving the archive to a file, outputting the archive to the browser, or outputting it as a string without saving it to a file.
+- Archival comments and comments of individual entry are supported.
+- Get information about each entry in the archive.
+- Only the following compression methods are supported:
+  + No compressed (Stored).
+  + Deflate compression.
+  + BZIP2 compression with the extension `php-bz2`.
+- Support for `ZIP64` (file size is more than 4 GB or the number of entries in the archive is more than 65535).
+- Built-in support for aligning the archive to optimize Android packages (APK) [`zipalign`](https://developer.android.com/studio/command-line/zipalign.html).
+- Working with passwords for PHP 5.5
+  + Set the password to read the archive for all entries or only for some.
+  + Change the password for the archive, including for individual entries.
+  + Delete the archive password for all or individual entries.
+  + Set the password and/or the encryption method, both for all, and for individual entries in the archive.
+  + Set different passwords and encryption methods for different entries.
+  + Delete the password for all or some entries.
+  + Support `Traditional PKWARE Encryption (ZipCrypto)` and `WinZIP AES Encryption` encryption methods.
+  + Set the encryption method for all or individual entries in the archive.
 
 ### <a name="Requirements"></a> Requirements
-- `PHP` >= 5.5 (64 bit)
+- `PHP` >= 5.5 (preferably 64-bit).
 - Optional php-extension `bzip2` for BZIP2 compression.
 - Optional php-extension `openssl` or `mcrypt` for `WinZip Aes Encryption` support.
 
 ### <a name="Installation"></a> Installation
-`composer require nelexa/zip:^3.0`
+`composer require nelexa/zip`
+
+Latest stable version: [![Latest Stable Version](https://poser.pugx.org/nelexa/zip/v/stable)](https://packagist.org/packages/nelexa/zip)
 
 ### <a name="Examples"></a> Examples
 ```php
 // create new archive
 $zipFile = new \PhpZip\ZipFile();
 $zipFile
-    ->addFromString("zip/entry/filename", "Is file content")
-    ->addFile("/path/to/file", "data/tofile")
-    ->addDir(__DIR__, "to/path/")
-    ->saveAsFile($outputFilename)
-    ->close();
+    ->addFromString("zip/entry/filename", "Is file content") // add an entry from the string
+    ->addFile("/path/to/file", "data/tofile") // add an entry from the file
+    ->addDir(__DIR__, "to/path/") // add files from the directory
+    ->saveAsFile($outputFilename) // save the archive to a file
+    ->close(); // close archive
         
 // open archive, extract, add files, set password and output to browser.
 $zipFile
-    ->openFile($outputFilename)
-    ->extractTo($outputDirExtract)
+    ->openFile($outputFilename) // open archive from file
+    ->extractTo($outputDirExtract) // extract files to the specified directory
     ->deleteFromRegex('~^\.~') // delete all hidden (Unix) files
-    ->addFromString('dir/file.txt', 'Test file')
-    ->withNewPassword('password')
-    ->outputAsAttachment('library.jar');
+    ->addFromString('dir/file.txt', 'Test file') // add a new entry from the string
+    ->setPassword('password') // set password for all entries
+    ->outputAsAttachment('library.jar'); // output to the browser without saving to a file
 ```
 Other examples can be found in the `tests/` folder
 
+### <a name="Glossary"></a> Glossary
+**Zip Entry** - file or folder in a ZIP-archive. Each entry in the archive has certain properties, for example: file name, compression method, encryption method, file size before compression, file size after compression, CRC32 and others.
+
 ### <a name="Documentation"></a> Documentation:
-#### <a name="Documentation-Open-Zip-Archive"></a> Open Zip Archive
-Open zip archive from file.
+#### <a name="Documentation-Overview"></a> Overview of methods of the class `\PhpZip\ZipFile`
+- [ZipFile::__construct](#Documentation-ZipFile-__construct) - initializes the ZIP archive.
+- [ZipFile::addAll](#Documentation-ZipFile-addAll) - adds all entries from an array.
+- [ZipFile::addDir](#Documentation-ZipFile-addDir) - adds files to the archive from the directory on the specified path without subdirectories.
+- [ZipFile::addDirRecursive](#Documentation-ZipFile-addDirRecursive) - adds files to the archive from the directory on the specified path with subdirectories.
+- [ZipFile::addEmptyDir](#Documentation-ZipFile-addEmptyDir) - add a new directory.
+- [ZipFile::addFile](#Documentation-ZipFile-addFile) - adds a file to a ZIP archive from the given path.
+- [ZipFile::addFilesFromIterator](#Documentation-ZipFile-addFilesFromIterator) - adds files from the iterator of directories.
+- [ZipFile::addFilesFromGlob](#Documentation-ZipFile-addFilesFromGlob) - adds files from a directory by glob pattern without subdirectories.
+- [ZipFile::addFilesFromGlobRecursive](#Documentation-ZipFile-addFilesFromGlobRecursive) - adds files from a directory by glob pattern with subdirectories.
+- [ZipFile::addFilesFromRegex](#Documentation-ZipFile-addFilesFromRegex) - adds files from a directory by PCRE pattern without subdirectories.
+- [ZipFile::addFilesFromRegexRecursive](#Documentation-ZipFile-addFilesFromRegexRecursive) - adds files from a directory by PCRE pattern with subdirectories.
+- [ZipFile::addFromStream](#Documentation-ZipFile-addFromStream) - adds a entry from the stream to the ZIP archive.
+- [ZipFile::addFromString](#Documentation-ZipFile-addFromString) - adds a file to a ZIP archive using its contents.
+- [ZipFile::close](#Documentation-ZipFile-close) - close the archive.
+- [ZipFile::count](#Documentation-ZipFile-count) - returns the number of entries in the archive.
+- [ZipFile::deleteFromName](#Documentation-ZipFile-deleteFromName) - deletes an entry in the archive using its name.
+- [ZipFile::deleteFromGlob](#Documentation-ZipFile-deleteFromGlob) - deletes a entries in the archive using glob pattern.
+- [ZipFile::deleteFromRegex](#Documentation-ZipFile-deleteFromRegex) - deletes a entries in the archive using PCRE pattern.
+- [ZipFile::deleteAll](#Documentation-ZipFile-deleteAll) - deletes all entries in the ZIP archive.
+- [ZipFile::extractTo](#Documentation-ZipFile-extractTo) - extract the archive contents.
+- [ZipFile::getAllInfo](#Documentation-ZipFile-getAllInfo) - returns detailed information about all entries in the archive.
+- [ZipFile::getArchiveComment](#Documentation-ZipFile-getArchiveComment) - returns the Zip archive comment.
+- [ZipFile::getEntryComment](#Documentation-ZipFile-getEntryComment) - returns the comment of an entry using the entry name.
+- [ZipFile::getEntryContent](#Documentation-ZipFile-getEntryContent) - returns the entry contents using its name.
+- [ZipFile::getEntryInfo](#Documentation-ZipFile-getEntryInfo) - returns detailed information about the entry in the archive.
+- [ZipFile::getListFiles](#Documentation-ZipFile-getListFiles) - returns list of archive files.
+- [ZipFile::hasEntry](#Documentation-ZipFile-hasEntry) - checks if there is an entry in the archive.
+- [ZipFile::isDirectory](#Documentation-ZipFile-isDirectory) - checks that the entry in the archive is a directory.
+- [ZipFile::matcher](#Documentation-ZipFile-matcher) - selecting entries in the archive to perform operations on them.
+- [ZipFile::openFile](#Documentation-ZipFile-openFile) - opens a zip-archive from a file.
+- [ZipFile::openFromString](#Documentation-ZipFile-openFromString) - opens a zip-archive from a string.
+- [ZipFile::openFromStream](#Documentation-ZipFile-openFromStream) - opens a zip-archive from the stream.
+- [ZipFile::outputAsAttachment](#Documentation-ZipFile-outputAsAttachment) - outputs a ZIP-archive to the browser.
+- [ZipFile::outputAsResponse](#Documentation-ZipFile-outputAsResponse) - outputs a ZIP-archive as PSR-7 Response.
+- [ZipFile::outputAsString](#Documentation-ZipFile-outputAsString) - outputs a ZIP-archive as string.
+- [ZipFile::removePassword](#Documentation-ZipFile-removePassword) - removes the password from all files in the archive.
+- [ZipFile::removePasswordEntry](#Documentation-ZipFile-removePasswordEntry) - removes password from one entry in the archive.
+- [ZipFile::rename](#Documentation-ZipFile-rename) - renames an entry defined by its name.
+- [ZipFile::rewrite](#Documentation-ZipFile-rewrite) - save changes and re-open the changed archive.
+- [ZipFile::saveAsFile](#Documentation-ZipFile-saveAsFile) - saves the archive to a file.
+- [ZipFile::saveAsStream](#Documentation-ZipFile-saveAsStream) - writes the archive to the stream.
+- [ZipFile::setArchiveComment](#Documentation-ZipFile-setArchiveComment) - set the comment of a ZIP archive.
+- [ZipFile::setCompressionLevel](#Documentation-ZipFile-setCompressionLevel) - set the compression level for all files in the archive.
+- [ZipFile::setCompressionLevelEntry](#Documentation-ZipFile-setCompressionLevelEntry) - sets the compression level for the entry by its name.
+- [ZipFile::setCompressionMethodEntry](#Documentation-ZipFile-setCompressionMethodEntry) - sets the compression method for the entry by its name.
+- [ZipFile::setEntryComment](#Documentation-ZipFile-setEntryComment) - set the comment of an entry defined by its name.
+- [ZipFile::setReadPassword](#Documentation-ZipFile-setReadPassword) - set the password for the open archive.
+- [ZipFile::setReadPasswordEntry](#Documentation-ZipFile-setReadPasswordEntry) - sets a password for reading of an entry defined by its name.
+- ~~ZipFile::withNewPassword~~ - is an deprecated method, use the [ZipFile::setPassword](#Documentation-ZipFile-setPassword) method.
+- [ZipFile::setPassword](#Documentation-ZipFile-setPassword) - sets a new password for all files in the archive.
+- [ZipFile::setPasswordEntry](#Documentation-ZipFile-setPasswordEntry) - sets a new password of an entry defined by its name.
+- [ZipFile::setZipAlign](#Documentation-ZipFile-setZipAlign) - sets the alignment of the archive to optimize APK files (Android packages).
+- [ZipFile::unchangeAll](#Documentation-ZipFile-unchangeAll) - undo all changes done in the archive.
+- [ZipFile::unchangeArchiveComment](#Documentation-ZipFile-unchangeArchiveComment) - undo changes to the archive comment.
+- [ZipFile::unchangeEntry](#Documentation-ZipFile-unchangeEntry) - undo changes of an entry defined by its name.
+- ~~ZipFile::withoutPassword~~ - is an deprecated method, use the [ZipFile::removePassword](#Documentation-ZipFile-removePassword) method.
+- ~~ZipFile::withReadPassword~~ - is an deprecated method, use the [ZipFile::setReadPassword](#Documentation-ZipFile-setReadPassword) method.
+
+#### <a name="Documentation-Open-Zip-Archive"></a> Creation/Opening of ZIP-archive
+<a name="Documentation-ZipFile-__construct"></a>**ZipFile::__construct** - initializes the ZIP archive.
 ```php
 $zipFile = new \PhpZip\ZipFile();
-$zipFile->openFile($filename);
 ```
-Open zip archive from data string.
+<a name="Documentation-ZipFile-openFile"></a> **ZipFile::openFile** - opens a zip-archive from a file.
+```php
+$zipFile = new \PhpZip\ZipFile();
+$zipFile->openFile('file.zip');
+```
+<a name="Documentation-ZipFile-openFromString"></a> **ZipFile::openFromString** - opens a zip-archive from a string.
 ```php
 $zipFile = new \PhpZip\ZipFile();
 $zipFile->openFromString($stringContents);
 ```
-Open zip archive from stream resource.
+<a name="Documentation-ZipFile-openFromStream"></a> **ZipFile::openFromStream** - opens a zip-archive from the stream.
 ```php
-$stream = fopen($filename, 'rb');
+$stream = fopen('file.zip', 'rb');
 
 $zipFile = new \PhpZip\ZipFile();
 $zipFile->openFromStream($stream);
 ```
-#### <a name="Documentation-Open-Zip-Entries"></a> Get Zip Entries
-Get num entries.
+#### <a name="Documentation-Open-Zip-Entries"></a> Reading entries from the archive
+<a name="Documentation-ZipFile-count"></a> **ZipFile::count** - returns the number of entries in the archive.
 ```php
 $count = count($zipFile);
 // or
 $count = $zipFile->count();
 ```
-Get list files.
+<a name="Documentation-ZipFile-getListFiles"></a> **ZipFile::getListFiles** - returns list of archive files.
 ```php
 $listFiles = $zipFile->getListFiles();
 
-// Example result:
-//
-// $listFiles = [
-//   'info.txt',
-//   'path/to/file.jpg',
-//   'another path/'
-// ];
+// example array contents:
+// array (
+//   0 => 'info.txt',
+//   1 => 'path/to/file.jpg',
+//   2 => 'another path/',
+// )
 ```
-Get entry contents.
+<a name="Documentation-ZipFile-getEntryContent"></a> **ZipFile::getEntryContent** - returns the entry contents using its name.
 ```php
 // $entryName = 'path/to/example-entry-name.txt';
 
 $contents = $zipFile[$entryName];
+// or
+$contents = $zipFile->getEntryContents($entryName);
 ```
-Checks whether a entry exists.
+<a name="Documentation-ZipFile-hasEntry"></a> **ZipFile::hasEntry** - checks if there is an entry in the archive.
 ```php
 // $entryName = 'path/to/example-entry-name.txt';
 
 $hasEntry = isset($zipFile[$entryName]);
+// or
+$hasEntry = $zipFile->hasEntry($entryName);
 ```
-Check whether the directory entry.
+<a name="Documentation-ZipFile-isDirectory"></a> **ZipFile::isDirectory** - checks that the entry in the archive is a directory.
 ```php
 // $entryName = 'path/to/';
 
 $isDirectory = $zipFile->isDirectory($entryName);
 ```
-Extract all files to directory.
+<a name="Documentation-ZipFile-extractTo"></a> **ZipFile::extractTo** - extract the archive contents.
+The directory must exist.
 ```php
 $zipFile->extractTo($directory);
 ```
-Extract some files to directory.
+Extract some files to the directory.
+The directory must exist.
 ```php
 $extractOnlyFiles = [
     "filename1", 
@@ -137,77 +231,97 @@ $extractOnlyFiles = [
 ];
 $zipFile->extractTo($directory, $extractOnlyFiles);
 ```
-Iterate zip entries.
+#### <a name="Documentation-Zip-Iterate"></a> Iterating entries
+`ZipFile` is an iterator.
+Can iterate all the entries in the `foreach` loop.
 ```php
-foreach($zipFile as $entryName => $dataContent){
-    echo "Entry: $entryName" . PHP_EOL;
-    echo "Data: $dataContent" . PHP_EOL;
+foreach($zipFile as $entryName => $contents){
+    echo "Filename: $entryName" . PHP_EOL;
+    echo "Contents: $contents" . PHP_EOL;
     echo "-----------------------------" . PHP_EOL;
 }
 ```
-or
+Can iterate through the `Iterator`.
 ```php
 $iterator = new \ArrayIterator($zipFile);
 while ($iterator->valid())
 {
     $entryName = $iterator->key();
-    $dataContent = $iterator->current();
+    $contents = $iterator->current();
 
-    echo "Entry: $entryName" . PHP_EOL;
-    echo "Data: $dataContent" . PHP_EOL;
+    echo "Filename: $entryName" . PHP_EOL;
+    echo "Contents: $contents" . PHP_EOL;
     echo "-----------------------------" . PHP_EOL;
 
     $iterator->next();
 }
 ```
-Get comment archive.
+#### <a name="Documentation-Zip-Info"></a> Getting information about entries
+<a name="Documentation-ZipFile-getArchiveComment"></a> **ZipFile::getArchiveComment** - returns the Zip archive comment.
 ```php
 $commentArchive = $zipFile->getArchiveComment();
 ```
-Get comment zip entry.
+<a name="Documentation-ZipFile-getEntryComment"></a> **ZipFile::getEntryComment** - returns the comment of an entry using the entry name.
 ```php
 $commentEntry = $zipFile->getEntryComment($entryName);
 ```
-Set password for read encrypted entries.
-```php
-$zipFile->withReadPassword($password);
-```
-Get entry info.
+<a name="Documentation-ZipFile-getEntryInfo"></a> **ZipFile::getEntryInfo** - returns detailed information about the entry in the archive
 ```php
 $zipInfo = $zipFile->getEntryInfo('file.txt');
 
-echo $zipInfo . PHP_EOL;
-
-// Output:
-// ZipInfo {Path="file.txt", Size=9.77KB, Compressed size=2.04KB, Modified time=2016-09-24T19:25:10+03:00, Crc=0x4b5ab5c7, Method="Deflate", Attributes="-rw-r--r--", Platform="UNIX", Version=20}
+$arrayInfo = $zipInfo->toArray();
+// example array contents:
+// array (
+//   'name' => 'file.gif',
+//   'folder' => false,
+//   'size' => '43',
+//   'compressed_size' => '43',
+//   'modified' => 1510489440,
+//   'created' => null,
+//   'accessed' => null,
+//   'attributes' => '-rw-r--r--',
+//   'encrypted' => false,
+//   'encryption_method' => 0,
+//   'comment' => '',
+//   'crc' => 782934147,
+//   'method_name' => 'No compression',
+//   'compression_method' => 0,
+//   'platform' => 'UNIX',
+//   'version' => 10,
+// )
 
 print_r($zipInfo);
+// output:
+//PhpZip\Model\ZipInfo Object
+//(
+//    [name:PhpZip\Model\ZipInfo:private] => file.gif
+//    [folder:PhpZip\Model\ZipInfo:private] => 
+//    [size:PhpZip\Model\ZipInfo:private] => 43
+//    [compressedSize:PhpZip\Model\ZipInfo:private] => 43
+//    [mtime:PhpZip\Model\ZipInfo:private] => 1510489324
+//    [ctime:PhpZip\Model\ZipInfo:private] => 
+//    [atime:PhpZip\Model\ZipInfo:private] => 
+//    [encrypted:PhpZip\Model\ZipInfo:private] => 
+//    [comment:PhpZip\Model\ZipInfo:private] => 
+//    [crc:PhpZip\Model\ZipInfo:private] => 782934147
+//    [methodName:PhpZip\Model\ZipInfo:private] => No compression
+//    [compressionMethod:PhpZip\Model\ZipInfo:private] => 0
+//    [platform:PhpZip\Model\ZipInfo:private] => UNIX
+//    [version:PhpZip\Model\ZipInfo:private] => 10
+//    [attributes:PhpZip\Model\ZipInfo:private] => -rw-r--r--
+//    [encryptionMethod:PhpZip\Model\ZipInfo:private] => 0
+//    [compressionLevel:PhpZip\Model\ZipInfo:private] => -1
+//)
 
+echo $zipInfo;
 // Output:
-// PhpZip\Model\ZipInfo Object
-// (
-//     [path:PhpZip\Model\ZipInfo:private] => file.txt
-//     [folder:PhpZip\Model\ZipInfo:private] => 
-//     [size:PhpZip\Model\ZipInfo:private] => 10000
-//     [compressedSize:PhpZip\Model\ZipInfo:private] => 2086
-//     [mtime:PhpZip\Model\ZipInfo:private] => 1474734310
-//     [ctime:PhpZip\Model\ZipInfo:private] => 
-//     [atime:PhpZip\Model\ZipInfo:private] => 
-//     [encrypted:PhpZip\Model\ZipInfo:private] => 
-//     [comment:PhpZip\Model\ZipInfo:private] => 
-//     [crc:PhpZip\Model\ZipInfo:private] => 1264235975
-//     [method:PhpZip\Model\ZipInfo:private] => Deflate
-//     [platform:PhpZip\Model\ZipInfo:private] => UNIX
-//     [version:PhpZip\Model\ZipInfo:private] => 20
-//     [attributes:PhpZip\Model\ZipInfo:private] => -rw-r--r--
-// )
+// PhpZip\Model\ZipInfo {Name="file.gif", Size="43 bytes", Compressed size="43 bytes", Modified time="2017-11-12T15:22:04+03:00", Crc=0x2eaaa083, Method name="No compression", Attributes="-rw-r--r--", Platform="UNIX", Version=10}
 ```
-Get info for all entries.
+<a name="Documentation-ZipFile-getAllInfo"></a> **ZipFile::getAllInfo** - returns detailed information about all entries in the archive.
 ```php
 $zipAllInfo = $zipFile->getAllInfo();
 
 print_r($zipAllInfo);
-
 //Array
 //(
 //    [file.txt] => PhpZip\Model\ZipInfo Object
@@ -222,295 +336,447 @@ print_r($zipAllInfo);
 //    
 //    ...
 //)
-
 ```
-#### <a name="Documentation-Add-Zip-Entries"></a> Add Zip Entries
-Adding a file to the zip-archive.
+#### <a name="Documentation-Add-Zip-Entries"></a> Adding entries to the archive
+
+All methods of adding entries to a ZIP archive allow you to specify a method for compressing content.
+
+The following methods of compression are available:
+- `\PhpZip\ZipFile::METHOD_STORED` - no compression
+- `\PhpZip\ZipFile::METHOD_DEFLATED` - Deflate compression
+- `\PhpZip\ZipFile::METHOD_BZIP2` - Bzip2 compression with the extension `ext-bz2`
+
+<a name="Documentation-ZipFile-addFile"></a> **ZipFile::addFile** - adds a file to a ZIP archive from the given path.
 ```php
-// entry name is file basename.
-$zipFile->addFile($filename);
-// or
-$zipFile->addFile($filename, null);
+// $file = '...../file.ext'; 
+$zipFile->addFile($file);
 
-// with entry name
-$zipFile->addFile($filename, $entryName);
+// you can specify the name of the entry in the archive (if null, then the last component from the file name is used)
+$zipFile->addFile($file, $entryName);
 // or
-$zipFile[$entryName] = new \SplFileInfo($filename);
+$zipFile[$entryName] = new \SplFileInfo($file);
 
-// with compression method
-$zipFile->addFile($filename, $entryName, ZipFile::METHOD_DEFLATED); // Deflate compression
-$zipFile->addFile($filename, $entryName, ZipFile::METHOD_STORED); // No compression
-$zipFile->addFile($filename, null, ZipFile::METHOD_BZIP2); // BZIP2 compression
+// you can specify a compression method
+$zipFile->addFile($file, $entryName, ZipFile::METHOD_STORED); // No compression
+$zipFile->addFile($file, $entryName, ZipFile::METHOD_DEFLATED); // Deflate compression
+$zipFile->addFile($file, $entryName, ZipFile::METHOD_BZIP2); // BZIP2 compression
 ```
-Add entry from string data.
+<a name="Documentation-ZipFile-addFromString"></a> **ZipFile::addFromString** - adds a file to a ZIP archive using its contents.
 ```php
-$zipFile[$entryName] = $data;
+$zipFile[$entryName] = $contents;
 // or
-$zipFile->addFromString($entryName, $data);
+$zipFile->addFromString($entryName, $contents);
 
-// with compression method
-$zipFile->addFromString($entryName, $data, ZipFile::METHOD_DEFLATED); // Deflate compression
-$zipFile->addFromString($entryName, $data, ZipFile::METHOD_STORED); // No compression
-$zipFile->addFromString($entryName, $data, ZipFile::METHOD_BZIP2); // BZIP2 compression
+// you can specify a compression method
+$zipFile->addFromString($entryName, $contents, ZipFile::METHOD_STORED); // No compression
+$zipFile->addFromString($entryName, $contents, ZipFile::METHOD_DEFLATED); // Deflate compression
+$zipFile->addFromString($entryName, $contents, ZipFile::METHOD_BZIP2); // BZIP2 compression
 ```
-Add entry from stream.
+<a name="Documentation-ZipFile-addFromStream"></a> **ZipFile::addFromStream** - adds a entry from the stream to the ZIP archive.
 ```php
-// $stream = fopen(...);
+// $stream = fopen(..., 'rb');
 
 $zipFile->addFromStream($stream, $entryName);
+// or
+$zipFile[$entryName] = $stream;
 
-// with compression method
-$zipFile->addFromStream($stream, $entryName, ZipFile::METHOD_DEFLATED); // Deflate compression
+// you can specify a compression method
 $zipFile->addFromStream($stream, $entryName, ZipFile::METHOD_STORED); // No compression
+$zipFile->addFromStream($stream, $entryName, ZipFile::METHOD_DEFLATED); // Deflate compression
 $zipFile->addFromStream($stream, $entryName, ZipFile::METHOD_BZIP2); // BZIP2 compression
 ```
-Add empty dir
+<a name="Documentation-ZipFile-addEmptyDir"></a> **ZipFile::addEmptyDir** - add a new directory.
 ```php
-// $dirName = "path/to/";
+// $path = "path/to/";
 
-$zipFile->addEmptyDir($dirName);
+$zipFile->addEmptyDir($path);
 // or
-$zipFile[$dirName] = null;
+$zipFile[$path] = null;
 ```
-Add all entries form string contents.
+<a name="Documentation-ZipFile-addAll"></a> **ZipFile::addAll** - adds all entries from an array.
 ```php
-$mapData = [
-    'file.txt' => 'file contents',
-    'path/to/file.txt' => 'another file contents',
-    'empty dir/' => null,
+$entries = [
+    'file.txt' => 'file contents', // add an entry from the string contents
+    'empty dir/' => null, // add empty directory
+    'path/to/file.jpg' => fopen('..../filename', 'r'), // add an entry from the stream
+    'path/to/file.dat' => new \SplFileInfo('..../filename'), // add an entry from the file
 ];
 
-$zipFile->addAll($mapData);
+$zipFile->addAll($entries);
 ```
-Add a directory **not recursively** to the archive.
+<a name="Documentation-ZipFile-addDir"></a> **ZipFile::addDir** - adds files to the archive from the directory on the specified path without subdirectories.
 ```php
 $zipFile->addDir($dirName);
 
-// with entry path
+// you can specify the path in the archive to which you want to put entries
 $localPath = "to/path/";
 $zipFile->addDir($dirName, $localPath);
 
-// with compression method for all files
-$zipFile->addDir($dirName, $localPath, ZipFile::METHOD_DEFLATED); // Deflate compression
+// you can specify a compression method
 $zipFile->addDir($dirName, $localPath, ZipFile::METHOD_STORED); // No compression
+$zipFile->addDir($dirName, $localPath, ZipFile::METHOD_DEFLATED); // Deflate compression
 $zipFile->addDir($dirName, $localPath, ZipFile::METHOD_BZIP2); // BZIP2 compression
 ```
-Add a directory **recursively** to the archive.
+<a name="Documentation-ZipFile-addDirRecursive"></a> **ZipFile::addDirRecursive** - adds files to the archive from the directory on the specified path with subdirectories.
 ```php
 $zipFile->addDirRecursive($dirName);
 
-// with entry path
+// you can specify the path in the archive to which you want to put entries
 $localPath = "to/path/";
 $zipFile->addDirRecursive($dirName, $localPath);
 
-// with compression method for all files
-$zipFile->addDirRecursive($dirName, $localPath, ZipFile::METHOD_DEFLATED); // Deflate compression
+// you can specify a compression method
 $zipFile->addDirRecursive($dirName, $localPath, ZipFile::METHOD_STORED); // No compression
+$zipFile->addDirRecursive($dirName, $localPath, ZipFile::METHOD_DEFLATED); // Deflate compression
 $zipFile->addDirRecursive($dirName, $localPath, ZipFile::METHOD_BZIP2); // BZIP2 compression
 ```
-Add a files from directory iterator.
+<a name="Documentation-ZipFile-addFilesFromIterator"></a> **ZipFile::addFilesFromIterator** - adds files from the iterator of directories.
 ```php
-// $directoryIterator = new \DirectoryIterator($dir); // not recursive
-// $directoryIterator = new \RecursiveDirectoryIterator($dir); // recursive
+// $directoryIterator = new \DirectoryIterator($dir); // without subdirectories
+// $directoryIterator = new \RecursiveDirectoryIterator($dir); // with subdirectories
 
 $zipFile->addFilesFromIterator($directoryIterator);
 
-// with entry path
+// you can specify the path in the archive to which you want to put entries
 $localPath = "to/path/";
 $zipFile->addFilesFromIterator($directoryIterator, $localPath);
 // or
 $zipFile[$localPath] = $directoryIterator;
 
-// with compression method for all files
-$zipFile->addFilesFromIterator($directoryIterator, $localPath, ZipFile::METHOD_DEFLATED); // Deflate compression
+// you can specify a compression method
 $zipFile->addFilesFromIterator($directoryIterator, $localPath, ZipFile::METHOD_STORED); // No compression
+$zipFile->addFilesFromIterator($directoryIterator, $localPath, ZipFile::METHOD_DEFLATED); // Deflate compression
 $zipFile->addFilesFromIterator($directoryIterator, $localPath, ZipFile::METHOD_BZIP2); // BZIP2 compression
 ```
-Example add a directory to the archive with ignoring files from directory iterator.
+Example with some files ignoring:
 ```php
 $ignoreFiles = [
     "file_ignore.txt", 
     "dir_ignore/sub dir ignore/"
 ];
 
-// use \DirectoryIterator for not recursive
-$directoryIterator = new \RecursiveDirectoryIterator($dir);
+// $directoryIterator = new \DirectoryIterator($dir); // without subdirectories
+// $directoryIterator = new \RecursiveDirectoryIterator($dir); // with subdirectories
  
-// use IgnoreFilesFilterIterator for not recursive
-$ignoreIterator = new IgnoreFilesRecursiveFilterIterator(
+// use \PhpZip\Util\Iterator\IgnoreFilesFilterIterator for non-recursive search
+$ignoreIterator = new \PhpZip\Util\Iterator\IgnoreFilesRecursiveFilterIterator(
     $directoryIterator, 
     $ignoreFiles
 );
 
 $zipFile->addFilesFromIterator($ignoreIterator);
 ```
-Add a files **recursively** from [glob pattern](https://en.wikipedia.org/wiki/Glob_(programming)) to the archive.
-```php
-$globPattern = '**.{jpg,jpeg,png,gif}'; // example glob pattern -> add all .jpg, .jpeg, .png and .gif files
-
-$zipFile->addFilesFromGlobRecursive($dir, $globPattern);
-
-// with entry path
-$localPath = "to/path/";
-$zipFile->addFilesFromGlobRecursive($dir, $globPattern, $localPath);
-
-// with compression method for all files
-$zipFile->addFilesFromGlobRecursive($dir, $globPattern, $localPath), ZipFile::METHOD_DEFLATED); // Deflate compression
-$zipFile->addFilesFromGlobRecursive($dir, $globPattern, $localPath), ZipFile::METHOD_STORED); // No compression
-$zipFile->addFilesFromGlobRecursive($dir, $globPattern, $localPath), ZipFile::METHOD_BZIP2); // BZIP2 compression
-```
-Add a files **not recursively** from [glob pattern](https://en.wikipedia.org/wiki/Glob_(programming)) to the archive.
+<a name="Documentation-ZipFile-addFilesFromGlob"></a> **ZipFile::addFilesFromGlob** - adds files from a directory by [glob pattern](https://en.wikipedia.org/wiki/Glob_(programming)) without subdirectories.
 ```php
 $globPattern = '**.{jpg,jpeg,png,gif}'; // example glob pattern -> add all .jpg, .jpeg, .png and .gif files
 
 $zipFile->addFilesFromGlob($dir, $globPattern);
 
-// with entry path
+// you can specify the path in the archive to which you want to put entries
 $localPath = "to/path/";
 $zipFile->addFilesFromGlob($dir, $globPattern, $localPath);
 
-// with compression method for all files
-$zipFile->addFilesFromGlob($dir, $globPattern, $localPath), ZipFile::METHOD_DEFLATED); // Deflate compression
-$zipFile->addFilesFromGlob($dir, $globPattern, $localPath), ZipFile::METHOD_STORED); // No compression
-$zipFile->addFilesFromGlob($dir, $globPattern, $localPath), ZipFile::METHOD_BZIP2); // BZIP2 compression
+// you can specify a compression method
+$zipFile->addFilesFromGlob($dir, $globPattern, $localPath, ZipFile::METHOD_STORED); // No compression
+$zipFile->addFilesFromGlob($dir, $globPattern, $localPath, ZipFile::METHOD_DEFLATED); // Deflate compression
+$zipFile->addFilesFromGlob($dir, $globPattern, $localPath, ZipFile::METHOD_BZIP2); // BZIP2 compression
 ```
-Add a files **recursively** from [RegEx (Regular Expression) pattern](https://en.wikipedia.org/wiki/Regular_expression) to the archive.
+<a name="Documentation-ZipFile-addFilesFromGlobRecursive"></a> **ZipFile::addFilesFromGlobRecursive** - adds files from a directory by [glob pattern](https://en.wikipedia.org/wiki/Glob_(programming)) with subdirectories.
 ```php
-$regexPattern = '/\.(jpe?g|png|gif)$/si'; // example regex pattern -> add all .jpg, .jpeg, .png and .gif files
+$globPattern = '**.{jpg,jpeg,png,gif}'; // example glob pattern -> add all .jpg, .jpeg, .png and .gif files
 
-$zipFile->addFilesFromRegexRecursive($dir, $regexPattern);
+$zipFile->addFilesFromGlobRecursive($dir, $globPattern);
 
-// with entry path
+// you can specify the path in the archive to which you want to put entries
 $localPath = "to/path/";
-$zipFile->addFilesFromRegexRecursive($dir, $regexPattern, $localPath);
+$zipFile->addFilesFromGlobRecursive($dir, $globPattern, $localPath);
 
-// with compression method for all files
-$zipFile->addFilesFromRegexRecursive($dir, $regexPattern, $localPath, ZipFile::METHOD_DEFLATED); // Deflate compression
-$zipFile->addFilesFromRegexRecursive($dir, $regexPattern, $localPath, ZipFile::METHOD_STORED); // No compression
-$zipFile->addFilesFromRegexRecursive($dir, $regexPattern, $localPath, ZipFile::METHOD_BZIP2); // BZIP2 compression
+// you can specify a compression method
+$zipFile->addFilesFromGlobRecursive($dir, $globPattern, $localPath, ZipFile::METHOD_STORED); // No compression
+$zipFile->addFilesFromGlobRecursive($dir, $globPattern, $localPath, ZipFile::METHOD_DEFLATED); // Deflate compression
+$zipFile->addFilesFromGlobRecursive($dir, $globPattern, $localPath, ZipFile::METHOD_BZIP2); // BZIP2 compression
 ```
-Add a files **not recursively** from [RegEx (Regular Expression) pattern](https://en.wikipedia.org/wiki/Regular_expression) to the archive.
+<a name="Documentation-ZipFile-addFilesFromRegex"></a> **ZipFile::addFilesFromRegex** - adds files from a directory by [PCRE pattern](https://en.wikipedia.org/wiki/Regular_expression) without subdirectories.
 ```php
 $regexPattern = '/\.(jpe?g|png|gif)$/si'; // example regex pattern -> add all .jpg, .jpeg, .png and .gif files
 
 $zipFile->addFilesFromRegex($dir, $regexPattern);
 
-// with entry path
+// you can specify the path in the archive to which you want to put entries
 $localPath = "to/path/";
 $zipFile->addFilesFromRegex($dir, $regexPattern, $localPath);
 
-// with compression method for all files
-$zipFile->addFilesFromRegex($dir, $regexPattern, $localPath, ZipFile::METHOD_DEFLATED); // Deflate compression
+// you can specify a compression method
 $zipFile->addFilesFromRegex($dir, $regexPattern, $localPath, ZipFile::METHOD_STORED); // No compression
+$zipFile->addFilesFromRegex($dir, $regexPattern, $localPath, ZipFile::METHOD_DEFLATED); // Deflate compression
 $zipFile->addFilesFromRegex($dir, $regexPattern, $localPath, ZipFile::METHOD_BZIP2); // BZIP2 compression
 ```
-Rename entry name.
+<a name="Documentation-ZipFile-addFilesFromRegexRecursive"></a> **ZipFile::addFilesFromRegexRecursive** - adds files from a directory by [PCRE pattern](https://en.wikipedia.org/wiki/Regular_expression) with subdirectories.
 ```php
-$zipFile->rename($oldName, $newName);
+$regexPattern = '/\.(jpe?g|png|gif)$/si'; // example regex pattern -> add all .jpg, .jpeg, .png and .gif files
+
+$zipFile->addFilesFromRegexRecursive($dir, $regexPattern);
+
+// you can specify the path in the archive to which you want to put entries
+$localPath = "to/path/";
+$zipFile->addFilesFromRegexRecursive($dir, $regexPattern, $localPath);
+
+// you can specify a compression method
+$zipFile->addFilesFromRegexRecursive($dir, $regexPattern, $localPath, ZipFile::METHOD_STORED); // No compression
+$zipFile->addFilesFromRegexRecursive($dir, $regexPattern, $localPath, ZipFile::METHOD_DEFLATED); // Deflate compression
+$zipFile->addFilesFromRegexRecursive($dir, $regexPattern, $localPath, ZipFile::METHOD_BZIP2); // BZIP2 compression
 ```
-Delete entry by name.
+#### <a name="Documentation-Remove-Zip-Entries"></a> Deleting entries from the archive
+<a name="Documentation-ZipFile-deleteFromName"></a> **ZipFile::deleteFromName** - deletes an entry in the archive using its name.
 ```php
 $zipFile->deleteFromName($entryName);
 ```
-Delete entries from [glob pattern](https://en.wikipedia.org/wiki/Glob_(programming)).
+<a name="Documentation-ZipFile-deleteFromGlob"></a> **ZipFile::deleteFromGlob** - deletes a entries in the archive using [glob pattern](https://en.wikipedia.org/wiki/Glob_(programming)).
 ```php
 $globPattern = '**.{jpg,jpeg,png,gif}'; // example glob pattern -> delete all .jpg, .jpeg, .png and .gif files
 
 $zipFile->deleteFromGlob($globPattern);
 ```
-Delete entries from [RegEx (Regular Expression) pattern](https://en.wikipedia.org/wiki/Regular_expression).
+<a name="Documentation-ZipFile-deleteFromRegex"></a> **ZipFile::deleteFromRegex** - deletes a entries in the archive using [PCRE pattern](https://en.wikipedia.org/wiki/Regular_expression).
 ```php
 $regexPattern = '/\.(jpe?g|png|gif)$/si'; // example regex pattern -> delete all .jpg, .jpeg, .png and .gif files
 
 $zipFile->deleteFromRegex($regexPattern);
 ```
-Delete all entries.
+<a name="Documentation-ZipFile-deleteAll"></a> **ZipFile::deleteAll** - deletes all entries in the ZIP archive.
 ```php
 $zipFile->deleteAll();
 ```
-Sets the compression level for entries.
+#### <a name="Documentation-Entries"></a> Working with entries and archive
+<a name="Documentation-ZipFile-rename"></a> **ZipFile::rename** - renames an entry defined by its name.
 ```php
-// This property is only used if the effective compression method is DEFLATED or BZIP2.
-// Legal values are ZipFile::LEVEL_DEFAULT_COMPRESSION or range from
-// ZipFile::LEVEL_BEST_SPEED to ZipFile::LEVEL_BEST_COMPRESSION.
-
-$compressionMethod = ZipFile::LEVEL_BEST_COMPRESSION;
-
-$zipFile->setCompressionLevel($compressionLevel);
+$zipFile->rename($oldName, $newName);
 ```
-Set comment archive.
+<a name="Documentation-ZipFile-setCompressionLevel"></a> **ZipFile::setCompressionLevel** - set the compression level for all files in the archive.
+
+> _Note that this method does not apply to entries that were added after this method was run._
+
+By default, the compression level is -1 (`\PhpZip\ZipFile::LEVEL_DEFAULT_COMPRESSION`) or the compression level specified in the archive for Deflate compression.
+
+The values -1 (`\PhpZip\ZipFile::LEVEL_DEFAULT_COMPRESSION`) and the range from 1 (`\PhpZip\ZipFile::LEVEL_BEST_SPEED`) to 9 (`\PhpZip\ZipFile::LEVEL_BEST_COMPRESSION`) are supported. The higher the number, the better and longer the compression.
+```php
+$zipFile->setCompressionLevel(\PhpZip\ZipFile::LEVEL_BEST_COMPRESSION);
+```
+<a name="Documentation-ZipFile-setCompressionLevelEntry"></a> **ZipFile::setCompressionLevelEntry** - sets the compression level for the entry by its name.
+
+The values -1 (`\PhpZip\ZipFile::LEVEL_DEFAULT_COMPRESSION`) and the range from 1 (`\PhpZip\ZipFile::LEVEL_BEST_SPEED`) to 9 (`\PhpZip\ZipFile::LEVEL_BEST_COMPRESSION`) are supported. The higher the number, the better and longer the compression.
+```php
+$zipFile->setCompressionLevelEntry($entryName, \PhpZip\ZipFile::LEVEL_BEST_COMPRESSION);
+```
+<a name="Documentation-ZipFile-setCompressionMethodEntry"></a> **ZipFile::setCompressionMethodEntry** - sets the compression method for the entry by its name.
+
+The following compression methods are available:
+- `\PhpZip\ZipFile::METHOD_STORED` - No compression
+- `\PhpZip\ZipFile::METHOD_DEFLATED` - Deflate compression
+- `\PhpZip\ZipFile::METHOD_BZIP2` - Bzip2 compression with the extension `ext-bz2`
+```php
+$zipFile->setCompressionMethodEntry($entryName, ZipFile::METHOD_DEFLATED);
+```
+<a name="Documentation-ZipFile-setArchiveComment"></a> **ZipFile::setArchiveComment** - set the comment of a ZIP archive.
 ```php
 $zipFile->setArchiveComment($commentArchive);
 ```
-Set comment zip entry.
+<a name="Documentation-ZipFile-setEntryComment"></a> **ZipFile::setEntryComment** - set the comment of an entry defined by its name.
 ```php
-$zipFile->setEntryComment($entryName, $entryComment);
+$zipFile->setEntryComment($entryName, $comment);
 ```
-Set a new password.
+<a name="Documentation-ZipFile-matcher"></a> - selecting entries in the archive to perform operations on them.
 ```php
-$zipFile->withNewPassword($password);
+$matcher = $zipFile->matcher();
 ```
-Set a new password and encryption method.
+Selecting files from the archive one at a time:
 ```php
-$encryptionMethod = ZipFile::ENCRYPTION_METHOD_WINZIP_AES; // default value
-$zipFile->withNewPassword($password, $encryptionMethod);
+$matcher
+    ->add('entry name')
+    ->add('another entry');
+```
+Select multiple files in the archive:
+```php
+$matcher->add([
+    'entry name',
+    'another entry name',
+    'path/'
+]);
+```
+Selecting files by regular expression:
+```php
+$matcher->match('~\.jpe?g$~i');
+```
+Select all files in the archive:
+```php
+$matcher->all();
+```
+count() - gets the number of selected entries:
+```php
+$count = count($matcher);
+// or
+$count = $matcher->count();
+```
+getMatches() - returns a list of selected entries:
+```php
+$entries = $matcher->getMatches();
+// example array contents: ['entry name', 'another entry name'];
+```
+invoke() - invoke a callable function on selected entries:
+```php
+// example
+$matcher->invoke(function($entryName) use($zipFile) {
+    $newName = preg_replace('~\.(jpe?g)$~i', '.no_optimize.$1', $entryName);
+    $zipFile->rename($entryName, $newName);
+});
+```
+Functions for working on the selected entries:
+```php
+$matcher->delete(); // remove selected entries from a ZIP archive
+$matcher->setPassword($password); // sets a new password for the selected entries
+$matcher->setPassword($password, $encryptionMethod); // sets a new password and encryption method to selected entries
+$matcher->setEncryptionMethod($encryptionMethod); // sets the encryption method to the selected entries
+$matcher->disableEncryption(); // disables encryption for selected entries
+```
+#### <a name="Documentation-Password"></a> Working with passwords
 
-// Support encryption methods:
-// ZipFile::ENCRYPTION_METHOD_TRADITIONAL - Traditional PKWARE Encryption
-// ZipFile::ENCRYPTION_METHOD_WINZIP_AES - WinZip AES Encryption
-```
-Remove password from all entries.
+Implemented support for encryption methods:
+- `\PhpZip\ZipFile::ENCRYPTION_METHOD_TRADITIONAL` - Traditional PKWARE encryption
+- `\PhpZip\ZipFile::ENCRYPTION_METHOD_WINZIP_AES_256` - WinZip AES encryption 256 bit (recommended)
+- `\PhpZip\ZipFile::ENCRYPTION_METHOD_WINZIP_AES_192` - WinZip AES encryption 192 bit
+- `\PhpZip\ZipFile::ENCRYPTION_METHOD_WINZIP_AES_128` - WinZip AES encryption 128 bit
+
+<a name="Documentation-ZipFile-setReadPassword"></a> **ZipFile::setReadPassword** - set the password for the open archive.
+
+> _Setting a password is not required for adding new entries or deleting existing ones, but if you want to extract the content or change the method / compression level, the encryption method, or change the password, in this case the password must be specified._
 ```php
-$zipFile->withoutPassword();
+$zipFile->setReadPassword($password);
 ```
-#### <a name="Documentation-ZipAlign-Usage"></a> ZipAlign Usage
-Set archive alignment ([`zipalign`](https://developer.android.com/studio/command-line/zipalign.html)).
+<a name="Documentation-ZipFile-setReadPasswordEntry"></a> **ZipFile::setReadPasswordEntry** - gets a password for reading of an entry defined by its name.
 ```php
-// before save or output
-$zipFile->setAlign(4); // alternative command: zipalign -f -v 4 filename.zip
+$zipFile->setReadPasswordEntry($entryName, $password);
 ```
-#### <a name="Documentation-Save-Or-Output-Entries"></a> Save Zip File or Output
-Save archive to a file.
+<a name="Documentation-ZipFile-setPassword"></a> **ZipFile::setPassword** - sets a new password for all files in the archive.
+
+> _Note that this method does not apply to entries that were added after this method was run._
+```php
+$zipFile->setPassword($password);
+```
+You can set the encryption method:
+```php
+$encryptionMethod = ZipFile::ENCRYPTION_METHOD_WINZIP_AES_256;
+$zipFile->setPassword($password, $encryptionMethod);
+```
+<a name="Documentation-ZipFile-setPasswordEntry"></a> **ZipFile::setPasswordEntry** - sets a new password of an entry defined by its name.
+```php
+$zipFile->setPasswordEntry($entryName, $password);
+```
+You can set the encryption method:
+```php
+$encryptionMethod = ZipFile::ENCRYPTION_METHOD_WINZIP_AES_256;
+$zipFile->setPasswordEntry($entryName, $password, $encryptionMethod);
+```
+<a name="Documentation-ZipFile-removePassword"></a> **ZipFile::removePassword** - removes the password from all files in the archive.
+
+> _Note that this method does not apply to entries that were added after this method was run._
+```php
+$zipFile->removePassword();
+```
+<a name="Documentation-ZipFile-removePasswordEntry"></a> **ZipFile::removePasswordEntry** - removes password from one entry in the archive.
+```php
+$zipFile->removePasswordEntry($entryName);
+```
+#### <a name="Documentation-ZipAlign-Usage"></a> zipalign
+<a name="Documentation-ZipFile-setZipAlign"></a> **ZipFile::setZipAlign** - sets the alignment of the archive to optimize APK files (Android packages).
+
+This method adds padding to unencrypted and not compressed entries, to optimize memory consumption in the Android system. It is recommended to use for `APK` files. The file may grow slightly.
+
+This method is an alternative to executing the `zipalign -f -v 4 filename.zip`.
+
+More details can be found on the [link](https://developer.android.com/studio/command-line/zipalign.html).
+```php
+$zipFile->setZipAlign(4);
+```
+#### <a name="Documentation-Unchanged"></a> Undo changes
+<a name="Documentation-ZipFile-unchangeAll"></a> **ZipFile::unchangeAll** - undo all changes done in the archive.
+```php
+$zipFile->unchangeAll();
+```
+<a name="Documentation-ZipFile-unchangeArchiveComment"></a> **ZipFile::unchangeArchiveComment** - undo changes to the archive comment.
+```php
+$zipFile->unchangeArchiveComment();
+```
+<a name="Documentation-ZipFile-unchangeEntry"></a> **ZipFile::unchangeEntry** - undo changes of an entry defined by its name.
+```php
+$zipFile->unchangeEntry($entryName);
+```
+#### <a name="Documentation-Save-Or-Output-Entries"></a> Saving a file or output to a browser
+<a name="Documentation-ZipFile-saveAsFile"></a> **ZipFile::saveAsFile** - saves the archive to a file.
 ```php
 $zipFile->saveAsFile($filename);
 ```
-Save archive to a stream.
+<a name="Documentation-ZipFile-saveAsStream"></a> **ZipFile::saveAsStream** - writes the archive to the stream.
 ```php
 // $fp = fopen($filename, 'w+b');
 
 $zipFile->saveAsStream($fp);
 ```
-Returns the zip archive as a string.
+<a name="Documentation-ZipFile-outputAsString"></a> **ZipFile::outputAsString** - outputs a ZIP-archive as string.
 ```php
 $rawZipArchiveBytes = $zipFile->outputAsString();
 ```
-Output .ZIP archive as attachment and terminate.
+<a name="Documentation-ZipFile-outputAsAttachment"></a> **ZipFile::outputAsAttachment** - outputs a ZIP-archive to the browser.
 ```php
 $zipFile->outputAsAttachment($outputFilename);
-// or set mime type
+```
+You can set the Mime-Type:
+```php
 $mimeType = 'application/zip'
 $zipFile->outputAsAttachment($outputFilename, $mimeType);
 ```
-Rewrite and reopen zip archive.
+<a name="Documentation-ZipFile-outputAsResponse"></a> **ZipFile::outputAsResponse** - outputs a ZIP-archive as [PSR-7 Response](http://www.php-fig.org/psr/psr-7/).
+
+The output method can be used in any PSR-7 compatible framework. 
+```php
+// $response = ....; // instance Psr\Http\Message\ResponseInterface
+$zipFile->outputAsResponse($response, $outputFilename);
+```
+You can set the Mime-Type:
+```php
+$mimeType = 'application/zip'
+$zipFile->outputAsResponse($response, $outputFilename, $mimeType);
+```
+An example for the Slim Framework:
+```php
+$app = new \Slim\App;
+$app->get('/download', function ($req, $res, $args) {
+    $zipFile = new \PhpZip\ZipFile();
+    $zipFile['file.txt'] = 'content';
+    return $zipFile->outputAsResponse($res, 'file.zip');
+});
+$app->run();
+```
+<a name="Documentation-ZipFile-rewrite"></a> **ZipFile::rewrite** - save changes and re-open the changed archive.
 ```php
 $zipFile->rewrite();
 ```
-#### <a name="Documentation-Close-Zip-Archive"></a> Close Zip Archive
-Close zip archive.
+#### <a name="Documentation-Close-Zip-Archive"></a> Closing the archive
+<a name="Documentation-ZipFile-close"></a> **ZipFile::close** - close the archive.
 ```php
 $zipFile->close();
 ```
-### <a name="Running-Tests"></a> Running Tests
-Installing development dependencies.
+### <a name="Running-Tests"></a> Running the tests
+Install the dependencies for the development:
 ```bash
 composer install --dev
 ```
-Run tests
+Run the tests:
 ```bash
-vendor/bin/phpunit -v -c bootstrap.xml
+vendor/bin/phpunit -v -c phpunit.xml
 ```
-### <a name="Upgrade"></a> Upgrade version 2 to version 3
-Update to the New Major Version via Composer
+### <a name="Upgrade"></a> Upgrade
+#### <a name="Upgrade-v2-to-v3"></a> Upgrade version 2 to version 3.0
+Update the major version in the file `composer.json` to `^3.0`.
 ```json
 {
     "require": {
@@ -518,11 +784,11 @@ Update to the New Major Version via Composer
     }
 }
 ```
-Next, use Composer to download new versions of the libraries:
+Then install updates using `Composer`:
 ```bash
 composer update nelexa/zip
 ```
-Update your Code to Work with the New Version:
+Update your code to work with the new version:
 - Class `ZipOutputFile` merged to `ZipFile` and removed.
   + `new \PhpZip\ZipOutputFile()` to `new \PhpZip\ZipFile()`
 - Static initialization methods are now not static.
@@ -541,7 +807,7 @@ Update your Code to Work with the New Version:
   + `ZipOutputFile::setComment` to `ZipFile::setArchiveComment`
   + `ZipFile::getComment` to `ZipFile::getArchiveComment`
 - Changed signature for methods `addDir`, `addFilesFromGlob`, `addFilesFromRegex`.
-- Remove methods
+- Remove methods:
   + `getLevel`
   + `setCompressionMethod`
   + `setEntryPassword`

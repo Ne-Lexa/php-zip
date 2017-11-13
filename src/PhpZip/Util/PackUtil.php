@@ -1,4 +1,5 @@
 <?php
+
 namespace PhpZip\Util;
 
 use PhpZip\Exception\ZipException;
@@ -39,10 +40,24 @@ class PackUtil
     public static function unpackLongLE($value)
     {
         if (version_compare(PHP_VERSION, '5.6.3') >= 0) {
-            return current(unpack('P', $value));
+            return unpack('P', $value)[1];
         }
         $unpack = unpack('Va/Vb', $value);
         return $unpack['a'] + ($unpack['b'] << 32);
     }
 
+    /**
+     * Cast to signed int 32-bit
+     *
+     * @param int $int
+     * @return int
+     */
+    public static function toSignedInt32($int)
+    {
+        $int = $int & 0xffffffff;
+        if (PHP_INT_SIZE === 8 && ($int & 0x80000000)) {
+            return $int - 0x100000000;
+        }
+        return $int;
+    }
 }
