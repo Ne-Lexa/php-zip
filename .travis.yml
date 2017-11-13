@@ -17,7 +17,8 @@ install:
   - travis_retry composer install --prefer-dist --no-interaction
 
 before_script:
-  - sudo apt-get install p7zip-full
+  - sudo apt-get install p7zip-full -y
+  - sudo apt-get install zipalign -y
 
 script:
   - composer validate --no-check-lock
