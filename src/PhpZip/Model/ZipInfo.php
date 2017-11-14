@@ -205,8 +205,12 @@ class ZipInfo
 
         $this->name = $entry->getName();
         $this->folder = $entry->isDirectory();
-        $this->size = $entry->getSize();
-        $this->compressedSize = $entry->getCompressedSize();
+        $this->size = PHP_INT_SIZE === 4 ?
+            sprintf('%u', $entry->getSize()) :
+            $entry->getSize();
+        $this->compressedSize = PHP_INT_SIZE === 4 ?
+            sprintf('%u', $entry->getCompressedSize()) :
+            $entry->getCompressedSize();
         $this->mtime = $mtime;
         $this->ctime = $ctime;
         $this->atime = $atime;
@@ -222,6 +226,9 @@ class ZipInfo
 
         $attributes = str_repeat(" ", 12);
         $externalAttributes = $entry->getExternalAttributes();
+        $externalAttributes = PHP_INT_SIZE === 4 ?
+            sprintf('%u', $externalAttributes) :
+            $externalAttributes;
         $xattr = (($externalAttributes >> 16) & 0xFFFF);
         switch ($entry->getPlatform()) {
             case self::MADE_BY_MS_DOS:
@@ -570,8 +577,8 @@ class ZipInfo
         return __CLASS__ . ' {'
             . 'Name="' . $this->getName() . '", '
             . ($this->isFolder() ? 'Folder, ' : '')
-            . 'Size="' . FilesUtil::humanSize($this->getSize()).'"'
-            . ', Compressed size="' . FilesUtil::humanSize($this->getCompressedSize()).'"'
+            . 'Size="' . FilesUtil::humanSize($this->getSize()) . '"'
+            . ', Compressed size="' . FilesUtil::humanSize($this->getCompressedSize()) . '"'
             . ', Modified time="' . date(DATE_W3C, $this->getMtime()) . '", '
             . ($this->getCtime() !== null ? 'Created time="' . date(DATE_W3C, $this->getCtime()) . '", ' : '')
             . ($this->getAtime() !== null ? 'Accessed time="' . date(DATE_W3C, $this->getAtime()) . '", ' : '')

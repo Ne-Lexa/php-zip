@@ -260,7 +260,7 @@ abstract class ZipAbstractEntry implements ZipEntry
         // description of Data Descriptor in ZIP File Format Specification!
         return 0xffffffff <= $this->getCompressedSize()
             || 0xffffffff <= $this->getSize()
-            || 0xffffffff <= $this->getOffset();
+            || 0xffffffff <= sprintf('%u', $this->getOffset());
     }
 
     /**
@@ -282,12 +282,6 @@ abstract class ZipAbstractEntry implements ZipEntry
      */
     public function setCompressedSize($compressedSize)
     {
-        if (self::UNKNOWN != $compressedSize) {
-            $compressedSize = sprintf('%u', $compressedSize);
-            if (0 > $compressedSize || $compressedSize > 0x7fffffffffffffff) {
-                throw new ZipException("Compressed size out of range - " . $this->name);
-            }
-        }
         $this->compressedSize = $compressedSize;
         return $this;
     }
@@ -311,12 +305,6 @@ abstract class ZipAbstractEntry implements ZipEntry
      */
     public function setSize($size)
     {
-        if (self::UNKNOWN != $size) {
-            $size = sprintf('%u', $size);
-            if (0 > $size || $size > 0x7fffffffffffffff) {
-                throw new ZipException("Uncompressed Size out of range - " . $this->name);
-            }
-        }
         $this->size = $size;
         return $this;
     }
@@ -338,10 +326,6 @@ abstract class ZipAbstractEntry implements ZipEntry
      */
     public function setOffset($offset)
     {
-        $offset = sprintf('%u', $offset);
-        if (0 > $offset || $offset > 0x7fffffffffffffff) {
-            throw new ZipException("Offset out of range - " . $this->name);
-        }
         $this->offset = $offset;
         return $this;
     }
@@ -507,7 +491,7 @@ abstract class ZipAbstractEntry implements ZipEntry
      */
     public function getDosTime()
     {
-        return $this->dosTime & 0xffffffff;
+        return $this->dosTime;
     }
 
     /**
@@ -553,7 +537,7 @@ abstract class ZipAbstractEntry implements ZipEntry
         if (!$this->isInit(self::BIT_EXTERNAL_ATTR)) {
             return $this->isDirectory() ? 0x10 : 0;
         }
-        return $this->externalAttributes & 0xffffffff;
+        return $this->externalAttributes;
     }
 
     /**
@@ -567,10 +551,6 @@ abstract class ZipAbstractEntry implements ZipEntry
     {
         $known = self::UNKNOWN != $externalAttributes;
         if ($known) {
-            $externalAttributes = sprintf('%u', $externalAttributes);
-            if (0x00000000 > $externalAttributes || $externalAttributes > 0xffffffff) {
-                throw new ZipException("external file attributes out of range - " . $this->name);
-            }
             $this->externalAttributes = $externalAttributes;
         } else {
             $this->externalAttributes = 0;
@@ -701,7 +681,7 @@ abstract class ZipAbstractEntry implements ZipEntry
      */
     public function getCrc()
     {
-        return $this->crc & 0xffffffff;
+        return $this->crc;
     }
 
     /**
@@ -713,10 +693,6 @@ abstract class ZipAbstractEntry implements ZipEntry
      */
     public function setCrc($crc)
     {
-        $crc = sprintf('%u', $crc);
-        if (0x00000000 > $crc || $crc > 0xffffffff) {
-            throw new ZipException("CRC-32 out of range - " . $this->name);
-        }
         $this->crc = $crc;
         $this->setInit(self::BIT_CRC, true);
         return $this;

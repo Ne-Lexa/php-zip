@@ -19,7 +19,7 @@ class PackUtil
      */
     public static function packLongLE($longValue)
     {
-        if (version_compare(PHP_VERSION, '5.6.3') >= 0) {
+        if (PHP_INT_SIZE === 8 && PHP_VERSION_ID >= 506030) {
             return pack("P", $longValue);
         }
 
@@ -39,7 +39,7 @@ class PackUtil
      */
     public static function unpackLongLE($value)
     {
-        if (version_compare(PHP_VERSION, '5.6.3') >= 0) {
+        if (PHP_INT_SIZE === 8 && PHP_VERSION_ID >= 506030) {
             return unpack('P', $value)[1];
         }
         $unpack = unpack('Va/Vb', $value);

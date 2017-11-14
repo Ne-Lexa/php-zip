@@ -83,7 +83,7 @@ class PhpZipExtResourceTest extends ZipTestCase
      * Bug #49072 (feof never returns true for damaged file in zip)
      * @see https://github.com/php/php-src/blob/master/ext/zip/tests/bug49072.phpt
      * @expectedException \PhpZip\Exception\Crc32Exception
-     * @expectedExceptionMessage file1 (expected CRC32 value 0xc935c834, but is actually 0x76301511)
+     * @expectedExceptionMessage file1
      */
     public function testBug49072()
     {

@@ -251,6 +251,7 @@ class ZipInputStream implements ZipInputStreamInterface
             // Extra Field may have been parsed, map it to the real
             // offset and conditionally update the preamble size from it.
             $lfhOff = $this->mapper->map($entry->getOffset());
+            $lfhOff = PHP_INT_SIZE === 4 ? sprintf('%u', $lfhOff) : $lfhOff;
             if ($lfhOff < $this->preamble) {
                 $this->preamble = $lfhOff;
             }
@@ -353,6 +354,8 @@ class ZipInputStream implements ZipInputStreamInterface
 
         $pos = $entry->getOffset();
         assert(ZipEntry::UNKNOWN !== $pos);
+        $pos = PHP_INT_SIZE === 4 ? sprintf('%u', $pos) : $pos;
+
         $startPos = $pos = $this->mapper->map($pos);
         fseek($this->in, $startPos);
 
@@ -374,6 +377,7 @@ class ZipInputStream implements ZipInputStreamInterface
 
         // Get raw entry content
         $compressedSize = $entry->getCompressedSize();
+        $compressedSize = PHP_INT_SIZE === 4 ? sprintf('%u', $compressedSize) : $compressedSize;
         if ($compressedSize > 0) {
             $content = fread($this->in, $compressedSize);
         } else {
@@ -417,9 +421,13 @@ class ZipInputStream implements ZipInputStreamInterface
                     fseek($this->in, $startPos + 14);
                     // The CRC32 in the Local File Header.
                     $localCrc = sprintf('%u', fread($this->in, 4)[1]);
+                    $localCrc = PHP_INT_SIZE === 4 ? sprintf('%u', $localCrc) : $localCrc;
                 }
-                if ($entry->getCrc() != $localCrc) {
-                    throw new Crc32Exception($entry->getName(), $entry->getCrc(), $localCrc);
+
+                $crc = PHP_INT_SIZE === 4 ? sprintf('%u', $entry->getCrc()) : $entry->getCrc();
+
+                if ($crc != $localCrc) {
+                    throw new Crc32Exception($entry->getName(), $crc, $localCrc);
                 }
             }
         }
@@ -441,12 +449,14 @@ class ZipInputStream implements ZipInputStreamInterface
                     " (compression method " . $method . " is not supported)");
         }
         if (!$skipCheckCrc) {
-            $localCrc = sprintf('%u', crc32($content));
-            if ($entry->getCrc() != $localCrc) {
+            $localCrc = crc32($content);
+            $localCrc = PHP_INT_SIZE === 4 ? sprintf('%u', $localCrc) : $localCrc;
+            $crc = PHP_INT_SIZE === 4 ? sprintf('%u', $entry->getCrc()) : $entry->getCrc();
+            if ($crc != $localCrc) {
                 if ($isEncrypted) {
                     throw new ZipCryptoException("Wrong password");
                 }
-                throw new Crc32Exception($entry->getName(), $entry->getCrc(), $localCrc);
+                throw new Crc32Exception($entry->getName(), $crc, $localCrc);
             }
         }
         return $content;
@@ -468,6 +478,7 @@ class ZipInputStream implements ZipInputStreamInterface
     {
         $pos = $entry->getOffset();
         assert(ZipEntry::UNKNOWN !== $pos);
+        $pos = PHP_INT_SIZE === 4 ? sprintf('%u', $pos) : $pos;
         $pos = $this->mapper->map($pos);
 
         $extraLength = strlen($entry->getExtra());
@@ -510,7 +521,10 @@ class ZipInputStream implements ZipInputStreamInterface
      */
     public function copyEntryData(ZipEntry $entry, ZipOutputStreamInterface $out)
     {
-        $position = $entry->getOffset() + ZipEntry::LOCAL_FILE_HEADER_MIN_LEN +
+        $offset = $entry->getOffset();
+        $offset = PHP_INT_SIZE === 4 ? sprintf('%u', $offset) : $offset;
+        $offset = $this->mapper->map($offset);
+        $position = $offset + ZipEntry::LOCAL_FILE_HEADER_MIN_LEN +
             strlen($entry->getName()) + strlen($entry->getExtra());
         $length = $entry->getCompressedSize();
         fseek($this->in, $position, SEEK_SET);
