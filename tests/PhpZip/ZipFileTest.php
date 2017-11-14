@@ -30,6 +30,10 @@ class ZipFileTest extends ZipTestCase
      */
     public function testOpenFileCantOpen()
     {
+        if (0 === posix_getuid()){
+            $this->markTestSkipped('Skip the test for a user with root privileges');
+        }
+
         self::assertNotFalse(file_put_contents($this->outputFilename, 'content'));
         self::assertTrue(chmod($this->outputFilename, 0222));
 
@@ -1003,6 +1007,10 @@ class ZipFileTest extends ZipTestCase
      */
     public function testExtractFail3()
     {
+        if (0 === posix_getuid()){
+            $this->markTestSkipped('Skip the test for a user with root privileges');
+        }
+
         $zipFile = new ZipFile();
         $zipFile['file'] = 'content';
         $zipFile->saveAsFile($this->outputFilename);
@@ -1205,6 +1213,10 @@ class ZipFileTest extends ZipTestCase
      */
     public function testAddFileCantOpen()
     {
+        if (0 === posix_getuid()){
+            $this->markTestSkipped('Skip the test for a user with root privileges');
+        }
+
         self::assertNotFalse(file_put_contents($this->outputFilename, ''));
         self::assertTrue(chmod($this->outputFilename, 0244));
 
@@ -1489,6 +1501,10 @@ class ZipFileTest extends ZipTestCase
      */
     public function testSaveAsFileNotWritable()
     {
+        if (0 === posix_getuid()){
+            $this->markTestSkipped('Skip the test for a user with root privileges');
+        }
+
         self::assertTrue(mkdir($this->outputDirname, 0444, true));
         self::assertTrue(chmod($this->outputDirname, 0444));
 
