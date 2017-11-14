@@ -32,6 +32,7 @@
   + [Сохранение файла или вывод в браузер](#Documentation-Save-Or-Output-Entries)
   + [Закрытие архива](#Documentation-Close-Zip-Archive)
 - [Запуск тестов](#Running-Tests)
+- [История изменений](#Changelog)
 - [Обновление версий](#Upgrade)
   + [Обновление с версии 2 до версии 3.0](#Upgrade-v2-to-v3)
 
@@ -779,6 +780,8 @@ composer install --dev
 ```bash
 vendor/bin/phpunit -v -c phpunit.xml
 ```
+### <a name="Changelog"></a> История изменений
+[Ссылка на Changelog](CHANGELOG.md)
 ### <a name="Upgrade"></a> Обновление версий
 #### <a name="Upgrade-v2-to-v3"></a> Обновление с версии 2 до версии 3.0
 Обновите мажорную версию в файле `composer.json` до `^3.0`.
