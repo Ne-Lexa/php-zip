@@ -1080,7 +1080,7 @@ class ZipFile implements ZipFileInterface
     }
 
     /**
-     * Set password for zip archive
+     * Sets a new password for all files in the archive.
      *
      * @param string $password
      * @param int|null $encryptionMethod Encryption method
@@ -1100,8 +1100,10 @@ class ZipFile implements ZipFileInterface
     }
 
     /**
+     * Sets a new password of an entry defined by its name.
+     *
      * @param string $entryName
-     * @param string|null $password
+     * @param string $password
      * @param int|null $encryptionMethod
      * @return ZipFileInterface
      * @throws ZipException
@@ -1120,29 +1122,29 @@ class ZipFile implements ZipFileInterface
     /**
      * Remove password for all entries for update.
      * @return ZipFileInterface
-     * @deprecated using ZipFileInterface::removePassword()
+     * @deprecated using ZipFileInterface::disableEncryption()
      */
     public function withoutPassword()
     {
-        return $this->removePassword();
+        return $this->disableEncryption();
     }
 
     /**
-     * Remove password for all entries for update.
+     * Disable encryption for all entries that are already in the archive.
      * @return ZipFileInterface
      */
-    public function removePassword()
+    public function disableEncryption()
     {
         $this->zipModel->removePassword();
         return $this;
     }
 
     /**
-     * Remove password for concrete entry.
+     * Disable encryption of an entry defined by its name.
      * @param string $entryName
      * @return ZipFileInterface
      */
-    public function removePasswordEntry($entryName)
+    public function disableEncryptionEntry($entryName)
     {
         $this->zipModel->removePasswordEntry($entryName);
         return $this;

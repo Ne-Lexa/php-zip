@@ -119,6 +119,8 @@ $zipFile
 - [ZipFile::deleteFromGlob](#Documentation-ZipFile-deleteFromGlob) - удаляет записи в соответствии с glob шаблоном.
 - [ZipFile::deleteFromRegex](#Documentation-ZipFile-deleteFromRegex) - удаляет записи в соответствии с регулярным выражением.
 - [ZipFile::deleteAll](#Documentation-ZipFile-deleteAll) - удаляет все записи в ZIP-архиве.
+- [ZipFile::disableEncryption](#Documentation-ZipFile-disableEncryption) - отключает шифрования всех записей, находящихся в архиве.
+- [ZipFile::disableEncryptionEntry](#Documentation-ZipFile-disableEncryptionEntry) - отключает шифрование записи по её имени.
 - [ZipFile::extractTo](#Documentation-ZipFile-extractTo) - извлекает содержимое архива в заданную директорию.
 - [ZipFile::getAllInfo](#Documentation-ZipFile-getAllInfo) - возвращает подробную информацию обо всех записях в архиве.
 - [ZipFile::getArchiveComment](#Documentation-ZipFile-getArchiveComment) - возвращает комментарий ZIP-архива.
@@ -135,8 +137,6 @@ $zipFile
 - [ZipFile::outputAsAttachment](#Documentation-ZipFile-outputAsAttachment) - выводит ZIP-архив в браузер.
 - [ZipFile::outputAsResponse](#Documentation-ZipFile-outputAsResponse) - выводит ZIP-архив, как Response PSR-7.
 - [ZipFile::outputAsString](#Documentation-ZipFile-outputAsString) - выводит ZIP-архив в виде строки.
-- [ZipFile::removePassword](#Documentation-ZipFile-removePassword) - удаляет пароль у всех файлов в архиве.
-- [ZipFile::removePasswordEntry](#Documentation-ZipFile-removePasswordEntry) - удаляет пароль у конкретного файла в архиве.
 - [ZipFile::rename](#Documentation-ZipFile-rename) - переименовывает запись по имени.
 - [ZipFile::rewrite](#Documentation-ZipFile-rewrite) - сохраняет изменения и заново открывает изменившийся архив.
 - [ZipFile::saveAsFile](#Documentation-ZipFile-saveAsFile) - сохраняет архив в файл.
@@ -155,7 +155,7 @@ $zipFile
 - [ZipFile::unchangeAll](#Documentation-ZipFile-unchangeAll) - отменяет все изменения, сделанные в архиве.
 - [ZipFile::unchangeArchiveComment](#Documentation-ZipFile-unchangeArchiveComment) - отменяет изменения в комментарии к архиву.
 - [ZipFile::unchangeEntry](#Documentation-ZipFile-unchangeEntry) - отменяет изменения для конкретной записи архива.
-- ~~ZipFile::withoutPassword~~ - устаревший метод (**deprecated**) используйте метод [ZipFile::removePassword](#Documentation-ZipFile-removePassword).
+- ~~ZipFile::withoutPassword~~ - устаревший метод (**deprecated**) используйте метод [ZipFile::disableEncryption](#Documentation-ZipFile-disableEncryption).
 - ~~ZipFile::withReadPassword~~ - устаревший метод (**deprecated**) используйте метод [ZipFile::setReadPassword](#Documentation-ZipFile-setReadPassword).
 
 #### <a name="Documentation-Open-Zip-Archive"></a> Создание/Открытие ZIP-архива
@@ -678,15 +678,15 @@ $zipFile->setPasswordEntry($entryName, $password);
 $encryptionMethod = ZipFile::ENCRYPTION_METHOD_WINZIP_AES_256;
 $zipFile->setPasswordEntry($entryName, $password, $encryptionMethod);
 ```
-<a name="Documentation-ZipFile-removePassword"></a> **ZipFile::removePassword** - удаляет пароль у всех файлов в архиве.
+<a name="Documentation-ZipFile-disableEncryption"></a> **ZipFile::disableEncryption** - отключает шифрования всех записей, находящихся в архиве.
 
 > _Обратите внимание, что действие данного метода не распространяется на записи, добавленные после выполнения этого метода._
 ```php
-$zipFile->removePassword();
+$zipFile->disableEncryption();
 ```
-<a name="Documentation-ZipFile-removePasswordEntry"></a> **ZipFile::removePasswordEntry** - удаляет пароль у конкретного файла в архиве.
+<a name="Documentation-ZipFile-disableEncryptionEntry"></a> **ZipFile::disableEncryptionEntry** - отключает шифрование записи по её имени.
 ```php
-$zipFile->removePasswordEntry($entryName);
+$zipFile->disableEncryptionEntry($entryName);
 ```
 #### <a name="Documentation-ZipAlign-Usage"></a> zipalign
 <a name="Documentation-ZipFile-setZipAlign"></a> **ZipFile::setZipAlign** - устанавливает выравнивание архива для оптимизации APK файлов (Android packages).
@@ -808,7 +808,7 @@ composer update nelexa/zip
   + `setLevel` в `setCompressionLevel`
   + `ZipFile::setPassword` в `ZipFile::withReadPassword`
   + `ZipOutputFile::setPassword` в `ZipFile::withNewPassword`
-  + `ZipOutputFile::removePasswordAllEntries` в `ZipFile::withoutPassword`
+  + `ZipOutputFile::disableEncryptionAllEntries` в `ZipFile::withoutPassword`
   + `ZipOutputFile::setComment` в `ZipFile::setArchiveComment`
   + `ZipFile::getComment` в `ZipFile::getArchiveComment`
 - Изменились сигнатуры для методов `addDir`, `addFilesFromGlob`, `addFilesFromRegex`.

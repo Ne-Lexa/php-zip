@@ -21,7 +21,7 @@ class ZipPasswordTest extends ZipFileAddDirTest
         }
 
         $password = base64_encode(CryptoUtil::randomBytes(100));
-        $badPassword = "sdgt43r23wefe";
+        $badPassword = "bad password";
 
         // create encryption password with ZipCrypto
         $zipFile = new ZipFile();
@@ -86,7 +86,7 @@ class ZipPasswordTest extends ZipFileAddDirTest
 
         // clear password
         $zipFile->addFromString('file1', '');
-        $zipFile->removePassword();
+        $zipFile->disableEncryption();
         $zipFile->addFromString('file2', '');
         $zipFile->saveAsFile($this->outputFilename);
         $zipFile->close();
@@ -286,10 +286,10 @@ class ZipPasswordTest extends ZipFileAddDirTest
                 self::assertFalse($zipFile->getEntryInfo('file' . $i)->isEncrypted());
             }
         }
-        $zipFile->removePasswordEntry('file3');
+        $zipFile->disableEncryptionEntry('file3');
         self::assertFalse($zipFile->getEntryInfo('file3')->isEncrypted());
         self::asserttrue($zipFile->getEntryInfo('file2')->isEncrypted());
-        $zipFile->removePassword();
+        $zipFile->disableEncryption();
         $infoList = $zipFile->getAllInfo();
         array_walk($infoList, function (ZipInfo $zipInfo) {
             self::assertFalse($zipInfo->isEncrypted());

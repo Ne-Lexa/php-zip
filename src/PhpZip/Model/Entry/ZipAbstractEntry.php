@@ -395,7 +395,7 @@ abstract class ZipAbstractEntry implements ZipEntry
      *
      * @return ZipEntry
      */
-    public function clearEncryption()
+    public function disableEncryption()
     {
         $this->setEncrypted(false);
         $headerId = WinZipAesEntryExtraField::getHeaderId();
@@ -722,7 +722,7 @@ abstract class ZipAbstractEntry implements ZipEntry
         if (!empty($this->password)) {
             $this->setEncrypted(true);
         } else {
-            $this->clearEncryption();
+            $this->disableEncryption();
         }
         return $this;
     }

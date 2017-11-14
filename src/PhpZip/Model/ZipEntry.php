@@ -252,7 +252,7 @@ interface ZipEntry
      *
      * @return ZipEntry
      */
-    public function clearEncryption();
+    public function disableEncryption();
 
     /**
      * Returns the compression method for this entry.

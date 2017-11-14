@@ -119,6 +119,8 @@ Other examples can be found in the `tests/` folder
 - [ZipFile::deleteFromGlob](#Documentation-ZipFile-deleteFromGlob) - deletes a entries in the archive using glob pattern.
 - [ZipFile::deleteFromRegex](#Documentation-ZipFile-deleteFromRegex) - deletes a entries in the archive using PCRE pattern.
 - [ZipFile::deleteAll](#Documentation-ZipFile-deleteAll) - deletes all entries in the ZIP archive.
+- [ZipFile::disableEncryption](#Documentation-ZipFile-disableEncryption) - disable encryption for all entries that are already in the archive.
+- [ZipFile::disableEncryptionEntry](#Documentation-ZipFile-disableEncryptionEntry) - disable encryption of an entry defined by its name.
 - [ZipFile::extractTo](#Documentation-ZipFile-extractTo) - extract the archive contents.
 - [ZipFile::getAllInfo](#Documentation-ZipFile-getAllInfo) - returns detailed information about all entries in the archive.
 - [ZipFile::getArchiveComment](#Documentation-ZipFile-getArchiveComment) - returns the Zip archive comment.
@@ -135,8 +137,6 @@ Other examples can be found in the `tests/` folder
 - [ZipFile::outputAsAttachment](#Documentation-ZipFile-outputAsAttachment) - outputs a ZIP-archive to the browser.
 - [ZipFile::outputAsResponse](#Documentation-ZipFile-outputAsResponse) - outputs a ZIP-archive as PSR-7 Response.
 - [ZipFile::outputAsString](#Documentation-ZipFile-outputAsString) - outputs a ZIP-archive as string.
-- [ZipFile::removePassword](#Documentation-ZipFile-removePassword) - removes the password from all files in the archive.
-- [ZipFile::removePasswordEntry](#Documentation-ZipFile-removePasswordEntry) - removes password from one entry in the archive.
 - [ZipFile::rename](#Documentation-ZipFile-rename) - renames an entry defined by its name.
 - [ZipFile::rewrite](#Documentation-ZipFile-rewrite) - save changes and re-open the changed archive.
 - [ZipFile::saveAsFile](#Documentation-ZipFile-saveAsFile) - saves the archive to a file.
@@ -155,7 +155,7 @@ Other examples can be found in the `tests/` folder
 - [ZipFile::unchangeAll](#Documentation-ZipFile-unchangeAll) - undo all changes done in the archive.
 - [ZipFile::unchangeArchiveComment](#Documentation-ZipFile-unchangeArchiveComment) - undo changes to the archive comment.
 - [ZipFile::unchangeEntry](#Documentation-ZipFile-unchangeEntry) - undo changes of an entry defined by its name.
-- ~~ZipFile::withoutPassword~~ - is an deprecated method, use the [ZipFile::removePassword](#Documentation-ZipFile-removePassword) method.
+- ~~ZipFile::withoutPassword~~ - is an deprecated method, use the [ZipFile::disableEncryption](#Documentation-ZipFile-disableEncryption) method.
 - ~~ZipFile::withReadPassword~~ - is an deprecated method, use the [ZipFile::setReadPassword](#Documentation-ZipFile-setReadPassword) method.
 
 #### <a name="Documentation-Open-Zip-Archive"></a> Creation/Opening of ZIP-archive
@@ -680,15 +680,15 @@ You can set the encryption method:
 $encryptionMethod = ZipFile::ENCRYPTION_METHOD_WINZIP_AES_256;
 $zipFile->setPasswordEntry($entryName, $password, $encryptionMethod);
 ```
-<a name="Documentation-ZipFile-removePassword"></a> **ZipFile::removePassword** - removes the password from all files in the archive.
+<a name="Documentation-ZipFile-disableEncryption"></a> **ZipFile::disableEncryption** - disable encryption for all entries that are already in the archive.
 
 > _Note that this method does not apply to entries that were added after this method was run._
 ```php
-$zipFile->removePassword();
+$zipFile->disableEncryption();
 ```
-<a name="Documentation-ZipFile-removePasswordEntry"></a> **ZipFile::removePasswordEntry** - removes password from one entry in the archive.
+<a name="Documentation-ZipFile-disableEncryptionEntry"></a> **ZipFile::disableEncryptionEntry** - disable encryption of an entry defined by its name.
 ```php
-$zipFile->removePasswordEntry($entryName);
+$zipFile->disableEncryptionEntry($entryName);
 ```
 #### <a name="Documentation-ZipAlign-Usage"></a> zipalign
 <a name="Documentation-ZipFile-setZipAlign"></a> **ZipFile::setZipAlign** - sets the alignment of the archive to optimize APK files (Android packages).
@@ -807,7 +807,7 @@ Update your code to work with the new version:
   + `setLevel` to `setCompressionLevel`
   + `ZipFile::setPassword` to `ZipFile::withReadPassword`
   + `ZipOutputFile::setPassword` to `ZipFile::withNewPassword`
-  + `ZipOutputFile::removePasswordAllEntries` to `ZipFile::withoutPassword`
+  + `ZipOutputFile::disableEncryptionAllEntries` to `ZipFile::withoutPassword`
   + `ZipOutputFile::setComment` to `ZipFile::setArchiveComment`
   + `ZipFile::getComment` to `ZipFile::getArchiveComment`
 - Changed signature for methods `addDir`, `addFilesFromGlob`, `addFilesFromRegex`.

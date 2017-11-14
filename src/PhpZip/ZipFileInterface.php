@@ -513,7 +513,7 @@ interface ZipFileInterface extends \Countable, \ArrayAccess, \Iterator
     public function withNewPassword($password, $encryptionMethod = self::ENCRYPTION_METHOD_WINZIP_AES_256);
 
     /**
-     * Set password for zip archive
+     * Sets a new password for all files in the archive.
      *
      * @param string $password
      * @param int|null $encryptionMethod Encryption method
@@ -522,32 +522,34 @@ interface ZipFileInterface extends \Countable, \ArrayAccess, \Iterator
     public function setPassword($password, $encryptionMethod = self::ENCRYPTION_METHOD_WINZIP_AES_256);
 
     /**
+     * Sets a new password of an entry defined by its name.
+     *
      * @param string $entryName
      * @param string $password
      * @param int|null $encryptionMethod
-     * @return mixed
+     * @return ZipFileInterface
      */
     public function setPasswordEntry($entryName, $password, $encryptionMethod = null);
 
     /**
      * Remove password for all entries for update.
      * @return ZipFileInterface
-     * @deprecated using ZipFileInterface::removePassword()
+     * @deprecated using ZipFileInterface::disableEncryption()
      */
     public function withoutPassword();
 
     /**
-     * Remove password for all entries for update.
+     * Disable encryption for all entries that are already in the archive.
      * @return ZipFileInterface
      */
-    public function removePassword();
+    public function disableEncryption();
 
     /**
-     * Remove password for concrete entry.
+     * Disable encryption of an entry defined by its name.
      * @param string $entryName
      * @return ZipFileInterface
      */
-    public function removePasswordEntry($entryName);
+    public function disableEncryptionEntry($entryName);
 
     /**
      * Undo all changes done in the archive

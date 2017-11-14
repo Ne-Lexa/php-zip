@@ -162,6 +162,9 @@ class ZipModel implements \Countable
         $this->matcher()->all()->setPassword(null);
     }
 
+    /**
+     * @param string|ZipEntry $entryName
+     */
     public function removePasswordEntry($entryName)
     {
         $this->matcher()->add($entryName)->setPassword(null);
