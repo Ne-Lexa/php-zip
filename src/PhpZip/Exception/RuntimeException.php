@@ -1,4 +1,5 @@
 <?php
+
 namespace PhpZip\Exception;
 
 /**
@@ -9,5 +10,4 @@ namespace PhpZip\Exception;
  */
 class RuntimeException extends ZipException
 {
-
 }

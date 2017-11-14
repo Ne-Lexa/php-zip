@@ -1,4 +1,5 @@
 <?php
+
 namespace PhpZip;
 
 use PhpZip\Util\Iterator\IgnoreFilesFilterIterator;
@@ -9,7 +10,7 @@ use PhpZip\Util\Iterator\IgnoreFilesRecursiveFilterIterator;
  */
 class ZipFileAddDirTest extends ZipTestCase
 {
-    private static $files = [
+    protected static $files = [
         '.hidden' => 'Hidden file',
         'text file.txt' => 'Text file',
         'Текстовый документ.txt' => 'Текстовый документ',
@@ -52,7 +53,7 @@ class ZipFileAddDirTest extends ZipTestCase
         }
     }
 
-    protected static function assertFilesResult(ZipFile $zipFile, array $actualResultFiles = [], $localPath = '/')
+    protected static function assertFilesResult(ZipFileInterface $zipFile, array $actualResultFiles = [], $localPath = '/')
     {
         $localPath = rtrim($localPath, '/');
         $localPath = empty($localPath) ? "" : $localPath . '/';
@@ -134,6 +135,29 @@ class ZipFileAddDirTest extends ZipTestCase
         $zipFile->close();
     }
 
+    public function testAddFilesFromIteratorEmptyLocalPath()
+    {
+        $localPath = '';
+
+        $directoryIterator = new \DirectoryIterator($this->outputDirname);
+
+        $zipFile = new ZipFile();
+        $zipFile->addFilesFromIterator($directoryIterator, $localPath);
+        $zipFile->saveAsFile($this->outputFilename);
+        $zipFile->close();
+
+        self::assertCorrectZipArchive($this->outputFilename);
+
+        $zipFile->openFile($this->outputFilename);
+        self::assertFilesResult($zipFile, [
+            '.hidden',
+            'text file.txt',
+            'Текстовый документ.txt',
+            'empty dir/',
+        ]);
+        $zipFile->close();
+    }
+
     public function testAddFilesFromRecursiveIterator()
     {
         $localPath = 'to/project';
@@ -182,7 +206,8 @@ class ZipFileAddDirTest extends ZipTestCase
         $zipFile->close();
     }
 
-    public function testAddFilesFromIteratorWithIgnoreFiles(){
+    public function testAddFilesFromIteratorWithIgnoreFiles()
+    {
         $localPath = 'to/project';
         $ignoreFiles = [
             'Текстовый документ.txt',
@@ -207,7 +232,8 @@ class ZipFileAddDirTest extends ZipTestCase
         $zipFile->close();
     }
 
-    public function testAddFilesFromRecursiveIteratorWithIgnoreFiles(){
+    public function testAddFilesFromRecursiveIteratorWithIgnoreFiles()
+    {
         $localPath = 'to/project';
         $ignoreFiles = [
             '.hidden',
@@ -354,6 +380,4 @@ class ZipFileAddDirTest extends ZipTestCase
         self::assertFilesResult($zipFile, array_keys(self::$files), $localPath);
         $zipFile->close();
     }
-
-
 }

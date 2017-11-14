@@ -1,10 +1,11 @@
 <?php
+
 namespace PhpZip\Model;
 
-use PhpZip\Extra\NtfsExtraField;
-use PhpZip\Extra\WinZipAesEntryExtraField;
+use PhpZip\Extra\Fields\NtfsExtraField;
+use PhpZip\Extra\Fields\WinZipAesEntryExtraField;
 use PhpZip\Util\FilesUtil;
-use PhpZip\ZipFile;
+use PhpZip\ZipFileInterface;
 
 /**
  * Zip info
@@ -86,7 +87,8 @@ class ZipInfo
     ];
 
     private static $valuesCompressionMethod = [
-        ZipFile::METHOD_STORED => 'no compression',
+        ZipEntry::UNKNOWN => 'unknown',
+        ZipFileInterface::METHOD_STORED => 'no compression',
         1 => 'shrink',
         2 => 'reduce level 1',
         3 => 'reduce level 2',
@@ -94,7 +96,7 @@ class ZipInfo
         5 => 'reduce level 4',
         6 => 'implode',
         7 => 'reserved for Tokenizing compression algorithm',
-        ZipFile::METHOD_DEFLATED => 'deflate',
+        ZipFileInterface::METHOD_DEFLATED => 'deflate',
         9 => 'deflate64',
         10 => 'PKWARE Data Compression Library Imploding (old IBM TERSE)',
         11 => 'reserved by PKWARE',
@@ -114,72 +116,71 @@ class ZipInfo
     /**
      * @var string
      */
-    private $path;
-
+    private $name;
     /**
      * @var bool
      */
     private $folder;
-
     /**
      * @var int
      */
     private $size;
-
     /**
      * @var int
      */
     private $compressedSize;
-
     /**
      * @var int
      */
     private $mtime;
-
     /**
      * @var int|null
      */
     private $ctime;
-
     /**
      * @var int|null
      */
     private $atime;
-
     /**
      * @var bool
      */
     private $encrypted;
-
     /**
      * @var string|null
      */
     private $comment;
-
     /**
      * @var int
      */
     private $crc;
-
     /**
      * @var string
      */
-    private $method;
-
+    private $methodName;
+    /**
+     * @var int
+     */
+    private $compressionMethod;
     /**
      * @var string
      */
     private $platform;
-
     /**
      * @var int
      */
     private $version;
-
     /**
      * @var string
      */
     private $attributes;
+    /**
+     * @var int|null
+     */
+    private $encryptionMethod;
+    /**
+     * @var int|null
+     */
+    private $compressionLevel;
 
     /**
      * ZipInfo constructor.
@@ -192,35 +193,47 @@ class ZipInfo
         $atime = null;
         $ctime = null;
 
-        $field = $entry->getExtraField(NtfsExtraField::getHeaderId());
+        $field = $entry->getExtraFieldsCollection()->get(NtfsExtraField::getHeaderId());
         if (null !== $field && $field instanceof NtfsExtraField) {
             /**
              * @var NtfsExtraField $field
              */
             $atime = $field->getAtime();
             $ctime = $field->getCtime();
+            $mtime = $field->getMtime();
         }
 
-        $this->path = $entry->getName();
+        $this->name = $entry->getName();
         $this->folder = $entry->isDirectory();
-        $this->size = $entry->getSize();
-        $this->compressedSize = $entry->getCompressedSize();
+        $this->size = PHP_INT_SIZE === 4 ?
+            sprintf('%u', $entry->getSize()) :
+            $entry->getSize();
+        $this->compressedSize = PHP_INT_SIZE === 4 ?
+            sprintf('%u', $entry->getCompressedSize()) :
+            $entry->getCompressedSize();
         $this->mtime = $mtime;
         $this->ctime = $ctime;
         $this->atime = $atime;
         $this->encrypted = $entry->isEncrypted();
+        $this->encryptionMethod = $entry->getEncryptionMethod();
         $this->comment = $entry->getComment();
         $this->crc = $entry->getCrc();
-        $this->method = self::getMethodName($entry);
+        $this->compressionMethod = self::getMethodId($entry);
+        $this->methodName = self::getEntryMethodName($entry);
         $this->platform = self::getPlatformName($entry);
         $this->version = $entry->getVersionNeededToExtract();
+        $this->compressionLevel = $entry->getCompressionLevel();
 
         $attributes = str_repeat(" ", 12);
         $externalAttributes = $entry->getExternalAttributes();
+        $externalAttributes = PHP_INT_SIZE === 4 ?
+            sprintf('%u', $externalAttributes) :
+            $externalAttributes;
         $xattr = (($externalAttributes >> 16) & 0xFFFF);
         switch ($entry->getPlatform()) {
             case self::MADE_BY_MS_DOS:
-            /** @noinspection PhpMissingBreakStatementInspection */
+                // no break
+                /** @noinspection PhpMissingBreakStatementInspection */
             case self::MADE_BY_WINDOWS_NTFS:
                 if ($entry->getPlatform() != self::MADE_BY_MS_DOS ||
                     ($xattr & 0700) !=
@@ -237,11 +250,12 @@ class ZipInfo
                     if ($xattr & 0x10) {
                         $attributes[0] = 'd';
                         $attributes[3] = 'x';
-                    } else
+                    } else {
                         $attributes[0] = '-';
-                    if ($xattr & 0x08)
+                    }
+                    if ($xattr & 0x08) {
                         $attributes[0] = 'V';
-                    else {
+                    } else {
                         $ext = strtolower(pathinfo($entry->getName(), PATHINFO_EXTENSION));
                         if (in_array($ext, ["com", "exe", "btm", "cmd", "bat"])) {
                             $attributes[3] = 'x';
@@ -250,6 +264,7 @@ class ZipInfo
                     break;
                 } /* else: fall through! */
 
+            // no break
             default: /* assume Unix-like */
                 switch ($xattr & self::UNX_IFMT) {
                     case self::UNX_IFDIR:
@@ -284,33 +299,59 @@ class ZipInfo
                 $attributes[5] = ($xattr & self::UNX_IWGRP) ? 'w' : '-';
                 $attributes[8] = ($xattr & self::UNX_IWOTH) ? 'w' : '-';
 
-                if ($xattr & self::UNX_IXUSR)
+                if ($xattr & self::UNX_IXUSR) {
                     $attributes[3] = ($xattr & self::UNX_ISUID) ? 's' : 'x';
-                else
-                    $attributes[3] = ($xattr & self::UNX_ISUID) ? 'S' : '-';  /* S==undefined */
-                if ($xattr & self::UNX_IXGRP)
-                    $attributes[6] = ($xattr & self::UNX_ISGID) ? 's' : 'x';  /* == UNX_ENFMT */
-                else
-                    $attributes[6] = ($xattr & self::UNX_ISGID) ? 'S' : '-';  /* SunOS 4.1.x */
-                if ($xattr & self::UNX_IXOTH)
-                    $attributes[9] = ($xattr & self::UNX_ISVTX) ? 't' : 'x';  /* "sticky bit" */
-                else
-                    $attributes[9] = ($xattr & self::UNX_ISVTX) ? 'T' : '-';  /* T==undefined */
+                } else {
+                    $attributes[3] = ($xattr & self::UNX_ISUID) ? 'S' : '-';
+                }  /* S==undefined */
+                if ($xattr & self::UNX_IXGRP) {
+                    $attributes[6] = ($xattr & self::UNX_ISGID) ? 's' : 'x';
+                }  /* == UNX_ENFMT */
+                else {
+                    $attributes[6] = ($xattr & self::UNX_ISGID) ? 'S' : '-';
+                }  /* SunOS 4.1.x */
+                if ($xattr & self::UNX_IXOTH) {
+                    $attributes[9] = ($xattr & self::UNX_ISVTX) ? 't' : 'x';
+                }  /* "sticky bit" */
+                else {
+                    $attributes[9] = ($xattr & self::UNX_ISVTX) ? 'T' : '-';
+                }  /* T==undefined */
         }
         $this->attributes = trim($attributes);
     }
 
     /**
      * @param ZipEntry $entry
+     * @return int
+     */
+    private static function getMethodId(ZipEntry $entry)
+    {
+        $method = $entry->getMethod();
+        if ($entry->isEncrypted()) {
+            if ($entry->getMethod() === ZipEntry::METHOD_WINZIP_AES) {
+                $field = $entry->getExtraFieldsCollection()->get(WinZipAesEntryExtraField::getHeaderId());
+                if (null !== $field) {
+                    /**
+                     * @var WinZipAesEntryExtraField $field
+                     */
+                    $method = $field->getMethod();
+                }
+            }
+        }
+        return $method;
+    }
+
+    /**
+     * @param ZipEntry $entry
      * @return string
      */
-    public static function getMethodName(ZipEntry $entry)
+    private static function getEntryMethodName(ZipEntry $entry)
     {
         $return = '';
         if ($entry->isEncrypted()) {
             if ($entry->getMethod() === ZipEntry::METHOD_WINZIP_AES) {
-                $field = $entry->getExtraField(WinZipAesEntryExtraField::getHeaderId());
                 $return = ucfirst(self::$valuesCompressionMethod[$entry->getMethod()]);
+                $field = $entry->getExtraFieldsCollection()->get(WinZipAesEntryExtraField::getHeaderId());
                 if (null !== $field) {
                     /**
                      * @var WinZipAesEntryExtraField $field
@@ -348,34 +389,20 @@ class ZipInfo
     }
 
     /**
-     * @return array
+     * @return string
      */
-    public function toArray()
+    public function getName()
     {
-        return [
-            'path' => $this->getPath(),
-            'folder' => $this->isFolder(),
-            'size' => $this->getSize(),
-            'compressed_size' => $this->getCompressedSize(),
-            'modified' => $this->getMtime(),
-            'created' => $this->getCtime(),
-            'accessed' => $this->getAtime(),
-            'attributes' => $this->getAttributes(),
-            'encrypted' => $this->isEncrypted(),
-            'comment' => $this->getComment(),
-            'crc' => $this->getCrc(),
-            'method' => $this->getMethod(),
-            'platform' => $this->getPlatform(),
-            'version' => $this->getVersion()
-        ];
+        return $this->name;
     }
 
     /**
      * @return string
+     * @deprecated use \PhpZip\Model\ZipInfo::getName()
      */
     public function getPath()
     {
-        return $this->path;
+        return $this->getName();
     }
 
     /**
@@ -427,6 +454,14 @@ class ZipInfo
     }
 
     /**
+     * @return string
+     */
+    public function getAttributes()
+    {
+        return $this->attributes;
+    }
+
+    /**
      * @return boolean
      */
     public function isEncrypted()
@@ -452,10 +487,19 @@ class ZipInfo
 
     /**
      * @return string
+     * @deprecated use \PhpZip\Model\ZipInfo::getMethodName()
      */
     public function getMethod()
     {
-        return $this->method;
+        return $this->getMethodName();
+    }
+
+    /**
+     * @return string
+     */
+    public function getMethodName()
+    {
+        return $this->methodName;
     }
 
     /**
@@ -475,35 +519,76 @@ class ZipInfo
     }
 
     /**
-     * @return string
+     * @return int|null
      */
-    public function getAttributes()
+    public function getEncryptionMethod()
     {
-        return $this->attributes;
+        return $this->encryptionMethod;
+    }
+
+    /**
+     * @return int|null
+     */
+    public function getCompressionLevel()
+    {
+        return $this->compressionLevel;
+    }
+
+    /**
+     * @return int
+     */
+    public function getCompressionMethod()
+    {
+        return $this->compressionMethod;
+    }
+
+    /**
+     * @return array
+     */
+    public function toArray()
+    {
+        return [
+            'name' => $this->getName(),
+            'path' => $this->getName(), // deprecated
+            'folder' => $this->isFolder(),
+            'size' => $this->getSize(),
+            'compressed_size' => $this->getCompressedSize(),
+            'modified' => $this->getMtime(),
+            'created' => $this->getCtime(),
+            'accessed' => $this->getAtime(),
+            'attributes' => $this->getAttributes(),
+            'encrypted' => $this->isEncrypted(),
+            'encryption_method' => $this->getEncryptionMethod(),
+            'comment' => $this->getComment(),
+            'crc' => $this->getCrc(),
+            'method' => $this->getMethodName(), // deprecated
+            'method_name' => $this->getMethodName(),
+            'compression_method' => $this->getCompressionMethod(),
+            'platform' => $this->getPlatform(),
+            'version' => $this->getVersion()
+        ];
     }
 
     /**
      * @return string
      */
-    function __toString()
+    public function __toString()
     {
-        return 'ZipInfo {'
-        . 'Path="' . $this->getPath() . '", '
-        . ($this->isFolder() ? 'Folder, ' : '')
-        . 'Size=' . FilesUtil::humanSize($this->getSize())
-        . ', Compressed size=' . FilesUtil::humanSize($this->getCompressedSize())
-        . ', Modified time=' . date(DATE_W3C, $this->getMtime()) . ', '
-        . ($this->getCtime() !== null ? 'Created time=' . date(DATE_W3C, $this->getCtime()) . ', ' : '')
-        . ($this->getAtime() !== null ? 'Accessed time=' . date(DATE_W3C, $this->getAtime()) . ', ' : '')
-        . ($this->isEncrypted() ? 'Encrypted, ' : '')
-        . (!empty($this->comment) ? 'Comment="' . $this->getComment() . '", ' : '')
-        . (!empty($this->crc) ? 'Crc=0x' . dechex($this->getCrc()) . ', ' : '')
-        . 'Method="' . $this->getMethod() . '", '
-        . 'Attributes="' . $this->getAttributes() . '", '
-        . 'Platform="' . $this->getPlatform() . '", '
-        . 'Version=' . $this->getVersion()
-        . '}';
+        return __CLASS__ . ' {'
+            . 'Name="' . $this->getName() . '", '
+            . ($this->isFolder() ? 'Folder, ' : '')
+            . 'Size="' . FilesUtil::humanSize($this->getSize()) . '"'
+            . ', Compressed size="' . FilesUtil::humanSize($this->getCompressedSize()) . '"'
+            . ', Modified time="' . date(DATE_W3C, $this->getMtime()) . '", '
+            . ($this->getCtime() !== null ? 'Created time="' . date(DATE_W3C, $this->getCtime()) . '", ' : '')
+            . ($this->getAtime() !== null ? 'Accessed time="' . date(DATE_W3C, $this->getAtime()) . '", ' : '')
+            . ($this->isEncrypted() ? 'Encrypted, ' : '')
+            . (!empty($this->comment) ? 'Comment="' . $this->getComment() . '", ' : '')
+            . (!empty($this->crc) ? 'Crc=0x' . dechex($this->getCrc()) . ', ' : '')
+            . 'Method name="' . $this->getMethodName() . '", '
+            . 'Attributes="' . $this->getAttributes() . '", '
+            . 'Platform="' . $this->getPlatform() . '", '
+            . 'Version=' . $this->getVersion()
+            . '}';
     }
-
-
 }

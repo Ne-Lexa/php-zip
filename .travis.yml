@@ -21,4 +21,4 @@ before_script:
 
 script:
   - composer validate --no-check-lock
-  - vendor/bin/phpunit -v -c bootstrap.xml
+  - vendor/bin/phpunit -v -c phpunit.xml

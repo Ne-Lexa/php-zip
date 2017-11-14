@@ -1,9 +1,11 @@
 <?php
+
 namespace PhpZip\Model;
 
 use PhpZip\Exception\ZipException;
-use PhpZip\Extra\ExtraField;
-use PhpZip\ZipFile;
+
+use PhpZip\Extra\ExtraFieldsCollection;
+use PhpZip\ZipFileInterface;
 
 /**
  * ZIP file entry.
@@ -39,11 +41,21 @@ interface ZipEntry
     const METHOD_WINZIP_AES = 99;
 
     /** General Purpose Bit Flag mask for encrypted data. */
-    const GPBF_ENCRYPTED = 1;
+    const GPBF_ENCRYPTED = 1; // 1 << 0
+//    (For Methods 8 and 9 - Deflating)
+//    Bit 2  Bit 1
+//    0      0    Normal compression
+//    0      1    Maximum compression
+//    1      0    Fast compression
+//    1      1    Super Fast compression
+    const GPBF_COMPRESSION_FLAG1 = 2; // 1 << 1
+    const GPBF_COMPRESSION_FLAG2 = 4; // 1 << 2
     /** General Purpose Bit Flag mask for data descriptor. */
-    const GPBF_DATA_DESCRIPTOR = 8; // 1 << 3;
+    const GPBF_DATA_DESCRIPTOR = 8; // 1 << 3
+    /** General Purpose Bit Flag mask for strong encryption. */
+    const GPBF_STRONG_ENCRYPTION = 64; // 1 << 6
     /** General Purpose Bit Flag mask for UTF-8. */
-    const GPBF_UTF8 = 2048;
+    const GPBF_UTF8 = 2048; // 1 << 11
 
     /** Local File Header signature. */
     const LOCAL_FILE_HEADER_SIG = 0x04034B50;
@@ -76,19 +88,11 @@ interface ZipEntry
      * Compressed Size                  4
      * Uncompressed Size                4
      */
-    const LOCAL_FILE_HEADER_FILE_NAME_LENGTH_POS = 26; // 1 << 11;
-
-
+    const LOCAL_FILE_HEADER_FILE_NAME_LENGTH_POS = 26;
     /**
-     * @return CentralDirectory
+     * Default compression level for bzip2
      */
-    public function getCentralDirectory();
-
-    /**
-     * @param CentralDirectory $centralDirectory
-     * @return ZipEntry
-     */
-    public function setCentralDirectory(CentralDirectory $centralDirectory);
+    const LEVEL_DEFAULT_BZIP2_COMPRESSION = 4;
 
     /**
      * Returns the ZIP entry name.
@@ -197,7 +201,7 @@ interface ZipEntry
     /**
      * Returns the General Purpose Bit Flags.
      *
-     * @return bool
+     * @return int
      */
     public function getGeneralPurposeBitFlags();
 
@@ -235,20 +239,20 @@ interface ZipEntry
     public function isEncrypted();
 
     /**
-     * Sets the encryption property to false and removes any other
-     * encryption artifacts.
-     *
-     * @return ZipEntry
-     */
-    public function clearEncryption();
-
-    /**
      * Sets the encryption flag for this ZIP entry.
      *
      * @param bool $encrypted
      * @return ZipEntry
      */
     public function setEncrypted($encrypted);
+
+    /**
+     * Sets the encryption property to false and removes any other
+     * encryption artifacts.
+     *
+     * @return ZipEntry
+     */
+    public function disableEncryption();
 
     /**
      * Returns the compression method for this entry.
@@ -312,37 +316,9 @@ interface ZipEntry
     public function setExternalAttributes($externalAttributes);
 
     /**
-     * Return extra field from header id.
-     *
-     * @param int $headerId
-     * @return ExtraField|null
+     * @return ExtraFieldsCollection
      */
-    public function getExtraField($headerId);
-
-    /**
-     * Add extra field.
-     *
-     * @param ExtraField $field
-     * @return ExtraField
-     * @throws ZipException
-     */
-    public function addExtraField($field);
-
-    /**
-     * Return exists extra field from header id.
-     *
-     * @param int $headerId
-     * @return bool
-     */
-    public function hasExtraField($headerId);
-
-    /**
-     * Remove extra field from header id.
-     *
-     * @param int $headerId
-     * @return ExtraField|null
-     */
-    public function removeExtraField($headerId);
+    public function getExtraFieldsCollection();
 
     /**
      * Returns a protective copy of the serialized Extra Fields.
@@ -362,8 +338,6 @@ interface ZipEntry
      *
      * @param string $data The byte array holding the serialized Extra Fields.
      * @throws ZipException if the serialized Extra Fields exceed 64 KB
-     * @return ZipEntry
-     *         or do not conform to the ZIP File Format Specification
      */
     public function setExtra($data);
 
@@ -425,8 +399,10 @@ interface ZipEntry
     /**
      * Set encryption method
      *
-     * @see ZipFile::ENCRYPTION_METHOD_TRADITIONAL
-     * @see ZipFile::ENCRYPTION_METHOD_WINZIP_AES
+     * @see ZipFileInterface::ENCRYPTION_METHOD_TRADITIONAL
+     * @see ZipFileInterface::ENCRYPTION_METHOD_WINZIP_AES_128
+     * @see ZipFileInterface::ENCRYPTION_METHOD_WINZIP_AES_192
+     * @see ZipFileInterface::ENCRYPTION_METHOD_WINZIP_AES_256
      *
      * @param int $encryptionMethod
      * @return ZipEntry
@@ -443,10 +419,13 @@ interface ZipEntry
     public function getEntryContent();
 
     /**
-     * Write local file header, encryption header, file data and data descriptor to output stream.
-     *
-     * @param resource $outputStream
-     * @throws ZipException
+     * @param int $compressionLevel
+     * @return ZipEntry
      */
-    public function writeEntry($outputStream);
+    public function setCompressionLevel($compressionLevel = ZipFileInterface::LEVEL_DEFAULT_COMPRESSION);
+
+    /**
+     * @return int
+     */
+    public function getCompressionLevel();
 }

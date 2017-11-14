@@ -1,20 +1,22 @@
 <?php
+
 namespace PhpZip\Crypto;
 
 use PhpZip\Exception\RuntimeException;
 use PhpZip\Exception\ZipAuthenticationException;
 use PhpZip\Exception\ZipCryptoException;
-use PhpZip\Extra\WinZipAesEntryExtraField;
+use PhpZip\Extra\Fields\WinZipAesEntryExtraField;
 use PhpZip\Model\ZipEntry;
 use PhpZip\Util\CryptoUtil;
 
 /**
  * WinZip Aes Encryption Engine.
  *
+ * @see https://pkware.cachefly.net/webdocs/casestudies/APPNOTE.TXT .ZIP File Format Specification
  * @author Ne-Lexa alexey@nelexa.ru
  * @license MIT
  */
-class WinZipAesEngine implements CryptoEngine
+class WinZipAesEngine implements ZipEncryptionEngine
 {
     /**
      * The block size of the Advanced Encryption Specification (AES) Algorithm
@@ -50,13 +52,16 @@ class WinZipAesEngine implements CryptoEngine
      */
     public function decrypt($content)
     {
+        $extraFieldsCollection = $this->entry->getExtraFieldsCollection();
+
+        if (!isset($extraFieldsCollection[WinZipAesEntryExtraField::getHeaderId()])) {
+            throw new ZipCryptoException($this->entry->getName() . " (missing extra field for WinZip AES entry)");
+        }
+
         /**
          * @var WinZipAesEntryExtraField $field
          */
-        $field = $this->entry->getExtraField(WinZipAesEntryExtraField::getHeaderId());
-        if (null === $field) {
-            throw new ZipCryptoException($this->entry->getName() . " (missing extra field for WinZip AES entry)");
-        }
+        $field = $extraFieldsCollection[WinZipAesEntryExtraField::getHeaderId()];
 
         // Get key strength.
         $keyStrengthBits = $field->getKeyStrength();
@@ -218,8 +223,8 @@ class WinZipAesEngine implements CryptoEngine
         // @see https://sourceforge.net/p/p7zip/discussion/383044/thread/c859a2f0/
         $password = substr($password, 0, 99);
 
-        $keyStrengthBytes = 32;
-        $keyStrengthBits = $keyStrengthBytes * 8;
+        $keyStrengthBits = WinZipAesEntryExtraField::getKeyStrangeFromEncryptionMethod($this->entry->getEncryptionMethod());
+        $keyStrengthBytes = $keyStrengthBits / 8;
 
         assert(self::AES_BLOCK_SIZE_BITS <= $keyStrengthBits);
 

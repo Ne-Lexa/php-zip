@@ -1,9 +1,17 @@
 <?php
+
 namespace PhpZip\Crypto;
 
 use PhpZip\Exception\ZipAuthenticationException;
 
-interface CryptoEngine
+/**
+ * Encryption Engine
+ *
+ * @see https://pkware.cachefly.net/webdocs/casestudies/APPNOTE.TXT .ZIP File Format Specification
+ * @author Ne-Lexa alexey@nelexa.ru
+ * @license MIT
+ */
+interface ZipEncryptionEngine
 {
     /**
      * Decryption string.

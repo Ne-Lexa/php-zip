@@ -1,8 +1,8 @@
 <?php
+
 namespace PhpZip\Util;
 
 use PhpZip\Exception\RuntimeException;
-use PhpZip\Exception\ZipException;
 
 /**
  * Crypto Utils
@@ -17,7 +17,7 @@ class CryptoUtil
      * @return string
      * @throws RuntimeException
      */
-    public static final function randomBytes($length)
+    final public static function randomBytes($length)
     {
         $length = (int)$length;
         if (function_exists('random_bytes')) {

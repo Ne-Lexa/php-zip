@@ -1,4 +1,5 @@
 <?php
+
 namespace PhpZip;
 
 use PhpZip\Model\EndOfCentralDirectory;
@@ -27,8 +28,14 @@ class ZipTestCase extends \PHPUnit_Framework_TestCase
         parent::setUp();
 
         $id = uniqid('phpzip');
-        $this->outputFilename = sys_get_temp_dir() . '/' . $id . '.zip';
-        $this->outputDirname = sys_get_temp_dir() . '/' . $id;
+        $tempDir = sys_get_temp_dir() . '/phpunit-phpzip';
+        if (!is_dir($tempDir)) {
+            if (!mkdir($tempDir, 0755, true)) {
+                throw new \RuntimeException("Dir " . $tempDir . " can't created");
+            }
+        }
+        $this->outputFilename = $tempDir . '/' . $id . '.zip';
+        $this->outputDirname = $tempDir . '/' . $id;
     }
 
     /**
@@ -118,12 +125,13 @@ class ZipTestCase extends \PHPUnit_Framework_TestCase
     {
         if (DIRECTORY_SEPARATOR !== '\\' && `which zipalign`) {
             exec("zipalign -c -v 4 " . escapeshellarg($filename), $output, $returnCode);
-            if ($showErrors && $returnCode !== 0) fwrite(STDERR, implode(PHP_EOL, $output));
+            if ($showErrors && $returnCode !== 0) {
+                fwrite(STDERR, implode(PHP_EOL, $output));
+            }
             return $returnCode === 0;
         } else {
-            fwrite(STDERR, 'Can not find program "zipalign" for test');
+            fwrite(STDERR, 'Can not find program "zipalign" for test' . PHP_EOL);
             return null;
         }
     }
-
 }
