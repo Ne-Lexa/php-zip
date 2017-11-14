@@ -1,7 +1,10 @@
 <?php
-namespace PhpZip\Extra;
+
+namespace PhpZip\Extra\Fields;
 
 use PhpZip\Exception\ZipException;
+use PhpZip\Extra\ExtraField;
+use PhpZip\ZipFileInterface;
 
 /**
  * WinZip AES Extra Field.
@@ -11,7 +14,7 @@ use PhpZip\Exception\ZipException;
  * @author Ne-Lexa alexey@nelexa.ru
  * @license MIT
  */
-class WinZipAesEntryExtraField extends ExtraField
+class WinZipAesEntryExtraField implements ExtraField
 {
     const DATA_SIZE = 7;
     const VENDOR_ID = 17729; // 'A' | ('E' << 8);
@@ -32,10 +35,16 @@ class WinZipAesEntryExtraField extends ExtraField
     const KEY_STRENGTH_192BIT = 192;
     const KEY_STRENGTH_256BIT = 256;
 
-    private static $keyStrengths = [
+    protected static $keyStrengths = [
         self::KEY_STRENGTH_128BIT => 0x01,
         self::KEY_STRENGTH_192BIT => 0x02,
         self::KEY_STRENGTH_256BIT => 0x03
+    ];
+
+    protected static $encryptionMethods = [
+        self::KEY_STRENGTH_128BIT => ZipFileInterface::ENCRYPTION_METHOD_WINZIP_AES_128,
+        self::KEY_STRENGTH_192BIT => ZipFileInterface::ENCRYPTION_METHOD_WINZIP_AES_192,
+        self::KEY_STRENGTH_256BIT => ZipFileInterface::ENCRYPTION_METHOD_WINZIP_AES_256
     ];
 
     /**
@@ -43,21 +52,21 @@ class WinZipAesEntryExtraField extends ExtraField
      *
      * @var int
      */
-    private $vendorVersion = self::VV_AE_1;
+    protected $vendorVersion = self::VV_AE_1;
 
     /**
      * Encryption strength.
      *
      * @var int
      */
-    private $encryptionStrength = self::KEY_STRENGTH_256BIT;
+    protected $encryptionStrength = self::KEY_STRENGTH_256BIT;
 
     /**
      * Zip compression method.
      *
      * @var int
      */
-    private $method;
+    protected $method;
 
     /**
      * Returns the Header ID (type) of this Extra Field.
@@ -69,21 +78,6 @@ class WinZipAesEntryExtraField extends ExtraField
     public static function getHeaderId()
     {
         return 0x9901;
-    }
-
-    /**
-     * Returns the Data Size of this Extra Field.
-     * The Data Size is an unsigned short integer (two bytes)
-     * which indicates the length of the Data Block in bytes and does not
-     * include its own size in this Extra Field.
-     * This property may be initialized by calling ExtraField::readFrom.
-     *
-     * @return int The size of the Data Block in bytes
-     *         or 0 if unknown.
-     */
-    public function getDataSize()
-    {
-        return self::DATA_SIZE;
     }
 
     /**
@@ -156,6 +150,32 @@ class WinZipAesEntryExtraField extends ExtraField
     }
 
     /**
+     * Internal encryption method.
+     *
+     * @return int
+     */
+    public function getEncryptionMethod()
+    {
+        return isset(self::$encryptionMethods[$this->getKeyStrength()]) ?
+            self::$encryptionMethods[$this->getKeyStrength()] :
+            self::$encryptionMethods[self::KEY_STRENGTH_256BIT];
+    }
+
+    /**
+     * @param int $encryptionMethod
+     * @return int
+     * @throws ZipException
+     */
+    public static function getKeyStrangeFromEncryptionMethod($encryptionMethod)
+    {
+        $flipKey = array_flip(self::$encryptionMethods);
+        if (!isset($flipKey[$encryptionMethod])) {
+            throw new ZipException("Unsupport encryption method " . $encryptionMethod);
+        }
+        return $flipKey[$encryptionMethod];
+    }
+
+    /**
      * Sets compression method.
      *
      * @param int $compressionMethod Compression method
@@ -167,37 +187,6 @@ class WinZipAesEntryExtraField extends ExtraField
             throw new ZipException('Compression method out of range');
         }
         $this->method = $compressionMethod;
-    }
-
-    /**
-     * Initializes this Extra Field by deserializing a Data Block of
-     * size bytes $size from the resource $handle at the zero based offset $off.
-     *
-     * @param resource $handle
-     * @param int $off Offset bytes
-     * @param int $size Size
-     * @throws ZipException
-     */
-    public function readFrom($handle, $off, $size)
-    {
-        if (self::DATA_SIZE != $size)
-            throw new ZipException();
-
-        fseek($handle, $off, SEEK_SET);
-        /**
-         * @var int $vendorVersion
-         * @var int $vendorId
-         * @var int $keyStrength
-         * @var int $method
-         */
-        $unpack = unpack('vvendorVersion/vvendorId/ckeyStrength/vmethod', fread($handle, 7));
-        extract($unpack);
-        $this->setVendorVersion($vendorVersion);
-        if (self::VENDOR_ID != $vendorId) {
-            throw new ZipException();
-        }
-        $this->setKeyStrength(self::keyStrength($keyStrength)); // checked
-        $this->setMethod($method);
     }
 
     /**
@@ -218,19 +207,50 @@ class WinZipAesEntryExtraField extends ExtraField
      */
     public static function encryptionStrength($keyStrength)
     {
-        return isset(self::$keyStrengths[$keyStrength]) ? self::$keyStrengths[$keyStrength] : self::$keyStrengths[self::KEY_STRENGTH_128BIT];
+        return isset(self::$keyStrengths[$keyStrength]) ?
+            self::$keyStrengths[$keyStrength] :
+            self::$keyStrengths[self::KEY_STRENGTH_128BIT];
     }
 
     /**
-     * Serializes a Data Block of ExtraField::getDataSize bytes to the
-     * resource $handle at the zero based offset $off.
-     *
-     * @param resource $handle
-     * @param int $off Offset bytes
+     * Serializes a Data Block.
+     * @return string
      */
-    public function writeTo($handle, $off)
+    public function serialize()
     {
-        fseek($handle, $off, SEEK_SET);
-        fwrite($handle, pack('vvcv', $this->vendorVersion, self::VENDOR_ID, $this->encryptionStrength, $this->method));
+        return pack(
+            'vvcv',
+            $this->vendorVersion,
+            self::VENDOR_ID,
+            $this->encryptionStrength,
+            $this->method
+        );
+    }
+
+    /**
+     * Initializes this Extra Field by deserializing a Data Block.
+     * @param string $data
+     * @throws ZipException
+     */
+    public function deserialize($data)
+    {
+        $size = strlen($data);
+        if (self::DATA_SIZE !== $size) {
+            throw new ZipException('WinZip AES Extra data invalid size: ' . $size . '. Must be ' . self::DATA_SIZE);
+        }
+
+        /**
+         * @var int $vendorVersion
+         * @var int $vendorId
+         * @var int $keyStrength
+         * @var int $method
+         */
+        $unpack = unpack('vvendorVersion/vvendorId/ckeyStrength/vmethod', $data);
+        $this->setVendorVersion($unpack['vendorVersion']);
+        if (self::VENDOR_ID !== $unpack['vendorId']) {
+            throw new ZipException('Vendor id invalid: ' . $unpack['vendorId'] . '. Must be ' . self::VENDOR_ID);
+        }
+        $this->setKeyStrength(self::keyStrength($unpack['keyStrength'])); // checked
+        $this->setMethod($unpack['method']);
     }
 }

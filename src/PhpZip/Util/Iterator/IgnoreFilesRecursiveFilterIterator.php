@@ -1,4 +1,5 @@
 <?php
+
 namespace PhpZip\Util\Iterator;
 
 use PhpZip\Util\StringUtil;

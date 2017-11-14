@@ -1,4 +1,5 @@
 <?php
+
 namespace PhpZip\Util;
 
 use PhpZip\Util\Iterator\IgnoreFilesFilterIterator;
@@ -60,7 +61,7 @@ class FilesUtil
         $inCurrent = 0;
         $chars = str_split($globPattern);
         $regexPattern = '';
-        foreach ($chars AS $currentChar) {
+        foreach ($chars as $currentChar) {
             switch ($currentChar) {
                 case '*':
                     $regexPattern .= ($escaping ? "\\*" : '.*');
@@ -103,19 +104,21 @@ class FilesUtil
                     if ($inCurrent > 0 && !$escaping) {
                         $regexPattern .= ')';
                         $inCurrent--;
-                    } else if ($escaping)
+                    } elseif ($escaping) {
                         $regexPattern = "\\}";
-                    else
+                    } else {
                         $regexPattern = "}";
+                    }
                     $escaping = false;
                     break;
                 case ',':
                     if ($inCurrent > 0 && !$escaping) {
                         $regexPattern .= '|';
-                    } else if ($escaping)
+                    } elseif ($escaping) {
                         $regexPattern .= "\\,";
-                    else
+                    } else {
                         $regexPattern = ",";
+                    }
                     break;
                 default:
                     $escaping = false;
@@ -211,12 +214,15 @@ class FilesUtil
      */
     public static function humanSize($size, $unit = null)
     {
-        if (($unit === null && $size >= 1 << 30) || $unit === "GB")
+        if (($unit === null && $size >= 1 << 30) || $unit === "GB") {
             return number_format($size / (1 << 30), 2) . "GB";
-        if (($unit === null && $size >= 1 << 20) || $unit === "MB")
+        }
+        if (($unit === null && $size >= 1 << 20) || $unit === "MB") {
             return number_format($size / (1 << 20), 2) . "MB";
-        if (($unit === null && $size >= 1 << 10) || $unit === "KB")
+        }
+        if (($unit === null && $size >= 1 << 10) || $unit === "KB") {
             return number_format($size / (1 << 10), 2) . "KB";
+        }
         return number_format($size) . " bytes";
     }
 }

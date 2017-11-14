@@ -2,10 +2,11 @@
 
 namespace PhpZip;
 
-use PhpZip\Exception\ZipAuthenticationException;
 use PhpZip\Model\ZipEntry;
+use PhpZip\Model\ZipInfo;
 use PhpZip\Util\CryptoUtil;
 use PhpZip\Util\FilesUtil;
+use Psr\Http\Message\ResponseInterface;
 
 /**
  * ZipFile test
@@ -29,6 +30,10 @@ class ZipFileTest extends ZipTestCase
      */
     public function testOpenFileCantOpen()
     {
+        if (0 === posix_getuid()) {
+            $this->markTestSkipped('Skip the test for a user with root privileges');
+        }
+
         self::assertNotFalse(file_put_contents($this->outputFilename, 'content'));
         self::assertTrue(chmod($this->outputFilename, 0222));
 
@@ -122,7 +127,31 @@ class ZipFileTest extends ZipTestCase
     public function testOpenFromStreamInvalidResourceType()
     {
         $zipFile = new ZipFile();
+        /** @noinspection PhpParamsInspection */
         $zipFile->openFromStream("stream resource");
+    }
+
+    /**
+     * @expectedException \PhpZip\Exception\InvalidArgumentException
+     * @expectedExceptionMessage Invalid resource type - gd.
+     */
+    public function testOpenFromStreamInvalidResourceType2()
+    {
+        $zipFile = new ZipFile();
+        if (!extension_loaded("gd")) {
+            $this->markTestSkipped('not extension gd');
+        }
+        $zipFile->openFromStream(imagecreate(1, 1));
+    }
+
+    /**
+     * @expectedException \PhpZip\Exception\InvalidArgumentException
+     * @expectedExceptionMessage Invalid stream type - dir.
+     */
+    public function testOpenFromStreamInvalidResourceType3()
+    {
+        $zipFile = new ZipFile();
+        $zipFile->openFromStream(opendir(__DIR__));
     }
 
     /**
@@ -170,8 +199,8 @@ class ZipFileTest extends ZipTestCase
         $zipFile = new ZipFile();
         $zipFile
             ->addFromString('file', 'content')
-            ->saveAsFile($this->outputFilename);
-        $zipFile->close();
+            ->saveAsFile($this->outputFilename)
+            ->close();
 
         $handle = fopen($this->outputFilename, 'rb');
         $zipFile->openFromStream($handle);
@@ -187,16 +216,18 @@ class ZipFileTest extends ZipTestCase
     public function testEmptyArchive()
     {
         $zipFile = new ZipFile();
-        $zipFile->saveAsFile($this->outputFilename);
-        $zipFile->close();
+        $zipFile
+            ->saveAsFile($this->outputFilename)
+            ->close();
 
         self::assertCorrectEmptyZip($this->outputFilename);
         self::assertTrue(mkdir($this->outputDirname, 0755, true));
 
         $zipFile->openFile($this->outputFilename);
         self::assertEquals($zipFile->count(), 0);
-        $zipFile->extractTo($this->outputDirname);
-        $zipFile->close();
+        $zipFile
+            ->extractTo($this->outputDirname)
+            ->close();
 
         self::assertTrue(FilesUtil::isEmptyDir($this->outputDirname));
     }
@@ -214,18 +245,23 @@ class ZipFileTest extends ZipTestCase
         $fileExpected = $this->outputDirname . DIRECTORY_SEPARATOR . 'file_expected.zip';
 
         $zipFile = new ZipFile();
-        $zipFile->addDirRecursive(__DIR__);
-        $zipFile->saveAsFile($fileActual);
+        $zipFile->addDirRecursive(__DIR__.'/../../src');
+        $sourceCount = $zipFile->count();
+        self::assertTrue($sourceCount > 0);
+        $zipFile
+            ->saveAsFile($fileActual)
+            ->close();
         self::assertCorrectZipArchive($fileActual);
-        $zipFile->close();
 
-        $zipFile->openFile($fileActual);
-        $zipFile->saveAsFile($fileExpected);
+        $zipFile
+            ->openFile($fileActual)
+            ->saveAsFile($fileExpected);
         self::assertCorrectZipArchive($fileExpected);
 
         $zipFileExpected = new ZipFile();
         $zipFileExpected->openFile($fileExpected);
 
+        self::assertEquals($zipFile->count(), $sourceCount);
         self::assertEquals($zipFileExpected->count(), $zipFile->count());
         self::assertEquals($zipFileExpected->getListFiles(), $zipFile->getListFiles());
 
@@ -243,13 +279,13 @@ class ZipFileTest extends ZipTestCase
      * @see ZipOutputFile::addFromString()
      * @see ZipOutputFile::addFromFile()
      * @see ZipOutputFile::addFromStream()
-     * @see ZipFile::getEntryContent()
+     * @see ZipFile::getEntryContents()
      */
     public function testCreateArchiveAndAddFiles()
     {
         $outputFromString = file_get_contents(__FILE__);
         $outputFromString2 = file_get_contents(dirname(dirname(__DIR__)) . DIRECTORY_SEPARATOR . 'README.md');
-        $outputFromFile = file_get_contents(dirname(dirname(__DIR__)) . DIRECTORY_SEPARATOR . 'bootstrap.xml');
+        $outputFromFile = file_get_contents(dirname(dirname(__DIR__)) . DIRECTORY_SEPARATOR . 'phpunit.xml');
         $outputFromStream = file_get_contents(dirname(dirname(__DIR__)) . DIRECTORY_SEPARATOR . 'composer.json');
 
         $filenameFromString = basename(__FILE__);
@@ -267,15 +303,18 @@ class ZipFileTest extends ZipTestCase
         fwrite($tempStream, $outputFromStream);
 
         $zipFile = new ZipFile;
-        $zipFile->addFromString($filenameFromString, $outputFromString);
-        $zipFile->addFile($tempFile, $filenameFromFile);
-        $zipFile->addFromStream($tempStream, $filenameFromStream);
-        $zipFile->addEmptyDir($emptyDirName);
+        $zipFile
+            ->addFromString($filenameFromString, $outputFromString)
+            ->addFile($tempFile, $filenameFromFile)
+            ->addFromStream($tempStream, $filenameFromStream)
+            ->addEmptyDir($emptyDirName);
         $zipFile[$filenameFromString2] = $outputFromString2;
         $zipFile[$emptyDirName2] = null;
         $zipFile[$emptyDirName3] = 'this content ignoring';
-        $zipFile->saveAsFile($this->outputFilename);
-        $zipFile->close();
+        self::assertEquals(count($zipFile), 7);
+        $zipFile
+            ->saveAsFile($this->outputFilename)
+            ->close();
         unlink($tempFile);
 
         self::assertCorrectZipArchive($this->outputFilename);
@@ -305,6 +344,18 @@ class ZipFileTest extends ZipTestCase
         $zipFile->close();
     }
 
+    public function testEmptyContent()
+    {
+        $zipFile = new ZipFile();
+        $zipFile['file'] = '';
+        $zipFile->saveAsFile($this->outputFilename);
+        $zipFile->close();
+
+        $zipFile->openFile($this->outputFilename);
+        self::assertEquals($zipFile['file'], '');
+        $zipFile->close();
+    }
+
     /**
      * Test compression method from image file.
      */
@@ -331,7 +382,7 @@ class ZipFileTest extends ZipTestCase
 
         $zipFile->openFile($this->outputFilename);
         $info = $zipFile->getEntryInfo($basename);
-        self::assertEquals($info->getMethod(), 'No compression');
+        self::assertEquals($info->getMethodName(), 'No compression');
         $zipFile->close();
     }
 
@@ -344,7 +395,7 @@ class ZipFileTest extends ZipTestCase
         $newName = 'tests/' . $oldName;
 
         $zipFile = new ZipFile();
-        $zipFile->addDirRecursive(__DIR__);
+        $zipFile->addDir(__DIR__);
         $zipFile->saveAsFile($this->outputFilename);
         $zipFile->close();
 
@@ -406,7 +457,6 @@ class ZipFileTest extends ZipTestCase
 
     /**
      * @expectedException \PhpZip\Exception\ZipNotFoundEntry
-     * @expectedExceptionMessage Not found entry
      */
     public function testRenameEntryNotFound()
     {
@@ -466,7 +516,6 @@ class ZipFileTest extends ZipTestCase
 
     /**
      * @expectedException \PhpZip\Exception\ZipNotFoundEntry
-     * @expectedExceptionMessage Not found entry entry
      */
     public function testDeleteFromNameNotFoundEntry()
     {
@@ -482,22 +531,32 @@ class ZipFileTest extends ZipTestCase
         $inputDir = dirname(dirname(__DIR__));
 
         $zipFile = new ZipFile();
-        $zipFile->addFilesFromGlobRecursive($inputDir, '**.{php,xml,json}', '/');
+        $zipFile->addFilesFromGlobRecursive($inputDir, '**.{xml,json,md}', '/');
+        self::assertTrue(isset($zipFile['composer.json']));
+        self::assertTrue(isset($zipFile['phpunit.xml']));
         $zipFile->saveAsFile($this->outputFilename);
         $zipFile->close();
 
         self::assertCorrectZipArchive($this->outputFilename);
 
         $zipFile->openFile($this->outputFilename);
+        self::assertTrue(isset($zipFile['composer.json']));
+        self::assertTrue(isset($zipFile['phpunit.xml']));
         $zipFile->deleteFromGlob('**.{xml,json}');
+        self::assertFalse(isset($zipFile['composer.json']));
+        self::assertFalse(isset($zipFile['phpunit.xml']));
         $zipFile->saveAsFile($this->outputFilename);
         $zipFile->close();
 
         self::assertCorrectZipArchive($this->outputFilename);
 
         $zipFile->openFile($this->outputFilename);
-        self::assertFalse(isset($zipFile['composer.json']));
-        self::assertFalse(isset($zipFile['bootstrap.xml']));
+        self::assertTrue($zipFile->count() > 0);
+
+        foreach ($zipFile->getListFiles() as $name) {
+            self::assertStringEndsWith('.md', $name);
+        }
+
         $zipFile->close();
     }
 
@@ -529,7 +588,7 @@ class ZipFileTest extends ZipTestCase
         $inputDir = dirname(dirname(__DIR__));
 
         $zipFile = new ZipFile();
-        $zipFile->addFilesFromRegexRecursive($inputDir, '~\.(xml|php|json)$~i', 'Path');
+        $zipFile->addFilesFromRegexRecursive($inputDir, '~\.(xml|json)$~i', 'Path');
         $zipFile->saveAsFile($this->outputFilename);
         $zipFile->close();
 
@@ -547,7 +606,7 @@ class ZipFileTest extends ZipTestCase
         $zipFile->openFile($this->outputFilename);
         self::assertFalse(isset($zipFile['Path/composer.json']));
         self::assertFalse(isset($zipFile['Path/test.txt']));
-        self::assertTrue(isset($zipFile['Path/bootstrap.xml']));
+        self::assertTrue(isset($zipFile['Path/phpunit.xml']));
         $zipFile->close();
     }
 
@@ -577,7 +636,8 @@ class ZipFileTest extends ZipTestCase
     public function testDeleteAll()
     {
         $zipFile = new ZipFile();
-        $zipFile->addDirRecursive(__DIR__);
+        $zipFile->addDirRecursive(dirname(dirname(__DIR__)) .DIRECTORY_SEPARATOR. 'src');
+        self::assertTrue($zipFile->count() > 0);
         $zipFile->saveAsFile($this->outputFilename);
         $zipFile->close();
 
@@ -733,8 +793,7 @@ class ZipFileTest extends ZipTestCase
     }
 
     /**
-     * @expectedException \PhpZip\Exception\ZipException
-     * @expectedExceptionMessage Not found entry
+     * @expectedException \PhpZip\Exception\ZipNotFoundEntry
      */
     public function testSetEntryCommentNotFoundEntry()
     {
@@ -750,19 +809,19 @@ class ZipFileTest extends ZipTestCase
         $entries = [
             '1' => [
                 'data' => CryptoUtil::randomBytes(255),
-                'method' => ZipFile::METHOD_STORED,
+                'method' => ZipFileInterface::METHOD_STORED,
                 'expected' => 'No compression',
             ],
             '2' => [
                 'data' => CryptoUtil::randomBytes(255),
-                'method' => ZipFile::METHOD_DEFLATED,
+                'method' => ZipFileInterface::METHOD_DEFLATED,
                 'expected' => 'Deflate',
             ],
         ];
         if (extension_loaded("bz2")) {
             $entries['3'] = [
                 'data' => CryptoUtil::randomBytes(255),
-                'method' => ZipFile::METHOD_BZIP2,
+                'method' => ZipFileInterface::METHOD_BZIP2,
                 'expected' => 'Bzip2',
             ];
         }
@@ -777,12 +836,12 @@ class ZipFileTest extends ZipTestCase
         self::assertCorrectZipArchive($this->outputFilename);
 
         $zipFile->openFile($this->outputFilename);
-        $zipFile->setCompressionLevel(ZipFile::LEVEL_BEST_COMPRESSION);
+        $zipFile->setCompressionLevel(ZipFileInterface::LEVEL_BEST_COMPRESSION);
         $zipAllInfo = $zipFile->getAllInfo();
 
         foreach ($zipAllInfo as $entryName => $info) {
             self::assertEquals($zipFile[$entryName], $entries[$entryName]['data']);
-            self::assertEquals($info->getMethod(), $entries[$entryName]['expected']);
+            self::assertEquals($info->getMethodName(), $entries[$entryName]['expected']);
             $entryInfo = $zipFile->getEntryInfo($entryName);
             self::assertEquals($entryInfo, $info);
         }
@@ -948,6 +1007,10 @@ class ZipFileTest extends ZipTestCase
      */
     public function testExtractFail3()
     {
+        if (0 === posix_getuid()) {
+            $this->markTestSkipped('Skip the test for a user with root privileges');
+        }
+
         $zipFile = new ZipFile();
         $zipFile['file'] = 'content';
         $zipFile->saveAsFile($this->outputFilename);
@@ -958,105 +1021,6 @@ class ZipFileTest extends ZipTestCase
 
         $zipFile->openFile($this->outputFilename);
         $zipFile->extractTo($this->outputDirname);
-    }
-
-    /**
-     * Test archive password.
-     */
-    public function testSetPassword()
-    {
-        $password = base64_encode(CryptoUtil::randomBytes(100));
-        $badPassword = "sdgt43r23wefe";
-
-        // create encryption password with ZipCrypto
-        $zipFile = new ZipFile();
-        $zipFile->addDirRecursive(__DIR__);
-        $zipFile->withNewPassword($password, ZipFile::ENCRYPTION_METHOD_TRADITIONAL);
-        $zipFile->saveAsFile($this->outputFilename);
-        $zipFile->close();
-
-        self::assertCorrectZipArchive($this->outputFilename, $password);
-
-        // check bad password for ZipCrypto
-        $zipFile->openFile($this->outputFilename);
-        $zipFile->withReadPassword($badPassword);
-        foreach ($zipFile->getListFiles() as $entryName) {
-            try {
-                $zipFile[$entryName];
-                self::fail("Expected Exception has not been raised.");
-            } catch (ZipAuthenticationException $ae) {
-                self::assertNotNull($ae);
-            }
-        }
-
-        // check correct password for ZipCrypto
-        $zipFile->withReadPassword($password);
-        foreach ($zipFile->getAllInfo() as $info) {
-            self::assertTrue($info->isEncrypted());
-            self::assertContains('ZipCrypto', $info->getMethod());
-            $decryptContent = $zipFile[$info->getPath()];
-            self::assertNotEmpty($decryptContent);
-            self::assertContains('<?php', $decryptContent);
-        }
-
-        // change encryption method to WinZip Aes and update file
-        $zipFile->withNewPassword($password, ZipFile::ENCRYPTION_METHOD_WINZIP_AES);
-        $zipFile->saveAsFile($this->outputFilename);
-        $zipFile->close();
-
-        self::assertCorrectZipArchive($this->outputFilename, $password);
-
-        // check from WinZip AES encryption
-        $zipFile->openFile($this->outputFilename);
-        // set bad password WinZip AES
-        $zipFile->withReadPassword($badPassword);
-        foreach ($zipFile->getListFiles() as $entryName) {
-            try {
-                $zipFile[$entryName];
-                self::fail("Expected Exception has not been raised.");
-            } catch (ZipAuthenticationException $ae) {
-                self::assertNotNull($ae);
-            }
-        }
-
-        // set correct password WinZip AES
-        $zipFile->withReadPassword($password);
-        foreach ($zipFile->getAllInfo() as $info) {
-            self::assertTrue($info->isEncrypted());
-            self::assertContains('WinZip', $info->getMethod());
-            $decryptContent = $zipFile[$info->getPath()];
-            self::assertNotEmpty($decryptContent);
-            self::assertContains('<?php', $decryptContent);
-        }
-
-        // clear password
-        $zipFile->addFromString('file1', '');
-        $zipFile->withoutPassword();
-        $zipFile->addFromString('file2', '');
-        $zipFile->saveAsFile($this->outputFilename);
-        $zipFile->close();
-
-        self::assertCorrectZipArchive($this->outputFilename);
-
-        // check remove password
-        $zipFile->openFile($this->outputFilename);
-        foreach ($zipFile->getAllInfo() as $info) {
-            self::assertFalse($info->isEncrypted());
-        }
-        $zipFile->close();
-    }
-
-    /**
-     * @expectedException \PhpZip\Exception\ZipException
-     * @expectedExceptionMessage Invalid encryption method
-     */
-    public function testSetEncryptionMethodInvalid()
-    {
-        $zipFile = new ZipFile();
-        $encryptionMethod = 9999;
-        $zipFile->withNewPassword('pass', $encryptionMethod);
-        $zipFile['entry'] = 'content';
-        $zipFile->outputAsString();
     }
 
     /**
@@ -1101,7 +1065,7 @@ class ZipFileTest extends ZipTestCase
 
     /**
      * @expectedException \PhpZip\Exception\ZipUnsupportMethod
-     * @expectedExceptionMessage Unsupported method
+     * @expectedExceptionMessage Unsupported compression method
      */
     public function testAddFromStringUnsupportedMethod()
     {
@@ -1142,8 +1106,8 @@ class ZipFileTest extends ZipTestCase
         $zipFile->openFile($this->outputFilename);
         $infoStored = $zipFile->getEntryInfo(basename($fileStored));
         $infoDeflated = $zipFile->getEntryInfo(basename($fileDeflated));
-        self::assertEquals($infoStored->getMethod(), 'No compression');
-        self::assertEquals($infoDeflated->getMethod(), 'Deflate');
+        self::assertEquals($infoStored->getMethodName(), 'No compression');
+        self::assertEquals($infoDeflated->getMethodName(), 'Deflate');
         $zipFile->close();
     }
 
@@ -1154,6 +1118,7 @@ class ZipFileTest extends ZipTestCase
     public function testAddFromStreamInvalidResource()
     {
         $zipFile = new ZipFile();
+        /** @noinspection PhpParamsInspection */
         $zipFile->addFromStream("invalid resource", "name");
     }
 
@@ -1207,8 +1172,8 @@ class ZipFileTest extends ZipTestCase
         $zipFile->openFile($this->outputFilename);
         $infoStored = $zipFile->getEntryInfo(basename($fileStored));
         $infoDeflated = $zipFile->getEntryInfo(basename($fileDeflated));
-        self::assertEquals($infoStored->getMethod(), 'No compression');
-        self::assertEquals($infoDeflated->getMethod(), 'Deflate');
+        self::assertEquals($infoStored->getMethodName(), 'No compression');
+        self::assertEquals($infoDeflated->getMethodName(), 'Deflate');
         $zipFile->close();
     }
 
@@ -1248,6 +1213,10 @@ class ZipFileTest extends ZipTestCase
      */
     public function testAddFileCantOpen()
     {
+        if (0 === posix_getuid()) {
+            $this->markTestSkipped('Skip the test for a user with root privileges');
+        }
+
         self::assertNotFalse(file_put_contents($this->outputFilename, ''));
         self::assertTrue(chmod($this->outputFilename, 0244));
 
@@ -1522,6 +1491,7 @@ class ZipFileTest extends ZipTestCase
     public function testSaveAsStreamBadStream()
     {
         $zipFile = new ZipFile();
+        /** @noinspection PhpParamsInspection */
         $zipFile->saveAsStream("bad stream");
     }
 
@@ -1531,6 +1501,10 @@ class ZipFileTest extends ZipTestCase
      */
     public function testSaveAsFileNotWritable()
     {
+        if (0 === posix_getuid()) {
+            $this->markTestSkipped('Skip the test for a user with root privileges');
+        }
+
         self::assertTrue(mkdir($this->outputDirname, 0444, true));
         self::assertTrue(chmod($this->outputDirname, 0444));
 
@@ -1551,13 +1525,13 @@ class ZipFileTest extends ZipTestCase
             $files['file' . $i . '.txt'] = CryptoUtil::randomBytes(255);
         }
 
-        $methods = [ZipFile::METHOD_STORED, ZipFile::METHOD_DEFLATED];
+        $methods = [ZipFileInterface::METHOD_STORED, ZipFileInterface::METHOD_DEFLATED];
         if (extension_loaded("bz2")) {
-            $methods[] = ZipFile::METHOD_BZIP2;
+            $methods[] = ZipFileInterface::METHOD_BZIP2;
         }
 
         $zipFile = new ZipFile();
-        $zipFile->setCompressionLevel(ZipFile::LEVEL_BEST_SPEED);
+        $zipFile->setCompressionLevel(ZipFileInterface::LEVEL_BEST_SPEED);
         foreach ($files as $entryName => $content) {
             $zipFile->addFromString($entryName, $content, $methods[array_rand($methods)]);
         }
@@ -1628,18 +1602,43 @@ class ZipFileTest extends ZipTestCase
     public function testArrayAccessAddFile()
     {
         $entryName = 'path/to/file.dat';
+        $entryNameStream = 'path/to/' . basename(__FILE__);
 
         $zipFile = new ZipFile();
         $zipFile[$entryName] = new \SplFileInfo(__FILE__);
+        $zipFile[$entryNameStream] = fopen(__FILE__, 'r');
         $zipFile->saveAsFile($this->outputFilename);
         $zipFile->close();
 
         self::assertCorrectZipArchive($this->outputFilename);
 
         $zipFile->openFile($this->outputFilename);
-        self::assertEquals(sizeof($zipFile), 1);
+        self::assertEquals(sizeof($zipFile), 2);
         self::assertTrue(isset($zipFile[$entryName]));
+        self::assertTrue(isset($zipFile[$entryNameStream]));
         self::assertEquals($zipFile[$entryName], file_get_contents(__FILE__));
+        self::assertEquals($zipFile[$entryNameStream], file_get_contents(__FILE__));
+        $zipFile->close();
+    }
+
+    public function testUnknownCompressionMethod()
+    {
+        $zipFile = new ZipFile();
+
+        $zipFile->addFromString('file', 'content', ZipEntry::UNKNOWN);
+        $zipFile->addFromString('file2', base64_encode(CryptoUtil::randomBytes(512)), ZipEntry::UNKNOWN);
+
+        self::assertEquals($zipFile->getEntryInfo('file')->getMethodName(), 'Unknown');
+        self::assertEquals($zipFile->getEntryInfo('file2')->getMethodName(), 'Unknown');
+
+        $zipFile->saveAsFile($this->outputFilename);
+        $zipFile->close();
+
+        $zipFile->openFile($this->outputFilename);
+
+        self::assertEquals($zipFile->getEntryInfo('file')->getMethodName(), 'No compression');
+        self::assertEquals($zipFile->getEntryInfo('file2')->getMethodName(), 'Deflate');
+
         $zipFile->close();
     }
 
@@ -1664,26 +1663,6 @@ class ZipFileTest extends ZipTestCase
     }
 
     /**
-     * @expectedException \PhpZip\Exception\InvalidArgumentException
-     * @expectedExceptionMessage Output filename is empty.
-     */
-    public function testOutputAsAttachmentNullName()
-    {
-        $zipFile = new ZipFile();
-        $zipFile->outputAsAttachment(null);
-    }
-
-    /**
-     * @expectedException \PhpZip\Exception\InvalidArgumentException
-     * @expectedExceptionMessage Output filename is empty.
-     */
-    public function testOutputAsAttachmentEmptyName()
-    {
-        $zipFile = new ZipFile();
-        $zipFile->outputAsAttachment('');
-    }
-
-    /**
      * @expectedException \PhpZip\Exception\ZipNotFoundEntry
      * @expectedExceptionMessage Zip entry bad entry name not found
      */
@@ -1701,8 +1680,10 @@ class ZipFileTest extends ZipTestCase
         $zipFile = new ZipFile();
         $zipFile['file'] = 'content';
         $zipFile['file2'] = 'content2';
-        $zipFile->saveAsFile($this->outputFilename);
-        $zipFile->close();
+        self::assertEquals(count($zipFile), 2);
+        $zipFile
+            ->saveAsFile($this->outputFilename)
+            ->close();
 
         $md5file = md5_file($this->outputFilename);
 
@@ -1711,7 +1692,7 @@ class ZipFileTest extends ZipTestCase
         self::assertTrue(isset($zipFile['file']));
         self::assertTrue(isset($zipFile['file2']));
         $zipFile['file3'] = 'content3';
-        self::assertEquals(count($zipFile), 2);
+        self::assertEquals(count($zipFile), 3);
         $zipFile = $zipFile->rewrite();
         self::assertEquals(count($zipFile), 3);
         self::assertTrue(isset($zipFile['file']));
@@ -1759,14 +1740,14 @@ class ZipFileTest extends ZipTestCase
     /**
      * Test zip alignment.
      */
-    public function testZipAlign()
+    public function testZipAlignSourceZip()
     {
         $zipFile = new ZipFile();
         for ($i = 0; $i < 100; $i++) {
             $zipFile->addFromString(
                 'entry' . $i . '.txt',
                 CryptoUtil::randomBytes(mt_rand(100, 4096)),
-                ZipFile::METHOD_STORED
+                ZipFileInterface::METHOD_STORED
             );
         }
         $zipFile->saveAsFile($this->outputFilename);
@@ -1775,7 +1756,9 @@ class ZipFileTest extends ZipTestCase
         self::assertCorrectZipArchive($this->outputFilename);
 
         $result = self::doZipAlignVerify($this->outputFilename);
-        if ($result === null) return; // zip align not installed
+        if ($result === null) {
+            return;
+        } // zip align not installed
 
         // check not zip align
         self::assertFalse($result);
@@ -1792,13 +1775,16 @@ class ZipFileTest extends ZipTestCase
 
         // check zip align
         self::assertTrue($result);
+    }
 
+    public function testZipAlignNewFiles()
+    {
         $zipFile = new ZipFile();
         for ($i = 0; $i < 100; $i++) {
             $zipFile->addFromString(
                 'entry' . $i . '.txt',
                 CryptoUtil::randomBytes(mt_rand(100, 4096)),
-                ZipFile::METHOD_STORED
+                ZipFileInterface::METHOD_STORED
             );
         }
         $zipFile->setZipAlign(4);
@@ -1808,20 +1794,291 @@ class ZipFileTest extends ZipTestCase
         self::assertCorrectZipArchive($this->outputFilename);
 
         $result = self::doZipAlignVerify($this->outputFilename);
+        if ($result === null) {
+            return;
+        } // zip align not installed
         // check not zip align
         self::assertTrue($result);
     }
 
-    public function testEmptyContents()
+    public function testZipAlignFromModifiedZipArchive()
     {
         $zipFile = new ZipFile();
-        $contents = '';
-        $zipFile->addFromString('file', $contents);
+        for ($i = 0; $i < 100; $i++) {
+            $zipFile->addFromString(
+                'entry' . $i . '.txt',
+                CryptoUtil::randomBytes(mt_rand(100, 4096)),
+                ZipFileInterface::METHOD_STORED
+            );
+        }
+        $zipFile->saveAsFile($this->outputFilename);
+        $zipFile->close();
+
+        self::assertCorrectZipArchive($this->outputFilename);
+
+        $result = self::doZipAlignVerify($this->outputFilename);
+        if ($result === null) {
+            return;
+        } // zip align not installed
+
+        // check not zip align
+        self::assertFalse($result);
+
+        $zipFile->openFile($this->outputFilename);
+        $zipFile->deleteFromRegex("~entry2[\d]+\.txt$~s");
+        for ($i = 0; $i < 100; $i++) {
+            $isStored = (bool)mt_rand(0, 1);
+
+            $zipFile->addFromString(
+                'entry_new_' . ($isStored ? 'stored' : 'deflated') . '_' . $i . '.txt',
+                CryptoUtil::randomBytes(mt_rand(100, 4096)),
+                $isStored ?
+                    ZipFileInterface::METHOD_STORED :
+                    ZipFileInterface::METHOD_DEFLATED
+            );
+        }
+        $zipFile->setZipAlign(4);
+        $zipFile->saveAsFile($this->outputFilename);
+        $zipFile->close();
+
+        self::assertCorrectZipArchive($this->outputFilename);
+
+        $result = self::doZipAlignVerify($this->outputFilename, true);
+        self::assertNotNull($result);
+
+        // check zip align
+        self::assertTrue($result);
+    }
+
+    public function testFilename0()
+    {
+        $zipFile = new ZipFile();
+        $zipFile[0] = 0;
+        self::assertTrue(isset($zipFile[0]));
+        self::assertTrue(isset($zipFile['0']));
+        self::assertCount(1, $zipFile);
+        $zipFile
+            ->saveAsFile($this->outputFilename)
+            ->close();
+
+        self::assertCorrectZipArchive($this->outputFilename);
+
+        $zipFile->openFile($this->outputFilename);
+        self::assertTrue(isset($zipFile[0]));
+        self::assertTrue(isset($zipFile['0']));
+        self::assertEquals($zipFile['0'], '0');
+        self::assertCount(1, $zipFile);
+        $zipFile->close();
+
+        self::assertTrue(unlink($this->outputFilename));
+
+        $zipFile = new ZipFile();
+        $zipFile->addFromString(0, 0);
+        self::assertTrue(isset($zipFile[0]));
+        self::assertTrue(isset($zipFile['0']));
+        self::assertCount(1, $zipFile);
+        $zipFile
+            ->saveAsFile($this->outputFilename)
+            ->close();
+
+        self::assertCorrectZipArchive($this->outputFilename);
+    }
+
+    public function testPsrResponse()
+    {
+        $zipFile = new ZipFile();
+        for ($i = 0; $i < 10; $i++) {
+            $zipFile[$i] = $i;
+        }
+        $filename = 'file.jar';
+        $response = $this->getMock(ResponseInterface::class);
+        $response = $zipFile->outputAsResponse($response, $filename);
+        $this->assertInstanceOf(ResponseInterface::class, $response);
+    }
+
+    public function testCompressionLevel()
+    {
+        $zipFile = new ZipFile();
+        $zipFile
+            ->addFromString('file', 'content', ZipFileInterface::METHOD_DEFLATED)
+            ->setCompressionLevelEntry('file', ZipFileInterface::LEVEL_BEST_COMPRESSION)
+            ->addFromString('file2', 'content', ZipFileInterface::METHOD_DEFLATED)
+            ->setCompressionLevelEntry('file2', ZipFileInterface::LEVEL_FAST)
+            ->addFromString('file3', 'content', ZipFileInterface::METHOD_DEFLATED)
+            ->setCompressionLevelEntry('file3', ZipFileInterface::LEVEL_SUPER_FAST)
+            ->addFromString('file4', 'content', ZipFileInterface::METHOD_DEFLATED)
+            ->setCompressionLevelEntry('file4', ZipFileInterface::LEVEL_DEFAULT_COMPRESSION)
+            ->saveAsFile($this->outputFilename)
+            ->close();
+
+        self::assertCorrectZipArchive($this->outputFilename);
+
+        $zipFile->openFile($this->outputFilename);
+        self::assertEquals($zipFile->getEntryInfo('file')
+            ->getCompressionLevel(), ZipFileInterface::LEVEL_BEST_COMPRESSION);
+        self::assertEquals($zipFile->getEntryInfo('file2')
+            ->getCompressionLevel(), ZipFileInterface::LEVEL_FAST);
+        self::assertEquals($zipFile->getEntryInfo('file3')
+            ->getCompressionLevel(), ZipFileInterface::LEVEL_SUPER_FAST);
+        self::assertEquals($zipFile->getEntryInfo('file4')
+            ->getCompressionLevel(), ZipFileInterface::LEVEL_DEFAULT_COMPRESSION);
+        $zipFile->close();
+    }
+
+    /**
+     * @expectedException \PhpZip\Exception\InvalidArgumentException
+     * @expectedExceptionMessage Invalid compression level
+     */
+    public function testInvalidCompressionLevel()
+    {
+        $zipFile = new ZipFile();
+        $zipFile->addFromString('file', 'content');
+        $zipFile->setCompressionLevel(15);
+    }
+
+    /**
+     * @expectedException \PhpZip\Exception\InvalidArgumentException
+     * @expectedExceptionMessage Invalid compression level
+     */
+    public function testInvalidCompressionLevelEntry()
+    {
+        $zipFile = new ZipFile();
+        $zipFile->addFromString('file', 'content');
+        $zipFile->setCompressionLevelEntry('file', 15);
+    }
+
+    public function testCompressionGlobal()
+    {
+        $zipFile = new ZipFile();
+        for ($i = 0; $i < 10; $i++) {
+            $zipFile->addFromString('file' . $i, 'content', ZipFileInterface::METHOD_DEFLATED);
+        }
+        $zipFile
+            ->setCompressionLevel(ZipFileInterface::LEVEL_BEST_SPEED)
+            ->saveAsFile($this->outputFilename)
+            ->close();
+
+        self::assertCorrectZipArchive($this->outputFilename);
+
+        $zipFile->openFile($this->outputFilename);
+        $infoList = $zipFile->getAllInfo();
+        array_walk($infoList, function (ZipInfo $zipInfo) {
+            self::assertEquals($zipInfo->getCompressionLevel(), ZipFileInterface::LEVEL_BEST_SPEED);
+        });
+        $zipFile->close();
+    }
+
+    public function testCompressionMethodEntry()
+    {
+        $zipFile = new ZipFile();
+        $zipFile->addFromString('file', 'content', ZipFileInterface::METHOD_STORED);
         $zipFile->saveAsFile($this->outputFilename);
         $zipFile->close();
 
         $zipFile->openFile($this->outputFilename);
-        self::assertEquals($zipFile['file'], $contents);
+        self::assertEquals($zipFile->getEntryInfo('file')->getMethodName(), 'No compression');
+        $zipFile->setCompressionMethodEntry('file', ZipFileInterface::METHOD_DEFLATED);
+        self::assertEquals($zipFile->getEntryInfo('file')->getMethodName(), 'Deflate');
+
+        $zipFile->rewrite();
+        self::assertEquals($zipFile->getEntryInfo('file')->getMethodName(), 'Deflate');
+    }
+
+    /**
+     * @expectedException \PhpZip\Exception\ZipUnsupportMethod
+     * @expectedExceptionMessage Unsupported method
+     */
+    public function testInvalidCompressionMethodEntry()
+    {
+        $zipFile = new ZipFile();
+        $zipFile->addFromString('file', 'content', ZipFileInterface::METHOD_STORED);
+        $zipFile->setCompressionMethodEntry('file', 99);
+    }
+
+    public function testUnchangeAll()
+    {
+        $zipFile = new ZipFile();
+        for ($i = 0; $i < 10; $i++) {
+            $zipFile[$i] = $i;
+        }
+        $zipFile->setArchiveComment('comment');
+        self::assertCount(10, $zipFile);
+        self::assertEquals($zipFile->getArchiveComment(), 'comment');
+        $zipFile->saveAsFile($this->outputFilename);
+
+        $zipFile->unchangeAll();
+        self::assertCount(0, $zipFile);
+        self::assertEquals($zipFile->getArchiveComment(), null);
+        $zipFile->close();
+
+        $zipFile->openFile($this->outputFilename);
+        self::assertCount(10, $zipFile);
+        self::assertEquals($zipFile->getArchiveComment(), 'comment');
+
+        for ($i = 10; $i < 100; $i++) {
+            $zipFile[$i] = $i;
+        }
+        $zipFile->setArchiveComment('comment 2');
+        self::assertCount(100, $zipFile);
+        self::assertEquals($zipFile->getArchiveComment(), 'comment 2');
+
+        $zipFile->unchangeAll();
+        self::assertCount(10, $zipFile);
+        self::assertEquals($zipFile->getArchiveComment(), 'comment');
+        $zipFile->close();
+    }
+
+    public function testUnchangeArchiveComment()
+    {
+        $zipFile = new ZipFile();
+        for ($i = 0; $i < 10; $i++) {
+            $zipFile[$i] = $i;
+        }
+        $zipFile->setArchiveComment('comment');
+        self::assertEquals($zipFile->getArchiveComment(), 'comment');
+        $zipFile->saveAsFile($this->outputFilename);
+
+        $zipFile->unchangeArchiveComment();
+        self::assertEquals($zipFile->getArchiveComment(), null);
+        $zipFile->close();
+
+        $zipFile->openFile($this->outputFilename);
+        self::assertEquals($zipFile->getArchiveComment(), 'comment');
+        $zipFile->setArchiveComment('comment 2');
+        self::assertEquals($zipFile->getArchiveComment(), 'comment 2');
+
+        $zipFile->unchangeArchiveComment();
+        self::assertEquals($zipFile->getArchiveComment(), 'comment');
+        $zipFile->close();
+    }
+
+    public function testUnchangeEntry()
+    {
+        $zipFile = new ZipFile();
+        $zipFile['file 1'] = 'content 1';
+        $zipFile['file 2'] = 'content 2';
+        $zipFile
+            ->saveAsFile($this->outputFilename)
+            ->close();
+
+        $zipFile->openFile($this->outputFilename);
+
+        $zipFile['file 1'] = 'modify content 1';
+        $zipFile->setPasswordEntry('file 1', 'password');
+
+        self::assertEquals($zipFile['file 1'], 'modify content 1');
+        self::assertTrue($zipFile->getEntryInfo('file 1')->isEncrypted());
+
+        self::assertEquals($zipFile['file 2'], 'content 2');
+        self::assertFalse($zipFile->getEntryInfo('file 2')->isEncrypted());
+
+        $zipFile->unchangeEntry('file 1');
+
+        self::assertEquals($zipFile['file 1'], 'content 1');
+        self::assertFalse($zipFile->getEntryInfo('file 1')->isEncrypted());
+
+        self::assertEquals($zipFile['file 2'], 'content 2');
+        self::assertFalse($zipFile->getEntryInfo('file 2')->isEncrypted());
         $zipFile->close();
     }
 
@@ -1844,10 +2101,12 @@ class ZipFileTest extends ZipTestCase
 
         $zipFile->openFile($this->outputFilename);
         self::assertEquals($zipFile->count(), $countFiles);
+        $i = 0;
         foreach ($zipFile as $entry => $content) {
-
+            self::assertEquals($entry, $i . '.txt');
+            self::assertEquals($content, $i);
+            $i++;
         }
         $zipFile->close();
     }
-
 }

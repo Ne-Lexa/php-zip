@@ -1,4 +1,5 @@
 <?php
+
 namespace PhpZip\Util;
 
 use PhpZip\Exception\ZipException;
@@ -39,9 +40,9 @@ class DateTimeConverter
 
         return mktime(
             ($dosTime >> 11) & 0x1f,         // hour
-            ($dosTime >> 5) & 0x3f,          // minute
-            2 * ($dosTime & 0x1f),           // second
-            ($dosTime >> 21) & 0x0f,         // month
+            ($dosTime >> 5) & 0x3f,        // minute
+            2 * ($dosTime & 0x1f),         // second
+            ($dosTime >> 21) & 0x0f,       // month
             ($dosTime >> 16) & 0x1f,         // day
             1980 + (($dosTime >> 25) & 0x7f) // year
         );

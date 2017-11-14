@@ -1,4 +1,5 @@
 <?php
+
 namespace PhpZip\Exception;
 
 /**
@@ -8,7 +9,6 @@ namespace PhpZip\Exception;
  * @author Ne-Lexa alexey@nelexa.ru
  * @license MIT
  */
-class InvalidArgumentException extends ZipException
+class InvalidArgumentException extends RuntimeException
 {
-
 }

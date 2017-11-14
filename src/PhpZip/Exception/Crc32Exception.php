@@ -1,4 +1,5 @@
 <?php
+
 namespace PhpZip\Exception;
 
 /**
@@ -6,7 +7,7 @@ namespace PhpZip\Exception;
  * Central File Header and the Data Descriptor or between the declared value
  * and the computed value from the decompressed data.
  *
- * The exception's detail message is the name of the ZIP entry.
+ * The exception detail message is the name of the ZIP entry.
  *
  * @author Ne-Lexa alexey@nelexa.ru
  * @license MIT
@@ -36,12 +37,8 @@ class Crc32Exception extends ZipException
      */
     public function __construct($name, $expected, $actual)
     {
-        parent::__construct($name
-            . " (expected CRC32 value 0x"
-            . dechex($expected)
-            . ", but is actually 0x"
-            . dechex($actual)
-            . ")");
+        parent::__construct($name . " (expected CRC32 value 0x" .
+            dechex($expected) . ", but is actually 0x" . dechex($actual) . ")");
         assert($expected != $actual);
         $this->expectedCrc = $expected;
         $this->actualCrc = $actual;
@@ -66,5 +63,4 @@ class Crc32Exception extends ZipException
     {
         return $this->actualCrc;
     }
-
 }

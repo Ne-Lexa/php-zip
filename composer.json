@@ -1,6 +1,6 @@
 {
   "name": "nelexa/zip",
-  "description": "Zip files CRUD. Open, create, update, extract and get info tool. Supports appending to existing ZIP files, WinZip AES encryption, Traditional PKWARE Encryption, ZipAlign tool, BZIP2 compression, external file attributes and ZIP64 extensions. Alternative ZipArchive. It does not require php-zip extension.",
+  "description": "PhpZip is a php-library for extended work with ZIP-archives. Open, create, update, delete, extract and get info tool. Supports appending to existing ZIP files, WinZip AES encryption, Traditional PKWARE Encryption, ZipAlign tool, BZIP2 compression, external file attributes and ZIP64 extensions. Alternative ZipArchive. It does not require php-zip extension.",
   "type": "library",
   "keywords": [
     "zip",
@@ -8,11 +8,11 @@
     "archive",
     "extract",
     "winzip",
-    "zipalign"
+    "zipalign",
+    "ziparchive"
   ],
   "require-dev": {
-    "phpunit/phpunit": "4.8",
-    "codeclimate/php-test-reporter": "^0.4.4"
+    "phpunit/phpunit": "4.8"
   },
   "license": "MIT",
   "authors": [
@@ -24,7 +24,8 @@
   ],
   "minimum-stability": "stable",
   "require": {
-    "php": "^5.5 || ^7.0"
+    "php": "^5.5 || ^7.0",
+    "psr/http-message": "^1.0"
   },
   "autoload": {
     "psr-4": {
