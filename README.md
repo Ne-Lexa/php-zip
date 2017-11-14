@@ -32,6 +32,7 @@ Table of contents
   + [Saving a file or output to a browser](#Documentation-Save-Or-Output-Entries)
   + [Closing the archive](#Documentation-Close-Zip-Archive)
 - [Running the tests](#Running-Tests)
+- [Changelog](#Changelog)
 - [Upgrade](#Upgrade)
   + [Upgrade version 2 to version 3.0](#Upgrade-v2-to-v3)
 
@@ -778,6 +779,9 @@ Run the tests:
 ```bash
 vendor/bin/phpunit -v -c phpunit.xml
 ```
+### <a name="Changelog"></a> Changelog
+[Link to Changelog](CHANGELOG.md)
+
 ### <a name="Upgrade"></a> Upgrade
 #### <a name="Upgrade-v2-to-v3"></a> Upgrade version 2 to version 3.0
 Update the major version in the file `composer.json` to `^3.0`.
