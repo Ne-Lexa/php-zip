@@ -174,6 +174,10 @@ class ZipPasswordTest extends ZipFileAddDirTest
 
     public function testEncryptionEntries()
     {
+        if (PHP_INT_SIZE === 4) {
+            $this->markTestSkipped('Skip test for 32-bit system. Not support Traditional PKWARE Encryption.');
+        }
+
         $password1 = '353442434235424234';
         $password2 = 'adgerhvrwjhqqehtqhkbqrgewg';
 
@@ -210,6 +214,10 @@ class ZipPasswordTest extends ZipFileAddDirTest
 
     public function testEncryptionEntriesWithDefaultPassword()
     {
+        if (PHP_INT_SIZE === 4) {
+            $this->markTestSkipped('Skip test for 32-bit system. Not support Traditional PKWARE Encryption.');
+        }
+
         $password1 = '353442434235424234';
         $password2 = 'adgerhvrwjhqqehtqhkbqrgewg';
         $defaultPassword = '  f  f  f  f f  ffff   f5   ';
