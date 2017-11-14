@@ -50,6 +50,10 @@ Table of contents
 - Support for `ZIP64` (file size is more than 4 GB or the number of entries in the archive is more than 65535).
 - Built-in support for aligning the archive to optimize Android packages (APK) [`zipalign`](https://developer.android.com/studio/command-line/zipalign.html).
 - Working with passwords for PHP 5.5
+> **Attention!**
+>
+> For 32-bit systems, the `Traditional PKWARE Encryption (ZipCrypto)` encryption method is not currently supported. 
+> Use the encryption method `WinZIP AES Encryption`, whenever possible.
   + Set the password to read the archive for all entries or only for some.
   + Change the password for the archive, including for individual entries.
   + Delete the archive password for all or individual entries.

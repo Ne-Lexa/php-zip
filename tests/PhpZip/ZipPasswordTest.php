@@ -6,6 +6,9 @@ use PhpZip\Exception\ZipAuthenticationException;
 use PhpZip\Model\ZipInfo;
 use PhpZip\Util\CryptoUtil;
 
+/**
+ * Tests with zip password.
+ */
 class ZipPasswordTest extends ZipFileAddDirTest
 {
     /**
@@ -13,6 +16,10 @@ class ZipPasswordTest extends ZipFileAddDirTest
      */
     public function testSetPassword()
     {
+        if (PHP_INT_SIZE === 4) {
+            $this->markTestSkipped('Skip test for 32-bit system. Not support Traditional PKWARE Encryption.');
+        }
+
         $password = base64_encode(CryptoUtil::randomBytes(100));
         $badPassword = "sdgt43r23wefe";
 
@@ -96,6 +103,10 @@ class ZipPasswordTest extends ZipFileAddDirTest
 
     public function testTraditionalEncryption()
     {
+        if (PHP_INT_SIZE === 4) {
+            $this->markTestSkipped('Skip test for 32-bit system. Not support Traditional PKWARE Encryption.');
+        }
+
         $password = base64_encode(CryptoUtil::randomBytes(50));
 
         $zip = new ZipFile();

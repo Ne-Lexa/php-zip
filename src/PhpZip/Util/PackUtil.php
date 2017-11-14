@@ -54,9 +54,11 @@ class PackUtil
      */
     public static function toSignedInt32($int)
     {
-        $int = $int & 0xffffffff;
-        if (PHP_INT_SIZE === 8 && ($int & 0x80000000)) {
-            return $int - 0x100000000;
+        if (PHP_INT_SIZE === 8) {
+            $int = $int & 0xffffffff;
+            if ($int & 0x80000000) {
+                return $int - 0x100000000;
+            }
         }
         return $int;
     }
