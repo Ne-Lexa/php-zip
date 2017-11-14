@@ -1226,61 +1226,64 @@ class ZipFile implements ZipFileInterface
      * Output .ZIP archive as attachment.
      * Die after output.
      *
-     * @param string $outputFilename
-     * @param string|null $mimeType
+     * @param string $outputFilename Output filename
+     * @param string|null $mimeType Mime-Type
+     * @param bool $attachment Http Header 'Content-Disposition' if true then attachment otherwise inline
      * @throws InvalidArgumentException
      */
-    public function outputAsAttachment($outputFilename, $mimeType = null)
+    public function outputAsAttachment($outputFilename, $mimeType = null, $attachment = true)
     {
         $outputFilename = (string)$outputFilename;
-        if (strlen($outputFilename) === 0) {
-            throw new InvalidArgumentException("Output filename is empty.");
-        }
-        if (empty($mimeType) || !is_string($mimeType)) {
+
+        if (empty($mimeType) || !is_string($mimeType) && !empty($outputFilename)) {
             $ext = strtolower(pathinfo($outputFilename, PATHINFO_EXTENSION));
 
             if (!empty($ext) && isset(self::$defaultMimeTypes[$ext])) {
                 $mimeType = self::$defaultMimeTypes[$ext];
-            } else {
-                $mimeType = self::$defaultMimeTypes['zip'];
             }
         }
-        $outputFilename = basename($outputFilename);
+        if (empty($mimeType)) {
+            $mimeType = self::$defaultMimeTypes['zip'];
+        }
 
         $content = $this->outputAsString();
         $this->close();
 
+        $headerContentDisposition = 'Content-Disposition: ' . ($attachment ? 'attachment' : 'inline');
+        if (!empty($outputFilename)) {
+            $headerContentDisposition .= '; filename="' . basename($outputFilename) . '"';
+        }
+
+        header($headerContentDisposition);
         header("Content-Type: " . $mimeType);
-        header('Content-Disposition: attachment; filename="' . $outputFilename . '"');
         header("Content-Length: " . strlen($content));
         exit($content);
     }
 
     /**
-     * Output .ZIP archive as PSR-Message Response.
+     * Output .ZIP archive as PSR-7 Response.
      *
-     * @param ResponseInterface $response
-     * @param string $outputFilename
-     * @param string|null $mimeType
+     * @param ResponseInterface $response Instance PSR-7 Response
+     * @param string $outputFilename Output filename
+     * @param string|null $mimeType Mime-Type
+     * @param bool $attachment Http Header 'Content-Disposition' if true then attachment otherwise inline
      * @return ResponseInterface
      * @throws InvalidArgumentException
      */
-    public function outputAsResponse(ResponseInterface $response, $outputFilename, $mimeType = null)
+    public function outputAsResponse(ResponseInterface $response, $outputFilename, $mimeType = null, $attachment = true)
     {
         $outputFilename = (string)$outputFilename;
-        if (strlen($outputFilename) === 0) {
-            throw new InvalidArgumentException("Output filename is empty.");
-        }
-        if (empty($mimeType) || !is_string($mimeType)) {
+
+        if (empty($mimeType) || !is_string($mimeType) && !empty($outputFilename)) {
             $ext = strtolower(pathinfo($outputFilename, PATHINFO_EXTENSION));
 
             if (!empty($ext) && isset(self::$defaultMimeTypes[$ext])) {
                 $mimeType = self::$defaultMimeTypes[$ext];
-            } else {
-                $mimeType = self::$defaultMimeTypes['zip'];
             }
         }
-        $outputFilename = basename($outputFilename);
+        if (empty($mimeType)) {
+            $mimeType = self::$defaultMimeTypes['zip'];
+        }
 
         if (!($handle = fopen('php://memory', 'w+b'))) {
             throw new InvalidArgumentException("Memory can not open from write.");
@@ -1288,9 +1291,14 @@ class ZipFile implements ZipFileInterface
         $this->writeZipToStream($handle);
         rewind($handle);
 
+        $contentDispositionValue = ($attachment ? 'attachment' : 'inline');
+        if (!empty($outputFilename)) {
+            $contentDispositionValue .= '; filename="' . basename($outputFilename) . '"';
+        }
+
         $stream = new ResponseStream($handle);
         $response->withHeader('Content-Type', $mimeType);
-        $response->withHeader('Content-Disposition', 'attachment; filename="' . $outputFilename . '"');
+        $response->withHeader('Content-Disposition', $contentDispositionValue);
         $response->withHeader('Content-Length', $stream->getSize());
         $response->withBody($stream);
         return $response;
@@ -1348,11 +1356,15 @@ class ZipFile implements ZipFileInterface
         $content = $this->outputAsString();
         $this->close();
         if ('plainfile' === $meta['wrapper_type']) {
-            if (file_put_contents($meta['uri'], $content) === false) {
-                throw new ZipException("Can not overwrite the zip file in the {$meta['uri']} file.");
+            /**
+             * @var resource $uri
+             */
+            $uri = $meta['uri'];
+            if (file_put_contents($uri, $content) === false) {
+                throw new ZipException("Can not overwrite the zip file in the {$uri} file.");
             }
-            if (!($handle = @fopen($meta['uri'], 'rb'))) {
-                throw new ZipException("File {$meta['uri']} can't open.");
+            if (!($handle = @fopen($uri, 'rb'))) {
+                throw new ZipException("File {$uri} can't open.");
             }
             return $this->openFromStream($handle);
         }

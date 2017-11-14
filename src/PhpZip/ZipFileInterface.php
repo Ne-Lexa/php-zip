@@ -592,22 +592,23 @@ interface ZipFileInterface extends \Countable, \ArrayAccess, \Iterator
      * Output .ZIP archive as attachment.
      * Die after output.
      *
-     * @param string $outputFilename
-     * @param string|null $mimeType
-     * @throws InvalidArgumentException
+     * @param string $outputFilename Output filename
+     * @param string|null $mimeType Mime-Type
+     * @param bool $attachment Http Header 'Content-Disposition' if true then attachment otherwise inline
      */
-    public function outputAsAttachment($outputFilename, $mimeType = null);
+    public function outputAsAttachment($outputFilename, $mimeType = null, $attachment = true);
 
     /**
-     * Output .ZIP archive as PSR-Message Response.
+     * Output .ZIP archive as PSR-7 Response.
      *
-     * @param ResponseInterface $response
-     * @param string $outputFilename
-     * @param string|null $mimeType
+     * @param ResponseInterface $response Instance PSR-7 Response
+     * @param string $outputFilename Output filename
+     * @param string|null $mimeType Mime-Type
+     * @param bool $attachment Http Header 'Content-Disposition' if true then attachment otherwise inline
      * @return ResponseInterface
      * @throws InvalidArgumentException
      */
-    public function outputAsResponse(ResponseInterface $response, $outputFilename, $mimeType = null);
+    public function outputAsResponse(ResponseInterface $response, $outputFilename, $mimeType = null, $attachment = true);
 
     /**
      * Returns the zip archive as a string.

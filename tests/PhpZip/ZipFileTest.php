@@ -30,7 +30,7 @@ class ZipFileTest extends ZipTestCase
      */
     public function testOpenFileCantOpen()
     {
-        if (0 === posix_getuid()){
+        if (0 === posix_getuid()) {
             $this->markTestSkipped('Skip the test for a user with root privileges');
         }
 
@@ -1007,7 +1007,7 @@ class ZipFileTest extends ZipTestCase
      */
     public function testExtractFail3()
     {
-        if (0 === posix_getuid()){
+        if (0 === posix_getuid()) {
             $this->markTestSkipped('Skip the test for a user with root privileges');
         }
 
@@ -1213,7 +1213,7 @@ class ZipFileTest extends ZipTestCase
      */
     public function testAddFileCantOpen()
     {
-        if (0 === posix_getuid()){
+        if (0 === posix_getuid()) {
             $this->markTestSkipped('Skip the test for a user with root privileges');
         }
 
@@ -1501,7 +1501,7 @@ class ZipFileTest extends ZipTestCase
      */
     public function testSaveAsFileNotWritable()
     {
-        if (0 === posix_getuid()){
+        if (0 === posix_getuid()) {
             $this->markTestSkipped('Skip the test for a user with root privileges');
         }
 
@@ -1660,26 +1660,6 @@ class ZipFileTest extends ZipTestCase
     {
         $zipFile = new ZipFile();
         $zipFile->addEmptyDir("");
-    }
-
-    /**
-     * @expectedException \PhpZip\Exception\InvalidArgumentException
-     * @expectedExceptionMessage Output filename is empty.
-     */
-    public function testOutputAsAttachmentNullName()
-    {
-        $zipFile = new ZipFile();
-        $zipFile->outputAsAttachment(null);
-    }
-
-    /**
-     * @expectedException \PhpZip\Exception\InvalidArgumentException
-     * @expectedExceptionMessage Output filename is empty.
-     */
-    public function testOutputAsAttachmentEmptyName()
-    {
-        $zipFile = new ZipFile();
-        $zipFile->outputAsAttachment('');
     }
 
     /**
@@ -1914,18 +1894,6 @@ class ZipFileTest extends ZipTestCase
         $response = $this->getMock(ResponseInterface::class);
         $response = $zipFile->outputAsResponse($response, $filename);
         $this->assertInstanceOf(ResponseInterface::class, $response);
-    }
-
-    /**
-     * @expectedException \PhpZip\Exception\InvalidArgumentException
-     * @expectedExceptionMessage Output filename is empty.
-     */
-    public function testInvalidPsrResponse()
-    {
-        $zipFile = new ZipFile();
-        $zipFile['file'] = 'content';
-        $response = $this->getMock(ResponseInterface::class);
-        $zipFile->outputAsResponse($response, '');
     }
 
     public function testCompressionLevel()
