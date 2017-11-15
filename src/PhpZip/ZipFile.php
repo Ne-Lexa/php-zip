@@ -610,7 +610,8 @@ class ZipFile implements ZipFileInterface
         \Iterator $iterator,
         $localPath = '/',
         $compressionMethod = null
-    ) {
+    )
+    {
         $localPath = (string)$localPath;
         if (null !== $localPath && 0 !== strlen($localPath)) {
             $localPath = rtrim($localPath, '/');
@@ -694,7 +695,8 @@ class ZipFile implements ZipFileInterface
         $localPath = '/',
         $recursive = true,
         $compressionMethod = null
-    ) {
+    )
+    {
         $inputDir = (string)$inputDir;
         if (null === $inputDir || 0 === strlen($inputDir)) {
             throw new InvalidArgumentException('Input dir empty');
@@ -789,7 +791,8 @@ class ZipFile implements ZipFileInterface
         $localPath = "/",
         $recursive = true,
         $compressionMethod = null
-    ) {
+    )
+    {
         $regexPattern = (string)$regexPattern;
         if (empty($regexPattern)) {
             throw new InvalidArgumentException("regex pattern empty");
@@ -1311,6 +1314,8 @@ class ZipFile implements ZipFileInterface
      */
     protected function writeZipToStream($handle)
     {
+        $this->onBeforeSave();
+
         $output = new ZipOutputStream($handle, $this->zipModel);
         $output->writeZip();
     }
@@ -1330,6 +1335,13 @@ class ZipFile implements ZipFileInterface
         $content = stream_get_contents($handle);
         fclose($handle);
         return $content;
+    }
+
+    /**
+     * Event before save or output.
+     */
+    protected function onBeforeSave()
+    {
     }
 
     /**
