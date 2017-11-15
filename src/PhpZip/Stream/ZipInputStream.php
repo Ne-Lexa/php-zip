@@ -481,8 +481,10 @@ class ZipInputStream implements ZipInputStreamInterface
         $pos = PHP_INT_SIZE === 4 ? sprintf('%u', $pos) : $pos;
         $pos = $this->mapper->map($pos);
 
-        $extraLength = strlen($entry->getExtra());
         $nameLength = strlen($entry->getName());
+
+        fseek($this->in, $pos + ZipEntry::LOCAL_FILE_HEADER_MIN_LEN - 2, SEEK_SET);
+        $extraLength = unpack('v', fread($this->in, 2))[1];
 
         $length = ZipEntry::LOCAL_FILE_HEADER_MIN_LEN + $extraLength + $nameLength;
 
@@ -505,7 +507,7 @@ class ZipInputStream implements ZipInputStreamInterface
         } else {
             stream_copy_to_stream($this->in, $out->getStream(), $length);
         }
-        $this->copyEntryData($entry, $out);
+        stream_copy_to_stream($this->in, $out->getStream(), $entry->getCompressedSize());
         if ($entry->getGeneralPurposeBitFlag(ZipEntry::GPBF_DATA_DESCRIPTOR)) {
             $length = 12;
             if ($entry->isZip64ExtensionsRequired()) {
@@ -524,11 +526,13 @@ class ZipInputStream implements ZipInputStreamInterface
         $offset = $entry->getOffset();
         $offset = PHP_INT_SIZE === 4 ? sprintf('%u', $offset) : $offset;
         $offset = $this->mapper->map($offset);
-        $position = $offset + ZipEntry::LOCAL_FILE_HEADER_MIN_LEN +
-            strlen($entry->getName()) + strlen($entry->getExtra());
-        $length = $entry->getCompressedSize();
-        fseek($this->in, $position, SEEK_SET);
-        stream_copy_to_stream($this->in, $out->getStream(), $length);
+        $nameLength = strlen($entry->getName());
+
+        fseek($this->in, $offset + ZipEntry::LOCAL_FILE_HEADER_MIN_LEN - 2, SEEK_SET);
+        $extraLength = unpack('v', fread($this->in, 2))[1];
+
+        fseek($this->in, $offset + ZipEntry::LOCAL_FILE_HEADER_MIN_LEN + $nameLength + $extraLength, SEEK_SET);
+        stream_copy_to_stream($this->in, $out->getStream(), $entry->getCompressedSize());
     }
 
     public function __destruct()
