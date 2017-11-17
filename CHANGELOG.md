@@ -1,5 +1,16 @@
 # Changelog
 
+# 3.1.2 (2017-11-17)
+- Changed the algorithm for adding paddings to zipalign. 
+  Now we will use the special field ExtraField c ID 0xD935, 
+  which was implemented by Google in the apksigner library. 
+  Now this field corresponds to the ZIP standard for storing 
+  ExtraField records, and not just filling with zero bytes, 
+  as in the zipalign console utility.
+
+## 3.1.1 (2017-11-15)
+- Fix resave zip aligned archive
+
 ## 3.1.0 (2017-11-14)
 - Added class `ZipModel` for all changes.
 - All manipulations with incoming and outgoing streams are in separate files: `ZipInputStream` and `ZipOutputStream`.
