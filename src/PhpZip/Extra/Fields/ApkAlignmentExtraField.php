@@ -48,11 +48,14 @@ class ApkAlignmentExtraField implements ExtraField
      */
     public function serialize()
     {
-        $args = array_merge(
-            ['vc*', $this->multiple],
-            array_fill(2, $this->padding, 0)
-        );
-        return call_user_func_array('pack', $args);
+        if ($this->padding > 0) {
+            $args = array_merge(
+                ['vc*', $this->multiple],
+                array_fill(2, $this->padding, 0)
+            );
+            return call_user_func_array('pack', $args);
+        }
+        return pack('v', $this->multiple);
     }
 
     /**
