@@ -9,28 +9,15 @@ use PhpZip\Util\CryptoUtil;
  */
 class ZipAlignTest extends ZipTestCase
 {
-    public function testApkAlignedAndReSave()
-    {
-        $filename = __DIR__ . '/resources/test.apk';
-
-        self::assertCorrectZipArchive($filename);
-        self::doZipAlignVerify($this->outputFilename);
-
-        $zipFile = new ZipFile();
-        $zipFile->openFile($filename);
-        $zipFile->saveAsFile($this->outputFilename);
-        $zipFile->close();
-
-        self::assertCorrectZipArchive($this->outputFilename);
-        self::doZipAlignVerify($this->outputFilename);
-    }
-
     public function testApkAlignedAndSetZipAlignAndReSave()
     {
         $filename = __DIR__ . '/resources/test.apk';
 
         self::assertCorrectZipArchive($filename);
-        self::doZipAlignVerify($this->outputFilename);
+        $result = self::doZipAlignVerify($filename);
+        if (null !== $result) {
+            self::assertTrue($result);
+        }
 
         $zipFile = new ZipFile();
         $zipFile->openFile($filename);
@@ -39,7 +26,10 @@ class ZipAlignTest extends ZipTestCase
         $zipFile->close();
 
         self::assertCorrectZipArchive($this->outputFilename);
-        self::doZipAlignVerify($this->outputFilename);
+        $result = self::doZipAlignVerify($this->outputFilename, true);
+        if (null !== $result) {
+            self::assertTrue($result);
+        }
     }
 
     /**

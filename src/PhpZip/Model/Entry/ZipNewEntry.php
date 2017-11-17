@@ -62,9 +62,9 @@ class ZipNewEntry extends ZipAbstractEntry
         $method = $this->getMethod();
         return self::METHOD_WINZIP_AES === $method ? 51 :
             (
-                ZipFileInterface::METHOD_BZIP2 === $method ? 46 :
+            ZipFileInterface::METHOD_BZIP2 === $method ? 46 :
                 (
-                    $this->isZip64ExtensionsRequired() ? 45 :
+                $this->isZip64ExtensionsRequired() ? 45 :
                     (ZipFileInterface::METHOD_DEFLATED === $method || $this->isDirectory() ? 20 : 10)
                 )
             );

@@ -10,6 +10,9 @@ use PhpZip\Exception\RuntimeException;
 use PhpZip\Exception\ZipCryptoException;
 use PhpZip\Exception\ZipException;
 use PhpZip\Exception\ZipUnsupportMethod;
+use PhpZip\Extra\ExtraFieldsCollection;
+use PhpZip\Extra\ExtraFieldsFactory;
+use PhpZip\Extra\Fields\ApkAlignmentExtraField;
 use PhpZip\Extra\Fields\WinZipAesEntryExtraField;
 use PhpZip\Mapper\OffsetPositionMapper;
 use PhpZip\Mapper\PositionMapper;
@@ -18,6 +21,7 @@ use PhpZip\Model\Entry\ZipSourceEntry;
 use PhpZip\Model\ZipEntry;
 use PhpZip\Model\ZipModel;
 use PhpZip\Util\PackUtil;
+use PhpZip\Util\StringUtil;
 use PhpZip\ZipFileInterface;
 
 /**
@@ -471,6 +475,9 @@ class ZipInputStream implements ZipInputStreamInterface
     }
 
     /**
+     * Copy the input stream of the LOC entry zip and the data into
+     * the output stream and zip the alignment if necessary.
+     *
      * @param ZipEntry $entry
      * @param ZipOutputStreamInterface $out
      */
@@ -484,37 +491,82 @@ class ZipInputStream implements ZipInputStreamInterface
         $nameLength = strlen($entry->getName());
 
         fseek($this->in, $pos + ZipEntry::LOCAL_FILE_HEADER_MIN_LEN - 2, SEEK_SET);
-        $extraLength = unpack('v', fread($this->in, 2))[1];
+        $sourceExtraLength = $destExtraLength = unpack('v', fread($this->in, 2))[1];
 
-        $length = ZipEntry::LOCAL_FILE_HEADER_MIN_LEN + $extraLength + $nameLength;
-
-        $padding = 0;
-        if ($this->zipModel->isZipAlign() && !$entry->isEncrypted() && $entry->getMethod() === ZipFileInterface::METHOD_STORED) {
-            $padding =
-                (
-                    $this->zipModel->getZipAlign() -
-                    (ftell($out->getStream()) + $length) % $this->zipModel->getZipAlign()
-                ) % $this->zipModel->getZipAlign();
+        if ($sourceExtraLength > 0) {
+            // read Local File Header extra fields
+            fseek($this->in, $pos + ZipEntry::LOCAL_FILE_HEADER_MIN_LEN + $nameLength, SEEK_SET);
+            $extra = fread($this->in, $sourceExtraLength);
+            $extraFieldsCollection = ExtraFieldsFactory::createExtraFieldCollections($extra, $entry);
+            if (isset($extraFieldsCollection[ApkAlignmentExtraField::getHeaderId()]) && $this->zipModel->isZipAlign()) {
+                unset($extraFieldsCollection[ApkAlignmentExtraField::getHeaderId()]);
+                $destExtraLength = strlen(ExtraFieldsFactory::createSerializedData($extraFieldsCollection));
+            }
+        } else {
+            $extraFieldsCollection = new ExtraFieldsCollection();
         }
+
+        $dataAlignmentMultiple = $this->zipModel->getZipAlign();
+        $copyInToOutLength = $entry->getCompressedSize();
 
         fseek($this->in, $pos, SEEK_SET);
-        if ($padding > 0) {
-            stream_copy_to_stream($this->in, $out->getStream(), ZipEntry::LOCAL_FILE_HEADER_MIN_LEN - 2);
-            fwrite($out->getStream(), pack('v', $extraLength + $padding));
-            fseek($this->in, 2, SEEK_CUR);
-            stream_copy_to_stream($this->in, $out->getStream(), $nameLength + $extraLength);
-            fwrite($out->getStream(), str_repeat(chr(0), $padding));
-        } else {
-            stream_copy_to_stream($this->in, $out->getStream(), $length);
-        }
-        stream_copy_to_stream($this->in, $out->getStream(), $entry->getCompressedSize());
-        if ($entry->getGeneralPurposeBitFlag(ZipEntry::GPBF_DATA_DESCRIPTOR)) {
-            $length = 12;
-            if ($entry->isZip64ExtensionsRequired()) {
-                $length += 8;
+
+        if (
+            $this->zipModel->isZipAlign() &&
+            !$entry->isEncrypted() &&
+            $entry->getMethod() === ZipFileInterface::METHOD_STORED
+        ) {
+            if (StringUtil::endsWith($entry->getName(), '.so')) {
+                $dataAlignmentMultiple = ApkAlignmentExtraField::ANDROID_COMMON_PAGE_ALIGNMENT_BYTES;
             }
-            stream_copy_to_stream($this->in, $out->getStream(), $length);
+
+            $dataMinStartOffset =
+                ftell($out->getStream()) +
+                ZipEntry::LOCAL_FILE_HEADER_MIN_LEN +
+                $destExtraLength +
+                $nameLength +
+                ApkAlignmentExtraField::ALIGNMENT_ZIP_EXTRA_MIN_SIZE_BYTES;
+            $padding =
+                ($dataAlignmentMultiple - ($dataMinStartOffset % $dataAlignmentMultiple))
+                % $dataAlignmentMultiple;
+
+            $alignExtra = new ApkAlignmentExtraField();
+            $alignExtra->setMultiple($dataAlignmentMultiple);
+            $alignExtra->setPadding($padding);
+            $extraFieldsCollection->add($alignExtra);
+
+            $extra = ExtraFieldsFactory::createSerializedData($extraFieldsCollection);
+
+            // copy Local File Header without extra field length
+            // from input stream to output stream
+            stream_copy_to_stream($this->in, $out->getStream(), ZipEntry::LOCAL_FILE_HEADER_MIN_LEN - 2);
+            // write new extra field length (2 bytes) to output stream
+            fwrite($out->getStream(), pack('v', strlen($extra)));
+            // skip 2 bytes to input stream
+            fseek($this->in, 2, SEEK_CUR);
+            // copy name from input stream to output stream
+            stream_copy_to_stream($this->in, $out->getStream(), $nameLength);
+            // write extra field to output stream
+            fwrite($out->getStream(), $extra);
+            // skip source extraLength from input stream
+            fseek($this->in, $sourceExtraLength, SEEK_CUR);
+        } else {
+            $copyInToOutLength += ZipEntry::LOCAL_FILE_HEADER_MIN_LEN + $sourceExtraLength + $nameLength;
+            ;
         }
+        if ($entry->getGeneralPurposeBitFlag(ZipEntry::GPBF_DATA_DESCRIPTOR)) {
+//            crc-32                          4 bytes
+//            compressed size                 4 bytes
+//            uncompressed size               4 bytes
+            $copyInToOutLength += 12;
+            if ($entry->isZip64ExtensionsRequired()) {
+//              compressed size                 +4 bytes
+//              uncompressed size               +4 bytes
+                $copyInToOutLength += 8;
+            }
+        }
+        // copy loc, data, data descriptor from input to output stream
+        stream_copy_to_stream($this->in, $out->getStream(), $copyInToOutLength);
     }
 
     /**
@@ -532,6 +584,7 @@ class ZipInputStream implements ZipInputStreamInterface
         $extraLength = unpack('v', fread($this->in, 2))[1];
 
         fseek($this->in, $offset + ZipEntry::LOCAL_FILE_HEADER_MIN_LEN + $nameLength + $extraLength, SEEK_SET);
+        // copy raw data from input stream to output stream
         stream_copy_to_stream($this->in, $out->getStream(), $entry->getCompressedSize());
     }
 
