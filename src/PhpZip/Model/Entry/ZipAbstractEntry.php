@@ -7,7 +7,6 @@ use PhpZip\Exception\ZipException;
 use PhpZip\Extra\ExtraFieldsCollection;
 use PhpZip\Extra\ExtraFieldsFactory;
 use PhpZip\Extra\Fields\WinZipAesEntryExtraField;
-use PhpZip\Extra\Fields\Zip64ExtraField;
 use PhpZip\Model\ZipEntry;
 use PhpZip\Util\DateTimeConverter;
 use PhpZip\Util\StringUtil;
@@ -585,18 +584,7 @@ abstract class ZipAbstractEntry implements ZipEntry
      */
     public function getExtra()
     {
-        $extraData = '';
-        foreach ($this->getExtraFieldsCollection() as $extraField) {
-            $data = $extraField->serialize();
-            $extraData .= pack('vv', $extraField::getHeaderId(), strlen($data));
-            $extraData .= $data;
-        }
-
-        $size = strlen($extraData);
-        if (0x0000 > $size || $size > 0xffff) {
-            throw new ZipException('Size extra out of range: ' . $size . '. Extra data: ' . $extraData);
-        }
-        return $extraData;
+        return ExtraFieldsFactory::createSerializedData($this->extraFieldsCollection);
     }
 
     /**
@@ -612,28 +600,7 @@ abstract class ZipAbstractEntry implements ZipEntry
      */
     public function setExtra($data)
     {
-        $this->extraFieldsCollection = new ExtraFieldsCollection();
-        if (null !== $data) {
-            $extraLength = strlen($data);
-            if (0x0000 > $extraLength || $extraLength > 0xffff) {
-                throw new ZipException("Extra Fields too large: " . $extraLength);
-            }
-            $pos = 0;
-            $endPos = $extraLength;
-            while ($pos < $endPos) {
-                $unpack = unpack('vheaderId/vdataSize', substr($data, $pos, 4));
-                $pos += 4;
-                $headerId = (int)$unpack['headerId'];
-                $dataSize = (int)$unpack['dataSize'];
-                $extraField = ExtraFieldsFactory::create($headerId);
-                if ($extraField instanceof Zip64ExtraField) {
-                    $extraField->setEntry($this);
-                }
-                $extraField->deserialize(substr($data, $pos, $dataSize));
-                $pos += $dataSize;
-                $this->extraFieldsCollection[$headerId] = $extraField;
-            }
-        }
+        $this->extraFieldsCollection = ExtraFieldsFactory::createExtraFieldCollections($data, $this);
     }
 
     /**

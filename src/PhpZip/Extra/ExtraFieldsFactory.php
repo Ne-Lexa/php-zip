@@ -3,11 +3,14 @@
 namespace PhpZip\Extra;
 
 use PhpZip\Exception\ZipException;
+use PhpZip\Extra\Fields\ApkAlignmentExtraField;
 use PhpZip\Extra\Fields\DefaultExtraField;
+use PhpZip\Extra\Fields\JarMarkerExtraField;
 use PhpZip\Extra\Fields\NtfsExtraField;
 use PhpZip\Extra\Fields\WinZipAesEntryExtraField;
 use PhpZip\Extra\Fields\Zip64ExtraField;
 use PhpZip\Model\ZipEntry;
+use PhpZip\Util\StringUtil;
 
 /**
  * Extra Fields Factory
@@ -24,6 +27,56 @@ class ExtraFieldsFactory
 
     private function __construct()
     {
+    }
+
+    /**
+     * @param string $extra
+     * @param ZipEntry|null $entry
+     * @return ExtraFieldsCollection
+     * @throws ZipException
+     */
+    public static function createExtraFieldCollections($extra, ZipEntry $entry = null)
+    {
+        $extraFieldsCollection = new ExtraFieldsCollection();
+        if (null !== $extra) {
+            $extraLength = strlen($extra);
+            if ($extraLength > 0xffff) {
+                throw new ZipException("Extra Fields too large: " . $extraLength);
+            }
+            $pos = 0;
+            $endPos = $extraLength;
+
+            while ($endPos - $pos >= 4) {
+                $unpack = unpack('vheaderId/vdataSize', substr($extra, $pos, 4));
+                $pos += 4;
+                $headerId = (int)$unpack['headerId'];
+                $dataSize = (int)$unpack['dataSize'];
+                $extraField = ExtraFieldsFactory::create($headerId);
+                if ($extraField instanceof Zip64ExtraField && $entry !== null) {
+                    $extraField->setEntry($entry);
+                }
+                $extraField->deserialize(substr($extra, $pos, $dataSize));
+                $pos += $dataSize;
+                $extraFieldsCollection[$headerId] = $extraField;
+            }
+        }
+        return $extraFieldsCollection;
+    }
+
+    public static function createSerializedData(ExtraFieldsCollection $extraFieldsCollection)
+    {
+        $extraData = '';
+        foreach ($extraFieldsCollection as $extraField) {
+            $data = $extraField->serialize();
+            $extraData .= pack('vv', $extraField::getHeaderId(), strlen($data));
+            $extraData .= $data;
+        }
+
+        $size = strlen($extraData);
+        if (0x0000 > $size || $size > 0xffff) {
+            throw new ZipException('Size extra out of range: ' . $size . '. Extra data: ' . $extraData);
+        }
+        return $extraData;
     }
 
     /**
@@ -69,6 +122,8 @@ class ExtraFieldsFactory
             self::$registry[WinZipAesEntryExtraField::getHeaderId()] = WinZipAesEntryExtraField::class;
             self::$registry[NtfsExtraField::getHeaderId()] = NtfsExtraField::class;
             self::$registry[Zip64ExtraField::getHeaderId()] = Zip64ExtraField::class;
+            self::$registry[ApkAlignmentExtraField::getHeaderId()] = ApkAlignmentExtraField::class;
+            self::$registry[JarMarkerExtraField::getHeaderId()] = JarMarkerExtraField::class;
         }
         return self::$registry;
     }
@@ -96,5 +151,23 @@ class ExtraFieldsFactory
     public static function createZip64Extra(ZipEntry $entry)
     {
         return new Zip64ExtraField($entry);
+    }
+
+    /**
+     * @param ZipEntry $entry
+     * @param int $padding
+     * @return ApkAlignmentExtraField
+     */
+    public static function createApkAlignExtra(ZipEntry $entry, $padding)
+    {
+        $padding = (int)$padding;
+        $multiple = 4;
+        if (StringUtil::endsWith($entry->getName(), '.so')) {
+            $multiple = ApkAlignmentExtraField::ANDROID_COMMON_PAGE_ALIGNMENT_BYTES;
+        }
+        $extraField = new ApkAlignmentExtraField();
+        $extraField->setMultiple($multiple);
+        $extraField->setPadding($padding);
+        return $extraField;
     }
 }

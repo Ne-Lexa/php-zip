@@ -8,6 +8,7 @@ use PhpZip\Exception\InvalidArgumentException;
 use PhpZip\Exception\RuntimeException;
 use PhpZip\Exception\ZipException;
 use PhpZip\Extra\ExtraFieldsFactory;
+use PhpZip\Extra\Fields\ApkAlignmentExtraField;
 use PhpZip\Extra\Fields\WinZipAesEntryExtraField;
 use PhpZip\Extra\Fields\Zip64ExtraField;
 use PhpZip\Model\EndOfCentralDirectory;
@@ -17,6 +18,7 @@ use PhpZip\Model\Entry\ZipSourceEntry;
 use PhpZip\Model\ZipEntry;
 use PhpZip\Model\ZipModel;
 use PhpZip\Util\PackUtil;
+use PhpZip\Util\StringUtil;
 use PhpZip\ZipFileInterface;
 
 /**
@@ -87,6 +89,39 @@ class ZipOutputStream implements ZipOutputStreamInterface
 
         $nameLength = strlen($entry->getName());
         $extraLength = strlen($extra);
+
+        // zip align
+        if (
+            $this->zipModel->isZipAlign() &&
+            !$entry->isEncrypted() &&
+            $entry->getMethod() === ZipFileInterface::METHOD_STORED
+        ) {
+            $dataAlignmentMultiple = $this->zipModel->getZipAlign();
+            if (StringUtil::endsWith($entry->getName(), '.so')) {
+                $dataAlignmentMultiple = ApkAlignmentExtraField::ANDROID_COMMON_PAGE_ALIGNMENT_BYTES;
+            }
+            $dataMinStartOffset =
+                $offset +
+                ZipEntry::LOCAL_FILE_HEADER_MIN_LEN +
+                $extraLength +
+                $nameLength +
+                ApkAlignmentExtraField::ALIGNMENT_ZIP_EXTRA_MIN_SIZE_BYTES;
+
+            $padding =
+                ($dataAlignmentMultiple - ($dataMinStartOffset % $dataAlignmentMultiple))
+                % $dataAlignmentMultiple;
+
+            $alignExtra = new ApkAlignmentExtraField();
+            $alignExtra->setMultiple($dataAlignmentMultiple);
+            $alignExtra->setPadding($padding);
+
+            $extraFieldsCollection = clone $entry->getExtraFieldsCollection();
+            $extraFieldsCollection->add($alignExtra);
+
+            $extra = ExtraFieldsFactory::createSerializedData($extraFieldsCollection);
+            $extraLength = strlen($extra);
+        }
+
         $size = $nameLength + $extraLength;
         if (0xffff < $size) {
             throw new ZipException(
@@ -96,20 +131,7 @@ class ZipOutputStream implements ZipOutputStreamInterface
             );
         }
 
-        // zip align
-        $padding = 0;
-        if ($this->zipModel->isZipAlign() && !$entry->isEncrypted() && $entry->getMethod() === ZipFileInterface::METHOD_STORED) {
-            $padding =
-                (
-                    $this->zipModel->getZipAlign() -
-                    (
-                        $offset + ZipEntry::LOCAL_FILE_HEADER_MIN_LEN + $nameLength + $extraLength
-                    ) % $this->zipModel->getZipAlign()
-                ) % $this->zipModel->getZipAlign();
-        }
-
         $dd = $entry->isDataDescriptorRequired();
-
         fwrite(
             $this->out,
             pack(
@@ -134,16 +156,14 @@ class ZipOutputStream implements ZipOutputStreamInterface
                 // file name length                2 bytes
                 $nameLength,
                 // extra field length              2 bytes
-                $extraLength + $padding
+                $extraLength
             )
         );
-        fwrite($this->out, $entry->getName());
+        if ($nameLength > 0) {
+            fwrite($this->out, $entry->getName());
+        }
         if ($extraLength > 0) {
             fwrite($this->out, $extra);
-        }
-
-        if ($padding > 0) {
-            fwrite($this->out, str_repeat(chr(0), $padding));
         }
 
         if ($entry instanceof ZipChangesEntry && !$entry->isChangedContent()) {

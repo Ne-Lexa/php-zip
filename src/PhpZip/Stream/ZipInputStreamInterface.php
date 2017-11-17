@@ -35,6 +35,9 @@ interface ZipInputStreamInterface
     public function getStream();
 
     /**
+     * Copy the input stream of the LOC entry zip and the data into
+     * the output stream and zip the alignment if necessary.
+     *
      * @param ZipEntry $entry
      * @param ZipOutputStreamInterface $out
      */

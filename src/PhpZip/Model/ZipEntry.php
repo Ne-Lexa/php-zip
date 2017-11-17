@@ -3,7 +3,6 @@
 namespace PhpZip\Model;
 
 use PhpZip\Exception\ZipException;
-
 use PhpZip\Extra\ExtraFieldsCollection;
 use PhpZip\ZipFileInterface;
 
