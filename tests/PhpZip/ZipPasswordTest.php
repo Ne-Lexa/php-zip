@@ -346,4 +346,28 @@ class ZipPasswordTest extends ZipFileAddDirTest
 
         $zipFile->close();
     }
+
+    /**
+     * @see https://github.com/Ne-Lexa/php-zip/issues/9
+     */
+    public function testIssues9()
+    {
+        $contents = str_pad('', 1000, 'test;test2;test3' . PHP_EOL, STR_PAD_RIGHT);
+        $password = base64_encode(CryptoUtil::randomBytes(20));
+
+        $encryptMethod = ZipFile::ENCRYPTION_METHOD_WINZIP_AES_256;
+        $zipFile = new ZipFile();
+        $zipFile
+            ->addFromString('codes.csv', $contents)
+            ->setPassword($password, $encryptMethod)
+            ->saveAsFile($this->outputFilename)
+            ->close();
+
+        $this->assertCorrectZipArchive($this->outputFilename, $password);
+
+        $zipFile->openFile($this->outputFilename);
+        $zipFile->setReadPassword($password);
+        $this->assertEquals($zipFile['codes.csv'], $contents);
+        $zipFile->close();
+    }
 }
