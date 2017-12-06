@@ -239,7 +239,6 @@ class ZipOutputStream implements ZipOutputStreamInterface
                     $field = $extraFieldsCollection->get(WinZipAesEntryExtraField::getHeaderId());
                     if (null !== $field) {
                         $method = $field->getMethod();
-                        $entry->setMethod($method);
                     }
                 }
 

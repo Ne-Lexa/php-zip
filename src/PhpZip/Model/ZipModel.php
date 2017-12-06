@@ -224,7 +224,7 @@ class ZipModel implements \Countable
         if (isset($this->outEntries[$entryName])) {
             return $this->outEntries[$entryName];
         }
-        throw new ZipNotFoundEntry('Zip entry ' . $entryName . ' not found');
+        throw new ZipNotFoundEntry('Zip entry "' . $entryName . '" not found');
     }
 
     /**

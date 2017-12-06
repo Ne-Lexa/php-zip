@@ -370,4 +370,30 @@ class ZipPasswordTest extends ZipFileAddDirTest
         $this->assertEquals($zipFile['codes.csv'], $contents);
         $zipFile->close();
     }
+
+    public function testReadAesEncryptedAndRewriteArchive()
+    {
+        $file = __DIR__ . '/resources/aes_password_archive.zip';
+        $password = '1234567890';
+
+        $zipFile = new ZipFile();
+        $zipFile->openFile($file);
+        $zipFile->setReadPassword($password);
+        $zipFile->setEntryComment('contents.txt', 'comment'); // change entry, but not changed contents
+        $zipFile->saveAsFile($this->outputFilename);
+
+        $zipFile2 = new ZipFile();
+        $zipFile2->openFile($this->outputFilename);
+        $zipFile2->setReadPassword($password);
+        $this->assertEquals($zipFile2->getListFiles(), $zipFile->getListFiles());
+        foreach ($zipFile as $name => $contents) {
+            $this->assertNotEmpty($name);
+            $this->assertNotEmpty($contents);
+            $this->assertContains('test contents', $contents);
+            $this->assertEquals($zipFile2[$name], $contents);
+        }
+        $zipFile2->close();
+
+        $zipFile->close();
+    }
 }
