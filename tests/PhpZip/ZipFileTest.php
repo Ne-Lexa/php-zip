@@ -1672,7 +1672,7 @@ class ZipFileTest extends ZipTestCase
 
     /**
      * @expectedException \PhpZip\Exception\ZipNotFoundEntry
-     * @expectedExceptionMessage Zip entry bad entry name not found
+     * @expectedExceptionMessage Zip entry "bad entry name" not found
      */
     public function testNotFoundEntry()
     {

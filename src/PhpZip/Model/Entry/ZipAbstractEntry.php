@@ -255,11 +255,8 @@ abstract class ZipAbstractEntry implements ZipEntry
      */
     public function isZip64ExtensionsRequired()
     {
-        // Offset MUST be considered in decision about ZIP64 format - see
-        // description of Data Descriptor in ZIP File Format Specification!
         return 0xffffffff <= $this->getCompressedSize()
-            || 0xffffffff <= $this->getSize()
-            || 0xffffffff <= sprintf('%u', $this->getOffset());
+            || 0xffffffff <= $this->getSize();
     }
 
     /**
@@ -432,7 +429,10 @@ abstract class ZipAbstractEntry implements ZipEntry
      */
     public function getMethod()
     {
-        return $this->isInit(self::BIT_METHOD) ? $this->method & 0xffff : self::UNKNOWN;
+        $isInit = $this->isInit(self::BIT_METHOD);
+        return $isInit ?
+            $this->method & 0xffff :
+            self::UNKNOWN;
     }
 
     /**
@@ -446,17 +446,14 @@ abstract class ZipAbstractEntry implements ZipEntry
     {
         if (self::UNKNOWN === $method) {
             $this->method = $method;
+            $this->setInit(self::BIT_METHOD, false);
             return $this;
         }
         if (0x0000 > $method || $method > 0xffff) {
-            throw new ZipException('method out of range');
+            throw new ZipException('method out of range: ' . $method);
         }
         switch ($method) {
             case self::METHOD_WINZIP_AES:
-                $this->method = $method;
-                $this->setInit(self::BIT_METHOD, true);
-                break;
-
             case ZipFileInterface::METHOD_STORED:
             case ZipFileInterface::METHOD_DEFLATED:
             case ZipFileInterface::METHOD_BZIP2:

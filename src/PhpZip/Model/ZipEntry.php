@@ -18,7 +18,7 @@ interface ZipEntry
     // Bit masks for initialized fields.
     const BIT_PLATFORM = 1,
         BIT_METHOD = 2 /* 1 << 1 */,
-        BIT_CRC = 2 /* 1 << 2 */,
+        BIT_CRC = 4 /* 1 << 2 */,
         BIT_DATE_TIME = 64 /* 1 << 6 */,
         BIT_EXTERNAL_ATTR = 128 /* 1 << 7*/
     ;
