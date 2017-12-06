@@ -346,4 +346,54 @@ class ZipPasswordTest extends ZipFileAddDirTest
 
         $zipFile->close();
     }
+
+    /**
+     * @see https://github.com/Ne-Lexa/php-zip/issues/9
+     */
+    public function testIssues9()
+    {
+        $contents = str_pad('', 1000, 'test;test2;test3' . PHP_EOL, STR_PAD_RIGHT);
+        $password = base64_encode(CryptoUtil::randomBytes(20));
+
+        $encryptMethod = ZipFile::ENCRYPTION_METHOD_WINZIP_AES_256;
+        $zipFile = new ZipFile();
+        $zipFile
+            ->addFromString('codes.csv', $contents)
+            ->setPassword($password, $encryptMethod)
+            ->saveAsFile($this->outputFilename)
+            ->close();
+
+        $this->assertCorrectZipArchive($this->outputFilename, $password);
+
+        $zipFile->openFile($this->outputFilename);
+        $zipFile->setReadPassword($password);
+        $this->assertEquals($zipFile['codes.csv'], $contents);
+        $zipFile->close();
+    }
+
+    public function testReadAesEncryptedAndRewriteArchive()
+    {
+        $file = __DIR__ . '/resources/aes_password_archive.zip';
+        $password = '1234567890';
+
+        $zipFile = new ZipFile();
+        $zipFile->openFile($file);
+        $zipFile->setReadPassword($password);
+        $zipFile->setEntryComment('contents.txt', 'comment'); // change entry, but not changed contents
+        $zipFile->saveAsFile($this->outputFilename);
+
+        $zipFile2 = new ZipFile();
+        $zipFile2->openFile($this->outputFilename);
+        $zipFile2->setReadPassword($password);
+        $this->assertEquals($zipFile2->getListFiles(), $zipFile->getListFiles());
+        foreach ($zipFile as $name => $contents) {
+            $this->assertNotEmpty($name);
+            $this->assertNotEmpty($contents);
+            $this->assertContains('test contents', $contents);
+            $this->assertEquals($zipFile2[$name], $contents);
+        }
+        $zipFile2->close();
+
+        $zipFile->close();
+    }
 }

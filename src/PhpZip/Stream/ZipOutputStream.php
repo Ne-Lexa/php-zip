@@ -223,7 +223,6 @@ class ZipOutputStream implements ZipOutputStreamInterface
             | ($entry->isDataDescriptorRequired() ? ZipEntry::GPBF_DATA_DESCRIPTOR : 0)
             | ($utf8 ? ZipEntry::GPBF_UTF8 : 0);
 
-        $skipCrc = false;
         $entryContent = null;
         $extraFieldsCollection = $entry->getExtraFieldsCollection();
         if (!($entry instanceof ZipChangesEntry && !$entry->isChangedContent())) {
@@ -233,57 +232,13 @@ class ZipOutputStream implements ZipOutputStreamInterface
                 $entry->setSize(strlen($entryContent));
                 $entry->setCrc(crc32($entryContent));
 
-                if (
-                    $encrypted &&
-                    (
-                        ZipEntry::METHOD_WINZIP_AES === $method ||
-                        $entry->getEncryptionMethod() === ZipFileInterface::ENCRYPTION_METHOD_WINZIP_AES_128 ||
-                        $entry->getEncryptionMethod() === ZipFileInterface::ENCRYPTION_METHOD_WINZIP_AES_192 ||
-                        $entry->getEncryptionMethod() === ZipFileInterface::ENCRYPTION_METHOD_WINZIP_AES_256
-                    )
-                ) {
-                    $field = null;
-                    $method = $entry->getMethod();
-                    $keyStrength = WinZipAesEntryExtraField::getKeyStrangeFromEncryptionMethod($entry->getEncryptionMethod()); // size bits
-
-                    $compressedSize = $entry->getCompressedSize();
-
-                    if (ZipEntry::METHOD_WINZIP_AES === $method) {
-                        /**
-                         * @var WinZipAesEntryExtraField $field
-                         */
-                        $field = $extraFieldsCollection->get(WinZipAesEntryExtraField::getHeaderId());
-                        if (null !== $field) {
-                            $method = $field->getMethod();
-                            if (ZipEntry::UNKNOWN !== $compressedSize) {
-                                $compressedSize -= $field->getKeyStrength() / 2 // salt value
-                                    + 2   // password verification value
-                                    + 10; // authentication code
-                            }
-                            $entry->setMethod($method);
-                        }
-                    }
-                    if (null === $field) {
-                        $field = ExtraFieldsFactory::createWinZipAesEntryExtra();
-                    }
-                    $field->setKeyStrength($keyStrength);
-                    $field->setMethod($method);
-                    $size = $entry->getSize();
-                    if (20 <= $size && ZipFileInterface::METHOD_BZIP2 !== $method) {
-                        $field->setVendorVersion(WinZipAesEntryExtraField::VV_AE_1);
-                    } else {
-                        $field->setVendorVersion(WinZipAesEntryExtraField::VV_AE_2);
-                        $skipCrc = true;
-                    }
-                    $extraFieldsCollection->add($field);
-                    if (ZipEntry::UNKNOWN !== $compressedSize) {
-                        $compressedSize += $field->getKeyStrength() / 2 // salt value
-                            + 2   // password verification value
-                            + 10; // authentication code
-                        $entry->setCompressedSize($compressedSize);
-                    }
-                    if ($skipCrc) {
-                        $entry->setCrc(0);
+                if ($encrypted && ZipEntry::METHOD_WINZIP_AES === $method) {
+                    /**
+                     * @var WinZipAesEntryExtraField $field
+                     */
+                    $field = $extraFieldsCollection->get(WinZipAesEntryExtraField::getHeaderId());
+                    if (null !== $field) {
+                        $method = $field->getMethod();
                     }
                 }
 
@@ -337,14 +292,23 @@ class ZipOutputStream implements ZipOutputStreamInterface
                 }
 
                 if ($encrypted) {
-                    if (
-                        $entry->getEncryptionMethod() === ZipFileInterface::ENCRYPTION_METHOD_WINZIP_AES_128 ||
-                        $entry->getEncryptionMethod() === ZipFileInterface::ENCRYPTION_METHOD_WINZIP_AES_192 ||
-                        $entry->getEncryptionMethod() === ZipFileInterface::ENCRYPTION_METHOD_WINZIP_AES_256
-                    ) {
-                        if ($skipCrc) {
+                    if (in_array($entry->getEncryptionMethod(), [
+                        ZipFileInterface::ENCRYPTION_METHOD_WINZIP_AES_128,
+                        ZipFileInterface::ENCRYPTION_METHOD_WINZIP_AES_192,
+                        ZipFileInterface::ENCRYPTION_METHOD_WINZIP_AES_256,
+                    ], true)) {
+                        $keyStrength = WinZipAesEntryExtraField::getKeyStrangeFromEncryptionMethod($entry->getEncryptionMethod()); // size bits
+                        $field = ExtraFieldsFactory::createWinZipAesEntryExtra();
+                        $field->setKeyStrength($keyStrength);
+                        $field->setMethod($method);
+                        $size = $entry->getSize();
+                        if (20 <= $size && ZipFileInterface::METHOD_BZIP2 !== $method) {
+                            $field->setVendorVersion(WinZipAesEntryExtraField::VV_AE_1);
+                        } else {
+                            $field->setVendorVersion(WinZipAesEntryExtraField::VV_AE_2);
                             $entry->setCrc(0);
                         }
+                        $extraFieldsCollection->add($field);
                         $entry->setMethod(ZipEntry::METHOD_WINZIP_AES);
 
                         $winZipAesEngine = new WinZipAesEngine($entry);
@@ -375,6 +339,7 @@ class ZipOutputStream implements ZipOutputStreamInterface
      * @param ZipEntry $entry
      * @param string $content
      * @return string
+     * @throws ZipException
      */
     protected function determineBestCompressionMethod(ZipEntry $entry, $content)
     {
