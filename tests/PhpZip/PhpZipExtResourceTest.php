@@ -75,7 +75,6 @@ class PhpZipExtResourceTest extends ZipTestCase
     {
         return [
             [__DIR__ . '/php-zip-ext-test-resources/bug40228.zip'],
-            [__DIR__ . '/php-zip-ext-test-resources/bug40228私はガラスを食べられます.zip'],
         ];
     }
 
