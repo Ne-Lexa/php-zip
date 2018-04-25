@@ -1302,11 +1302,11 @@ class ZipFile implements ZipFileInterface
         }
 
         $stream = new ResponseStream($handle);
-        $response->withHeader('Content-Type', $mimeType);
-        $response->withHeader('Content-Disposition', $contentDispositionValue);
-        $response->withHeader('Content-Length', $stream->getSize());
-        $response->withBody($stream);
-        return $response;
+        return $response
+            ->withHeader('Content-Type', $mimeType)
+            ->withHeader('Content-Disposition', $contentDispositionValue)
+            ->withHeader('Content-Length', $stream->getSize())
+            ->withBody($stream);
     }
 
     /**
