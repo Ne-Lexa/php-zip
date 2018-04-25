@@ -7,6 +7,7 @@ use PhpZip\Model\ZipInfo;
 use PhpZip\Util\CryptoUtil;
 use PhpZip\Util\FilesUtil;
 use Psr\Http\Message\ResponseInterface;
+use Zend\Diactoros\Response;
 
 /**
  * ZipFile test
@@ -1786,9 +1787,10 @@ class ZipFileTest extends ZipTestCase
             $zipFile[$i] = $i;
         }
         $filename = 'file.jar';
-        $response = $this->getMock(ResponseInterface::class);
-        $response = $zipFile->outputAsResponse($response, $filename);
+        $response = $zipFile->outputAsResponse(new Response(), $filename);
         $this->assertInstanceOf(ResponseInterface::class, $response);
+        $this->assertEquals('application/java-archive', $response->getHeaderLine('content-type'));
+        $this->assertEquals('attachment; filename="file.jar"', $response->getHeaderLine('content-disposition'));
     }
 
     public function testCompressionLevel()
