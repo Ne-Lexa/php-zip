@@ -98,7 +98,7 @@ class ZipFile implements ZipFileInterface
     public function openFile($filename)
     {
         if (!file_exists($filename)) {
-            throw new InvalidArgumentException("File $filename can't exists.");
+            throw new InvalidArgumentException("File $filename does not exist.");
         }
         if (!($handle = @fopen($filename, 'rb'))) {
             throw new ZipException("File $filename can't open.");
@@ -550,10 +550,10 @@ class ZipFile implements ZipFileInterface
     {
         $inputDir = (string)$inputDir;
         if (null === $inputDir || strlen($inputDir) === 0) {
-            throw new InvalidArgumentException('Input dir empty');
+            throw new InvalidArgumentException('The input directory is not specified');
         }
         if (!is_dir($inputDir)) {
-            throw new InvalidArgumentException('Directory ' . $inputDir . ' can\'t exists');
+            throw new InvalidArgumentException(sprintf('The "%s" directory does not exist.',  $inputDir));
         }
         $inputDir = rtrim($inputDir, '/\\') . DIRECTORY_SEPARATOR;
 
@@ -580,10 +580,10 @@ class ZipFile implements ZipFileInterface
     {
         $inputDir = (string)$inputDir;
         if (null === $inputDir || strlen($inputDir) === 0) {
-            throw new InvalidArgumentException('Input dir empty');
+            throw new InvalidArgumentException('The input directory is not specified');
         }
         if (!is_dir($inputDir)) {
-            throw new InvalidArgumentException('Directory ' . $inputDir . ' can\'t exists');
+            throw new InvalidArgumentException(sprintf('The "%s" directory does not exist.',  $inputDir));
         }
         $inputDir = rtrim($inputDir, '/\\') . DIRECTORY_SEPARATOR;
 
@@ -697,14 +697,14 @@ class ZipFile implements ZipFileInterface
     ) {
         $inputDir = (string)$inputDir;
         if (null === $inputDir || 0 === strlen($inputDir)) {
-            throw new InvalidArgumentException('Input dir empty');
+            throw new InvalidArgumentException('The input directory is not specified');
         }
         if (!is_dir($inputDir)) {
-            throw new InvalidArgumentException('Directory ' . $inputDir . ' can\'t exists');
+            throw new InvalidArgumentException(sprintf('The "%s" directory does not exist.',  $inputDir));
         }
         $globPattern = (string)$globPattern;
         if (empty($globPattern)) {
-            throw new InvalidArgumentException("glob pattern empty");
+            throw new InvalidArgumentException('The glob pattern is not specified');
         }
 
         $inputDir = rtrim($inputDir, '/\\') . DIRECTORY_SEPARATOR;
@@ -792,14 +792,14 @@ class ZipFile implements ZipFileInterface
     ) {
         $regexPattern = (string)$regexPattern;
         if (empty($regexPattern)) {
-            throw new InvalidArgumentException("regex pattern empty");
+            throw new InvalidArgumentException('The regex pattern is not specified');
         }
         $inputDir = (string)$inputDir;
         if (null === $inputDir || 0 === strlen($inputDir)) {
-            throw new InvalidArgumentException('Input dir empty');
+            throw new InvalidArgumentException('The input directory is not specified');
         }
         if (!is_dir($inputDir)) {
-            throw new InvalidArgumentException('Directory ' . $inputDir . ' can\'t exists');
+            throw new InvalidArgumentException(sprintf('The "%s" directory does not exist.',  $inputDir));
         }
         $inputDir = rtrim($inputDir, '/\\') . DIRECTORY_SEPARATOR;
 
