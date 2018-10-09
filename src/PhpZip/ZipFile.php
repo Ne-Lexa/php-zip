@@ -423,6 +423,7 @@ class ZipFile implements ZipFileInterface
 
         if ($compressionMethod === null) {
             if (function_exists('mime_content_type')) {
+                /** @noinspection PhpComposerExtensionStubsInspection */
                 $mimeType = @mime_content_type($filename);
                 $type = strtok($mimeType, '/');
                 if ($type === 'image') {
@@ -611,8 +612,7 @@ class ZipFile implements ZipFileInterface
         \Iterator $iterator,
         $localPath = '/',
         $compressionMethod = null
-    )
-    {
+    ) {
         $localPath = (string)$localPath;
         if (strlen($localPath) !== 0) {
             $localPath = trim($localPath, '\\/');
@@ -696,8 +696,7 @@ class ZipFile implements ZipFileInterface
         $localPath = '/',
         $recursive = true,
         $compressionMethod = null
-    )
-    {
+    ) {
         $inputDir = (string)$inputDir;
         if (strlen($inputDir) === 0) {
             throw new InvalidArgumentException('Input dir empty');
@@ -793,8 +792,7 @@ class ZipFile implements ZipFileInterface
         $localPath = "/",
         $recursive = true,
         $compressionMethod = null
-    )
-    {
+    ) {
         $regexPattern = (string)$regexPattern;
         if (empty($regexPattern)) {
             throw new InvalidArgumentException("regex pattern empty");

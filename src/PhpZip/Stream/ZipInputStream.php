@@ -446,6 +446,7 @@ class ZipInputStream implements ZipInputStreamInterface
                 if (!extension_loaded('bz2')) {
                     throw new ZipException('Extension bzip2 not install');
                 }
+                /** @noinspection PhpComposerExtensionStubsInspection */
                 $content = bzdecompress($content);
                 break;
             default:
@@ -552,7 +553,7 @@ class ZipInputStream implements ZipInputStreamInterface
             // skip source extraLength from input stream
             fseek($this->in, $sourceExtraLength, SEEK_CUR);
         } else {
-            $copyInToOutLength += ZipEntry::LOCAL_FILE_HEADER_MIN_LEN + $sourceExtraLength + $nameLength;;
+            $copyInToOutLength += ZipEntry::LOCAL_FILE_HEADER_MIN_LEN + $sourceExtraLength + $nameLength;
         }
         if ($entry->getGeneralPurposeBitFlag(ZipEntry::GPBF_DATA_DESCRIPTOR)) {
 //            crc-32                          4 bytes

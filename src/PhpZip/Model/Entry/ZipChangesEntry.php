@@ -48,6 +48,7 @@ class ZipChangesEntry extends ZipAbstractEntry
      * Returns an string content of the given entry.
      *
      * @return null|string
+     * @throws ZipException
      */
     public function getEntryContent()
     {

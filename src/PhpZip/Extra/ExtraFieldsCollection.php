@@ -152,7 +152,7 @@ class ExtraFieldsCollection implements \Countable, \ArrayAccess, \Iterator
     public function offsetSet($offset, $value)
     {
         if ($value instanceof ExtraField) {
-            if ($offset !== $value::getHeaderId()){
+            if ($offset !== $value::getHeaderId()) {
                 throw new InvalidArgumentException("Value header id !== array access key");
             }
             $this->add($value);

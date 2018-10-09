@@ -21,6 +21,7 @@
         }
     ],
     "require": {
+        "ext-zlib": "*",
         "php": "^5.5 || ^7.0",
         "psr/http-message": "^1.0"
     },

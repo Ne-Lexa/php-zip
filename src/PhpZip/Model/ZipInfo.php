@@ -1,4 +1,4 @@
-<?php
+<?php /** @noinspection PhpMissingBreakStatementInspection */
 
 namespace PhpZip\Model;
 
@@ -233,8 +233,6 @@ class ZipInfo
         $xattr = (($externalAttributes >> 16) & 0xFFFF);
         switch ($entry->getPlatform()) {
             case self::MADE_BY_MS_DOS:
-                // no break
-                /** @noinspection PhpMissingBreakStatementInspection */
             case self::MADE_BY_WINDOWS_NTFS:
                 if ($entry->getPlatform() != self::MADE_BY_MS_DOS ||
                     ($xattr & 0700) !=

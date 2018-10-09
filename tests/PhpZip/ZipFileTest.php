@@ -33,6 +33,7 @@ class ZipFileTest extends ZipTestCase
      */
     public function testOpenFileCantOpen()
     {
+        /** @noinspection PhpComposerExtensionStubsInspection */
         if (0 === posix_getuid()) {
             $this->markTestSkipped('Skip the test for a user with root privileges');
         }
@@ -152,6 +153,7 @@ class ZipFileTest extends ZipTestCase
         if (!extension_loaded("gd")) {
             $this->markTestSkipped('not extension gd');
         }
+        /** @noinspection PhpComposerExtensionStubsInspection */
         $zipFile->openFromStream(imagecreate(1, 1));
     }
 
@@ -1057,6 +1059,7 @@ class ZipFileTest extends ZipTestCase
      */
     public function testExtractFail3()
     {
+        /** @noinspection PhpComposerExtensionStubsInspection */
         if (0 === posix_getuid()) {
             $this->markTestSkipped('Skip the test for a user with root privileges');
         }
@@ -1275,6 +1278,7 @@ class ZipFileTest extends ZipTestCase
      */
     public function testAddFileCantOpen()
     {
+        /** @noinspection PhpComposerExtensionStubsInspection */
         if (posix_getuid() === 0) {
             $this->markTestSkipped('Skip the test for a user with root privileges');
         }
@@ -1588,6 +1592,7 @@ class ZipFileTest extends ZipTestCase
      */
     public function testSaveAsFileNotWritable()
     {
+        /** @noinspection PhpComposerExtensionStubsInspection */
         if (0 === posix_getuid()) {
             $this->markTestSkipped('Skip the test for a user with root privileges');
         }

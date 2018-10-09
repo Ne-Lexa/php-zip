@@ -255,6 +255,7 @@ class ZipOutputStream implements ZipOutputStreamInterface
                         $compressionLevel = $entry->getCompressionLevel() === ZipFileInterface::LEVEL_DEFAULT_COMPRESSION ?
                             ZipEntry::LEVEL_DEFAULT_BZIP2_COMPRESSION :
                             $entry->getCompressionLevel();
+                        /** @noinspection PhpComposerExtensionStubsInspection */
                         $entryContent = bzcompress($entryContent, $compressionLevel);
                         if (is_int($entryContent)) {
                             throw new ZipException('Error bzip2 compress. Error code: ' . $entryContent);

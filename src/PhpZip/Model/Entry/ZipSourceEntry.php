@@ -57,7 +57,6 @@ class ZipSourceEntry extends ZipAbstractEntry
      * Returns an string content of the given entry.
      *
      * @return string
-     * @throws ZipException
      */
     public function getEntryContent()
     {
@@ -74,7 +73,7 @@ class ZipSourceEntry extends ZipAbstractEntry
         }
         if (is_resource($this->entryContent)) {
             rewind($this->entryContent);
-            return stream_get_contents($this->entryContent, -1, 0);
+            return stream_get_contents($this->entryContent);
         }
         return $this->entryContent;
     }

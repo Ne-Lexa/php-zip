@@ -179,9 +179,11 @@ class WinZipAesEngine implements ZipEncryptionEngine
     {
         if (extension_loaded("openssl")) {
             $numBits = strlen($key) * 8;
+            /** @noinspection PhpComposerExtensionStubsInspection */
             return openssl_encrypt($data, 'AES-' . $numBits . '-CTR', $key, OPENSSL_RAW_DATA, $iv);
         } elseif (extension_loaded("mcrypt")) {
             /** @noinspection PhpDeprecationInspection */
+            /** @noinspection PhpComposerExtensionStubsInspection */
             return mcrypt_encrypt(MCRYPT_RIJNDAEL_128, $key, $data, "ctr", $iv);
         } else {
             throw new RuntimeException('Extension openssl or mcrypt not loaded');
@@ -200,9 +202,11 @@ class WinZipAesEngine implements ZipEncryptionEngine
     {
         if (extension_loaded("openssl")) {
             $numBits = strlen($key) * 8;
+            /** @noinspection PhpComposerExtensionStubsInspection */
             return openssl_decrypt($data, 'AES-' . $numBits . '-CTR', $key, OPENSSL_RAW_DATA, $iv);
         } elseif (extension_loaded("mcrypt")) {
             /** @noinspection PhpDeprecationInspection */
+            /** @noinspection PhpComposerExtensionStubsInspection */
             return mcrypt_decrypt(MCRYPT_RIJNDAEL_128, $key, $data, "ctr", $iv);
         } else {
             throw new RuntimeException('Extension openssl or mcrypt not loaded');
@@ -220,7 +224,7 @@ class WinZipAesEngine implements ZipEncryptionEngine
     {
         // Init key strength.
         $password = $this->entry->getPassword();
-        if ($password === null){
+        if ($password === null) {
             throw new ZipException('No password was set for the entry "'.$this->entry->getName().'"');
         }
 
