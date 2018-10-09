@@ -66,12 +66,13 @@ class ZipSourceEntry extends ZipAbstractEntry
             if ($this->getSize() < self::MAX_SIZE_CACHED_CONTENT_IN_MEMORY) {
                 $this->entryContent = $content;
             } else {
-                $this->entryContent = fopen('php://temp', 'rb');
+                $this->entryContent = fopen('php://temp', 'r+b');
                 fwrite($this->entryContent, $content);
             }
             return $content;
         }
         if (is_resource($this->entryContent)) {
+            rewind($this->entryContent);
             return stream_get_contents($this->entryContent, -1, 0);
         }
         return $this->entryContent;
