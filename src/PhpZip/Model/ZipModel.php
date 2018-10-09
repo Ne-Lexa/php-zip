@@ -3,8 +3,8 @@
 namespace PhpZip\Model;
 
 use PhpZip\Exception\InvalidArgumentException;
+use PhpZip\Exception\ZipEntryNotFoundException;
 use PhpZip\Exception\ZipException;
-use PhpZip\Exception\ZipNotFoundEntry;
 use PhpZip\Model\Entry\ZipChangesEntry;
 use PhpZip\Model\Entry\ZipSourceEntry;
 use PhpZip\ZipFileInterface;
@@ -74,11 +74,10 @@ class ZipModel implements \Countable
 
     /**
      * @param string $comment
-     * @throws InvalidArgumentException
      */
     public function setArchiveComment($comment)
     {
-        if (null !== $comment && strlen($comment) !== 0) {
+        if ($comment !== null && strlen($comment) !== 0) {
             $comment = (string)$comment;
             $length = strlen($comment);
             if (0x0000 > $length || $length > 0xffff) {
@@ -97,6 +96,7 @@ class ZipModel implements \Countable
      * Specify a password for extracting files.
      *
      * @param null|string $password
+     * @throws ZipException
      */
     public function setReadPassword($password)
     {
@@ -110,12 +110,13 @@ class ZipModel implements \Countable
     /**
      * @param string $entryName
      * @param string $password
-     * @throws ZipNotFoundEntry
+     * @throws ZipEntryNotFoundException
+     * @throws ZipException
      */
     public function setReadPasswordEntry($entryName, $password)
     {
         if (!isset($this->inputEntries[$entryName])) {
-            throw new ZipNotFoundEntry('Not found entry ' . $entryName);
+            throw new ZipEntryNotFoundException($entryName);
         }
         if ($this->inputEntries[$entryName]->isEncrypted()) {
             $this->inputEntries[$entryName]->setPassword($password);
@@ -181,8 +182,7 @@ class ZipModel implements \Countable
     /**
      * @param string|ZipEntry $old
      * @param string|ZipEntry $new
-     * @throws InvalidArgumentException
-     * @throws ZipNotFoundEntry
+     * @throws ZipException
      */
     public function renameEntry($old, $new)
     {
@@ -202,6 +202,8 @@ class ZipModel implements \Countable
     /**
      * @param string|ZipEntry $entry
      * @return ZipChangesEntry|ZipEntry
+     * @throws ZipException
+     * @throws ZipEntryNotFoundException
      */
     public function getEntryForChanges($entry)
     {
@@ -216,7 +218,7 @@ class ZipModel implements \Countable
     /**
      * @param string|ZipEntry $entryName
      * @return ZipEntry
-     * @throws ZipNotFoundEntry
+     * @throws ZipEntryNotFoundException
      */
     public function getEntry($entryName)
     {
@@ -224,7 +226,7 @@ class ZipModel implements \Countable
         if (isset($this->outEntries[$entryName])) {
             return $this->outEntries[$entryName];
         }
-        throw new ZipNotFoundEntry('Zip entry "' . $entryName . '" not found');
+        throw new ZipEntryNotFoundException($entryName);
     }
 
     /**
@@ -327,7 +329,6 @@ class ZipModel implements \Countable
 
     /**
      * @param int $encryptionMethod
-     * @throws ZipException
      */
     public function setEncryptionMethod($encryptionMethod = ZipFileInterface::ENCRYPTION_METHOD_WINZIP_AES_256)
     {

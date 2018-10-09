@@ -119,6 +119,7 @@ class WinZipAesEntryExtraField implements ExtraField
 
     /**
      * @return bool|int
+     * @throws ZipException
      */
     public function getKeyStrength()
     {
@@ -153,6 +154,7 @@ class WinZipAesEntryExtraField implements ExtraField
      * Internal encryption method.
      *
      * @return int
+     * @throws ZipException
      */
     public function getEncryptionMethod()
     {

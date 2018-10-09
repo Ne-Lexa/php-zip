@@ -186,6 +186,7 @@ class ZipInfo
      * ZipInfo constructor.
      *
      * @param ZipEntry $entry
+     * @throws \PhpZip\Exception\ZipException
      */
     public function __construct(ZipEntry $entry)
     {
@@ -323,6 +324,7 @@ class ZipInfo
     /**
      * @param ZipEntry $entry
      * @return int
+     * @throws \PhpZip\Exception\ZipException
      */
     private static function getMethodId(ZipEntry $entry)
     {
@@ -344,6 +346,7 @@ class ZipInfo
     /**
      * @param ZipEntry $entry
      * @return string
+     * @throws \PhpZip\Exception\ZipException
      */
     private static function getEntryMethodName(ZipEntry $entry)
     {

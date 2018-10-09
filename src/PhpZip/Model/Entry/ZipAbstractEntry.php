@@ -109,6 +109,7 @@ abstract class ZipAbstractEntry implements ZipEntry
 
     /**
      * @param ZipEntry $entry
+     * @throws ZipException
      */
     public function setEntry(ZipEntry $entry)
     {
@@ -212,7 +213,7 @@ abstract class ZipAbstractEntry implements ZipEntry
      */
     protected function isInit($mask)
     {
-        return 0 !== ($this->init & $mask);
+        return ($this->init & $mask) !== 0;
     }
 
     /**
@@ -274,7 +275,6 @@ abstract class ZipAbstractEntry implements ZipEntry
      *
      * @param int $compressedSize The Compressed Size.
      * @return ZipEntry
-     * @throws ZipException
      */
     public function setCompressedSize($compressedSize)
     {
@@ -297,7 +297,6 @@ abstract class ZipAbstractEntry implements ZipEntry
      *
      * @param int $size The (Uncompressed) Size.
      * @return ZipEntry
-     * @throws ZipException
      */
     public function setSize($size)
     {
@@ -318,7 +317,6 @@ abstract class ZipAbstractEntry implements ZipEntry
     /**
      * @param int $offset
      * @return ZipEntry
-     * @throws ZipException
      */
     public function setOffset($offset)
     {
@@ -382,7 +380,7 @@ abstract class ZipAbstractEntry implements ZipEntry
      */
     public function getGeneralPurposeBitFlag($mask)
     {
-        return 0 !== ($this->general & $mask);
+        return ($this->general & $mask) !== 0;
     }
 
     /**
@@ -390,6 +388,7 @@ abstract class ZipAbstractEntry implements ZipEntry
      * encryption artifacts.
      *
      * @return ZipEntry
+     * @throws ZipException
      */
     public function disableEncryption()
     {
@@ -401,7 +400,7 @@ abstract class ZipAbstractEntry implements ZipEntry
              */
             $field = $this->extraFieldsCollection[$headerId];
             if (self::METHOD_WINZIP_AES === $this->getMethod()) {
-                $this->setMethod(null === $field ? self::UNKNOWN : $field->getMethod());
+                $this->setMethod($field === null ? self::UNKNOWN : $field->getMethod());
             }
             unset($this->extraFieldsCollection[$headerId]);
         }
@@ -444,7 +443,7 @@ abstract class ZipAbstractEntry implements ZipEntry
      */
     public function setMethod($method)
     {
-        if (self::UNKNOWN === $method) {
+        if ($method === self::UNKNOWN) {
             $this->method = $method;
             $this->setInit(self::BIT_METHOD, false);
             return $this;
@@ -510,6 +509,7 @@ abstract class ZipAbstractEntry implements ZipEntry
      *
      * @param int $unixTimestamp
      * @return ZipEntry
+     * @throws ZipException
      */
     public function setTime($unixTimestamp)
     {
@@ -541,7 +541,6 @@ abstract class ZipAbstractEntry implements ZipEntry
      *
      * @param int $externalAttributes the external file attributes.
      * @return ZipEntry
-     * @throws ZipException
      */
     public function setExternalAttributes($externalAttributes)
     {
@@ -619,7 +618,7 @@ abstract class ZipAbstractEntry implements ZipEntry
      */
     public function setComment($comment)
     {
-        if (null !== $comment) {
+        if ($comment !== null) {
             $commentLength = strlen($comment);
             if (0x0000 > $commentLength || $commentLength > 0xffff) {
                 throw new ZipException("Comment too long");
@@ -635,7 +634,7 @@ abstract class ZipAbstractEntry implements ZipEntry
      */
     public function isDataDescriptorRequired()
     {
-        return self::UNKNOWN == ($this->getCrc() | $this->getCompressedSize() | $this->getSize());
+        return ($this->getCrc() | $this->getCompressedSize() | $this->getSize()) == self::UNKNOWN;
     }
 
     /**
@@ -653,7 +652,6 @@ abstract class ZipAbstractEntry implements ZipEntry
      *
      * @param int $crc
      * @return ZipEntry
-     * @throws ZipException
      */
     public function setCrc($crc)
     {
@@ -676,11 +674,12 @@ abstract class ZipAbstractEntry implements ZipEntry
      * @param string $password
      * @param null|int $encryptionMethod
      * @return ZipEntry
+     * @throws ZipException
      */
     public function setPassword($password, $encryptionMethod = null)
     {
         $this->password = $password;
-        if (null !== $encryptionMethod) {
+        if ($encryptionMethod !== null) {
             $this->setEncryptionMethod($encryptionMethod);
         }
         if (!empty($this->password)) {
@@ -715,10 +714,10 @@ abstract class ZipAbstractEntry implements ZipEntry
     {
         if (null !== $encryptionMethod) {
             if (
-                ZipFileInterface::ENCRYPTION_METHOD_TRADITIONAL !== $encryptionMethod
-                && ZipFileInterface::ENCRYPTION_METHOD_WINZIP_AES_128 !== $encryptionMethod
-                && ZipFileInterface::ENCRYPTION_METHOD_WINZIP_AES_192 !== $encryptionMethod
-                && ZipFileInterface::ENCRYPTION_METHOD_WINZIP_AES_256 !== $encryptionMethod
+                $encryptionMethod !== ZipFileInterface::ENCRYPTION_METHOD_TRADITIONAL
+                && $encryptionMethod !== ZipFileInterface::ENCRYPTION_METHOD_WINZIP_AES_128
+                && $encryptionMethod !== ZipFileInterface::ENCRYPTION_METHOD_WINZIP_AES_192
+                && $encryptionMethod !== ZipFileInterface::ENCRYPTION_METHOD_WINZIP_AES_256
             ) {
                 throw new ZipException('Invalid encryption method');
             }
@@ -738,7 +737,6 @@ abstract class ZipAbstractEntry implements ZipEntry
     /**
      * @param int $compressionLevel
      * @return ZipEntry
-     * @throws InvalidArgumentException
      */
     public function setCompressionLevel($compressionLevel = ZipFileInterface::LEVEL_DEFAULT_COMPRESSION)
     {

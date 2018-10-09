@@ -61,7 +61,8 @@ class ZipSourceEntry extends ZipAbstractEntry
      */
     public function getEntryContent()
     {
-        if (null === $this->entryContent) {
+        if ($this->entryContent === null) {
+            // In order not to unpack again, we cache the content in memory or on disk
             $content = $this->inputStream->readEntryContent($this);
             if ($this->getSize() < self::MAX_SIZE_CACHED_CONTENT_IN_MEMORY) {
                 $this->entryContent = $content;
@@ -89,7 +90,7 @@ class ZipSourceEntry extends ZipAbstractEntry
 
     public function __destruct()
     {
-        if (!$this->clone && null !== $this->entryContent && is_resource($this->entryContent)) {
+        if (!$this->clone && $this->entryContent !== null && is_resource($this->entryContent)) {
             fclose($this->entryContent);
         }
     }

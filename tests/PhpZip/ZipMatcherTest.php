@@ -16,7 +16,7 @@ class ZipMatcherTest extends \PHPUnit_Framework_TestCase
         }
 
         $matcher = $zipFile->matcher();
-        self::assertInstanceOf(ZipEntryMatcher::class, $matcher);
+        $this->assertInstanceOf(ZipEntryMatcher::class, $matcher);
 
         $this->assertTrue(is_array($matcher->getMatches()));
         $this->assertCount(0, $matcher);
@@ -40,7 +40,7 @@ class ZipMatcherTest extends \PHPUnit_Framework_TestCase
         $matcher->setPassword('qwerty');
         $info = $zipFile->getAllInfo();
         array_walk($info, function (ZipInfo $zipInfo) use ($actualMatches) {
-            self::assertEquals($zipInfo->isEncrypted(), in_array($zipInfo->getName(), $actualMatches));
+            $this->assertEquals($zipInfo->isEncrypted(), in_array($zipInfo->getName(), $actualMatches));
         });
 
         $matcher->all();
@@ -86,12 +86,12 @@ class ZipMatcherTest extends \PHPUnit_Framework_TestCase
         ];
 
         foreach ($renameEntriesArray as $name) {
-            self::assertTrue(isset($zipFile[$name]));
+            $this->assertTrue(isset($zipFile[$name]));
         }
 
         $matcher = $zipFile->matcher();
         $matcher->match('~^file_(1|5)\d+~');
-        self::assertEquals($matcher->getMatches(), $renameEntriesArray);
+        $this->assertEquals($matcher->getMatches(), $renameEntriesArray);
 
         $matcher->invoke(function ($entryName) use ($zipFile) {
             $newName = preg_replace('~\.(jpe?g)$~i', '.no_optimize.$1', $entryName);
@@ -99,11 +99,11 @@ class ZipMatcherTest extends \PHPUnit_Framework_TestCase
         });
 
         foreach ($renameEntriesArray as $name) {
-            self::assertFalse(isset($zipFile[$name]));
+            $this->assertFalse(isset($zipFile[$name]));
 
             $pathInfo = pathinfo($name);
             $newName = $pathInfo['filename'].'.no_optimize.'.$pathInfo['extension'];
-            self::assertTrue(isset($zipFile[$newName]));
+            $this->assertTrue(isset($zipFile[$newName]));
         }
 
         $zipFile->close();

@@ -9,7 +9,7 @@ use PhpZip\Exception\InvalidArgumentException;
 use PhpZip\Exception\RuntimeException;
 use PhpZip\Exception\ZipCryptoException;
 use PhpZip\Exception\ZipException;
-use PhpZip\Exception\ZipUnsupportMethod;
+use PhpZip\Exception\ZipUnsupportMethodException;
 use PhpZip\Extra\ExtraFieldsCollection;
 use PhpZip\Extra\ExtraFieldsFactory;
 use PhpZip\Extra\Fields\ApkAlignmentExtraField;
@@ -56,7 +56,6 @@ class ZipInputStream implements ZipInputStreamInterface
     /**
      * ZipInputStream constructor.
      * @param resource $in
-     * @throws RuntimeException
      */
     public function __construct($in)
     {
@@ -69,6 +68,7 @@ class ZipInputStream implements ZipInputStreamInterface
 
     /**
      * @return ZipModel
+     * @throws ZipException
      */
     public function readZip()
     {
@@ -165,7 +165,7 @@ class ZipInputStream implements ZipInputStreamInterface
                 $offset = $endOfCentralDirRecordPos - $data['cdSize'];
                 fseek($this->in, $offset, SEEK_SET);
                 $offset -= $data['cdPos'];
-                if (0 !== $offset) {
+                if ($offset !== 0) {
                     $this->mapper = new OffsetPositionMapper($offset);
                 }
                 $entryCount = $data['cdEntries'];
@@ -262,14 +262,13 @@ class ZipInputStream implements ZipInputStreamInterface
             $entries[$entry->getName()] = $entry;
         }
 
-        if (0 !== $numEntries % 0x10000) {
+        if (($numEntries % 0x10000) !== 0) {
             throw new ZipException("Expected " . abs($numEntries) .
                 ($numEntries > 0 ? " more" : " less") .
                 " entries in the Central Directory!");
         }
 
         if ($this->preamble + $this->postamble >= fstat($this->in)['size']) {
-            assert(0 === $numEntries);
             $this->checkZipFileSignature();
         }
 
@@ -278,13 +277,13 @@ class ZipInputStream implements ZipInputStreamInterface
 
     /**
      * @return ZipEntry
-     * @throws InvalidArgumentException
+     * @throws ZipException
      */
     public function readEntry()
     {
         // central file header signature   4 bytes  (0x02014b50)
         $fileHeaderSig = unpack('V', fread($this->in, 4))[1];
-        if (ZipOutputStreamInterface::CENTRAL_FILE_HEADER_SIG !== $fileHeaderSig) {
+        if ($fileHeaderSig !== ZipOutputStreamInterface::CENTRAL_FILE_HEADER_SIG) {
             throw new InvalidArgumentException("Corrupt zip file. Can not read zip entry.");
         }
 
@@ -329,10 +328,10 @@ class ZipInputStream implements ZipInputStreamInterface
         $entry->setSize($data['rawSize']);
         $entry->setExternalAttributes($data['rawExternalAttributes']);
         $entry->setOffset($data['lfhOff']); // must be unmapped!
-        if (0 < $data['extraLength']) {
+        if ($data['extraLength'] > 0) {
             $entry->setExtra(fread($this->in, $data['extraLength']));
         }
-        if (0 < $data['commentLength']) {
+        if ($data['commentLength'] > 0) {
             $entry->setComment(fread($this->in, $data['commentLength']));
         }
         return $entry;
@@ -352,19 +351,20 @@ class ZipInputStream implements ZipInputStreamInterface
             throw new InvalidArgumentException('entry must be ' . ZipSourceEntry::class);
         }
         $isEncrypted = $entry->isEncrypted();
-        if ($isEncrypted && null === $entry->getPassword()) {
+        if ($isEncrypted && $entry->getPassword() === null) {
             throw new ZipException("Can not password from entry " . $entry->getName());
         }
 
         $pos = $entry->getOffset();
-        assert(ZipEntry::UNKNOWN !== $pos);
-        $pos = PHP_INT_SIZE === 4 ? sprintf('%u', $pos) : $pos;
+        $pos = PHP_INT_SIZE === 4
+            ? sprintf('%u', $pos) // PHP 32-Bit
+            : $pos;                      // PHP 64-Bit
 
         $startPos = $pos = $this->mapper->map($pos);
         fseek($this->in, $startPos);
 
         // local file header signature     4 bytes  (0x04034b50)
-        if (ZipEntry::LOCAL_FILE_HEADER_SIG !== unpack('V', fread($this->in, 4))[1]) {
+        if (unpack('V', fread($this->in, 4))[1] !== ZipEntry::LOCAL_FILE_HEADER_SIG) {
             throw new ZipException($entry->getName() . " (expected Local File Header)");
         }
         fseek($this->in, $pos + ZipEntry::LOCAL_FILE_HEADER_FILE_NAME_LENGTH_POS);
@@ -390,7 +390,7 @@ class ZipInputStream implements ZipInputStreamInterface
 
         $skipCheckCrc = false;
         if ($isEncrypted) {
-            if (ZipEntry::METHOD_WINZIP_AES === $method) {
+            if ($method === ZipEntry::METHOD_WINZIP_AES) {
                 // Strong Encryption Specification - WinZip AES
                 $winZipAesEngine = new WinZipAesEngine($entry);
                 $content = $winZipAesEngine->decrypt($content);
@@ -418,7 +418,7 @@ class ZipInputStream implements ZipInputStreamInterface
                     // but older apps might not.
                     fseek($this->in, $pos + $compressedSize);
                     $localCrc = unpack('V', fread($this->in, 4))[1];
-                    if (ZipEntry::DATA_DESCRIPTOR_SIG === $localCrc) {
+                    if ($localCrc === ZipEntry::DATA_DESCRIPTOR_SIG) {
                         $localCrc = unpack('V', fread($this->in, 4))[1];
                     }
                 } else {
@@ -449,7 +449,7 @@ class ZipInputStream implements ZipInputStreamInterface
                 $content = bzdecompress($content);
                 break;
             default:
-                throw new ZipUnsupportMethod($entry->getName() .
+                throw new ZipUnsupportMethodException($entry->getName() .
                     " (compression method " . $method . " is not supported)");
         }
         if (!$skipCheckCrc) {
@@ -480,6 +480,7 @@ class ZipInputStream implements ZipInputStreamInterface
      *
      * @param ZipEntry $entry
      * @param ZipOutputStreamInterface $out
+     * @throws ZipException
      */
     public function copyEntry(ZipEntry $entry, ZipOutputStreamInterface $out)
     {
@@ -551,8 +552,7 @@ class ZipInputStream implements ZipInputStreamInterface
             // skip source extraLength from input stream
             fseek($this->in, $sourceExtraLength, SEEK_CUR);
         } else {
-            $copyInToOutLength += ZipEntry::LOCAL_FILE_HEADER_MIN_LEN + $sourceExtraLength + $nameLength;
-            ;
+            $copyInToOutLength += ZipEntry::LOCAL_FILE_HEADER_MIN_LEN + $sourceExtraLength + $nameLength;;
         }
         if ($entry->getGeneralPurposeBitFlag(ZipEntry::GPBF_DATA_DESCRIPTOR)) {
 //            crc-32                          4 bytes
@@ -595,7 +595,7 @@ class ZipInputStream implements ZipInputStreamInterface
 
     public function close()
     {
-        if ($this->in != null) {
+        if ($this->in !== null) {
             fclose($this->in);
             $this->in = null;
         }

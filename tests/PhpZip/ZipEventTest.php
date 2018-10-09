@@ -2,6 +2,8 @@
 
 namespace PhpZip;
 
+use PhpZip\Exception\ZipException;
+
 class ZipFileExtended extends ZipFile
 {
     protected function onBeforeSave()
@@ -14,29 +16,32 @@ class ZipFileExtended extends ZipFile
 
 class ZipEventTest extends ZipTestCase
 {
+    /**
+     * @throws ZipException
+     */
     public function testBeforeSave()
     {
         $zipFile = new ZipFileExtended();
         $zipFile->openFile(__DIR__ . '/resources/test.apk');
-        self::assertTrue(isset($zipFile['META-INF/MANIFEST.MF']));
-        self::assertTrue(isset($zipFile['META-INF/CERT.SF']));
-        self::assertTrue(isset($zipFile['META-INF/CERT.RSA']));
+        $this->assertTrue(isset($zipFile['META-INF/MANIFEST.MF']));
+        $this->assertTrue(isset($zipFile['META-INF/CERT.SF']));
+        $this->assertTrue(isset($zipFile['META-INF/CERT.RSA']));
         $zipFile->saveAsFile($this->outputFilename);
-        self::assertFalse(isset($zipFile['META-INF/MANIFEST.MF']));
-        self::assertFalse(isset($zipFile['META-INF/CERT.SF']));
-        self::assertFalse(isset($zipFile['META-INF/CERT.RSA']));
+        $this->assertFalse(isset($zipFile['META-INF/MANIFEST.MF']));
+        $this->assertFalse(isset($zipFile['META-INF/CERT.SF']));
+        $this->assertFalse(isset($zipFile['META-INF/CERT.RSA']));
         $zipFile->close();
 
-        self::assertCorrectZipArchive($this->outputFilename);
-        $result = self::doZipAlignVerify($this->outputFilename);
+        $this->assertCorrectZipArchive($this->outputFilename);
+        $result = $this->assertVerifyZipAlign($this->outputFilename);
         if (null !== $result) {
-            self::assertTrue($result);
+            $this->assertTrue($result);
         }
 
         $zipFile->openFile($this->outputFilename);
-        self::assertFalse(isset($zipFile['META-INF/MANIFEST.MF']));
-        self::assertFalse(isset($zipFile['META-INF/CERT.SF']));
-        self::assertFalse(isset($zipFile['META-INF/CERT.RSA']));
+        $this->assertFalse(isset($zipFile['META-INF/MANIFEST.MF']));
+        $this->assertFalse(isset($zipFile['META-INF/CERT.SF']));
+        $this->assertFalse(isset($zipFile['META-INF/CERT.RSA']));
         $zipFile->close();
     }
 }

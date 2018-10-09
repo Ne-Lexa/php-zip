@@ -2,10 +2,8 @@
 
 namespace PhpZip;
 
-use PhpZip\Exception\InvalidArgumentException;
+use PhpZip\Exception\ZipEntryNotFoundException;
 use PhpZip\Exception\ZipException;
-use PhpZip\Exception\ZipNotFoundEntry;
-use PhpZip\Exception\ZipUnsupportMethod;
 use PhpZip\Model\ZipEntry;
 use PhpZip\Model\ZipEntryMatcher;
 use PhpZip\Model\ZipInfo;
@@ -87,7 +85,6 @@ interface ZipFileInterface extends \Countable, \ArrayAccess, \Iterator
      *
      * @param string $filename
      * @return ZipFileInterface
-     * @throws InvalidArgumentException if file doesn't exists.
      * @throws ZipException             if can't open file.
      */
     public function openFile($filename);
@@ -97,7 +94,6 @@ interface ZipFileInterface extends \Countable, \ArrayAccess, \Iterator
      *
      * @param string $data
      * @return ZipFileInterface
-     * @throws InvalidArgumentException if data not available.
      * @throws ZipException             if can't open temp stream.
      */
     public function openFromString($data);
@@ -107,8 +103,6 @@ interface ZipFileInterface extends \Countable, \ArrayAccess, \Iterator
      *
      * @param resource $handle
      * @return ZipFileInterface
-     * @throws InvalidArgumentException Invalid stream resource
-     *         or resource cannot seekable stream
      */
     public function openFromStream($handle);
 
@@ -129,7 +123,6 @@ interface ZipFileInterface extends \Countable, \ArrayAccess, \Iterator
      *
      * @param null|string $comment
      * @return ZipFileInterface
-     * @throws InvalidArgumentException Length comment out of range
      */
     public function setArchiveComment($comment = null);
 
@@ -140,7 +133,7 @@ interface ZipFileInterface extends \Countable, \ArrayAccess, \Iterator
      *
      * @param string $entryName
      * @return bool
-     * @throws ZipNotFoundEntry
+     * @throws ZipEntryNotFoundException
      */
     public function isDirectory($entryName);
 
@@ -149,7 +142,7 @@ interface ZipFileInterface extends \Countable, \ArrayAccess, \Iterator
      *
      * @param string $entryName
      * @return string
-     * @throws ZipNotFoundEntry
+     * @throws ZipEntryNotFoundException
      */
     public function getEntryComment($entryName);
 
@@ -159,7 +152,7 @@ interface ZipFileInterface extends \Countable, \ArrayAccess, \Iterator
      * @param string $entryName
      * @param string|null $comment
      * @return ZipFileInterface
-     * @throws ZipNotFoundEntry
+     * @throws ZipEntryNotFoundException
      */
     public function setEntryComment($entryName, $comment = null);
 
@@ -184,7 +177,7 @@ interface ZipFileInterface extends \Countable, \ArrayAccess, \Iterator
      *
      * @param string|ZipEntry $entryName
      * @return ZipInfo
-     * @throws ZipNotFoundEntry
+     * @throws ZipEntryNotFoundException
      */
     public function getEntryInfo($entryName);
 
@@ -222,8 +215,6 @@ interface ZipFileInterface extends \Countable, \ArrayAccess, \Iterator
      *                 Use ZipFile::METHOD_STORED, ZipFile::METHOD_DEFLATED or ZipFile::METHOD_BZIP2.
      *                 If null, then auto choosing method.
      * @return ZipFileInterface
-     * @throws InvalidArgumentException If incorrect data or entry name.
-     * @throws ZipUnsupportMethod
      * @see ZipFileInterface::METHOD_STORED
      * @see ZipFileInterface::METHOD_DEFLATED
      * @see ZipFileInterface::METHOD_BZIP2
@@ -239,8 +230,6 @@ interface ZipFileInterface extends \Countable, \ArrayAccess, \Iterator
      *                 Use ZipFile::METHOD_STORED, ZipFile::METHOD_DEFLATED or ZipFile::METHOD_BZIP2.
      *                 If null, then auto choosing method.
      * @return ZipFileInterface
-     * @throws InvalidArgumentException
-     * @throws ZipUnsupportMethod
      * @see ZipFileInterface::METHOD_STORED
      * @see ZipFileInterface::METHOD_DEFLATED
      * @see ZipFileInterface::METHOD_BZIP2
@@ -256,8 +245,6 @@ interface ZipFileInterface extends \Countable, \ArrayAccess, \Iterator
      *                 Use ZipFile::METHOD_STORED, ZipFile::METHOD_DEFLATED or ZipFile::METHOD_BZIP2.
      *                 If null, then auto choosing method.
      * @return ZipFileInterface
-     * @throws InvalidArgumentException
-     * @throws ZipUnsupportMethod
      * @see ZipFileInterface::METHOD_STORED
      * @see ZipFileInterface::METHOD_DEFLATED
      * @see ZipFileInterface::METHOD_BZIP2
@@ -269,7 +256,6 @@ interface ZipFileInterface extends \Countable, \ArrayAccess, \Iterator
      *
      * @param string $dirName
      * @return ZipFileInterface
-     * @throws InvalidArgumentException
      */
     public function addEmptyDir($dirName);
 
@@ -282,7 +268,6 @@ interface ZipFileInterface extends \Countable, \ArrayAccess, \Iterator
      *                 Use ZipFile::METHOD_STORED, ZipFile::METHOD_DEFLATED or ZipFile::METHOD_BZIP2.
      *                 If null, then auto choosing method.
      * @return ZipFileInterface
-     * @throws InvalidArgumentException
      */
     public function addDir($inputDir, $localPath = "/", $compressionMethod = null);
 
@@ -295,8 +280,6 @@ interface ZipFileInterface extends \Countable, \ArrayAccess, \Iterator
      *                 Use ZipFile::METHOD_STORED, ZipFile::METHOD_DEFLATED or ZipFile::METHOD_BZIP2.
      *                 If null, then auto choosing method.
      * @return ZipFileInterface
-     * @throws InvalidArgumentException
-     * @throws ZipUnsupportMethod
      * @see ZipFileInterface::METHOD_STORED
      * @see ZipFileInterface::METHOD_DEFLATED
      * @see ZipFileInterface::METHOD_BZIP2
@@ -312,8 +295,6 @@ interface ZipFileInterface extends \Countable, \ArrayAccess, \Iterator
      *                 Use ZipFile::METHOD_STORED, ZipFile::METHOD_DEFLATED or ZipFile::METHOD_BZIP2.
      *                 If null, then auto choosing method.
      * @return ZipFileInterface
-     * @throws InvalidArgumentException
-     * @throws ZipUnsupportMethod
      * @see ZipFileInterface::METHOD_STORED
      * @see ZipFileInterface::METHOD_DEFLATED
      * @see ZipFileInterface::METHOD_BZIP2
@@ -330,7 +311,6 @@ interface ZipFileInterface extends \Countable, \ArrayAccess, \Iterator
      *                 Use ZipFile::METHOD_STORED, ZipFile::METHOD_DEFLATED or ZipFile::METHOD_BZIP2.
      *                 If null, then auto choosing method.
      * @return ZipFileInterface
-     * @throws InvalidArgumentException
      * @sse https://en.wikipedia.org/wiki/Glob_(programming) Glob pattern syntax
      */
     public function addFilesFromGlob($inputDir, $globPattern, $localPath = '/', $compressionMethod = null);
@@ -345,7 +325,6 @@ interface ZipFileInterface extends \Countable, \ArrayAccess, \Iterator
      *                 Use ZipFile::METHOD_STORED, ZipFile::METHOD_DEFLATED or ZipFile::METHOD_BZIP2.
      *                 If null, then auto choosing method.
      * @return ZipFileInterface
-     * @throws InvalidArgumentException
      * @sse https://en.wikipedia.org/wiki/Glob_(programming) Glob pattern syntax
      */
     public function addFilesFromGlobRecursive($inputDir, $globPattern, $localPath = '/', $compressionMethod = null);
@@ -393,8 +372,7 @@ interface ZipFileInterface extends \Countable, \ArrayAccess, \Iterator
      * @param string $oldName Old entry name.
      * @param string $newName New entry name.
      * @return ZipFileInterface
-     * @throws InvalidArgumentException
-     * @throws ZipNotFoundEntry
+     * @throws ZipEntryNotFoundException
      */
     public function rename($oldName, $newName);
 
@@ -403,7 +381,7 @@ interface ZipFileInterface extends \Countable, \ArrayAccess, \Iterator
      *
      * @param string $entryName Zip Entry name.
      * @return ZipFileInterface
-     * @throws ZipNotFoundEntry If entry not found.
+     * @throws ZipEntryNotFoundException If entry not found.
      */
     public function deleteFromName($entryName);
 
@@ -412,7 +390,6 @@ interface ZipFileInterface extends \Countable, \ArrayAccess, \Iterator
      *
      * @param string $globPattern Glob pattern
      * @return ZipFileInterface
-     * @throws InvalidArgumentException
      * @sse https://en.wikipedia.org/wiki/Glob_(programming) Glob pattern syntax
      */
     public function deleteFromGlob($globPattern);
@@ -422,7 +399,6 @@ interface ZipFileInterface extends \Countable, \ArrayAccess, \Iterator
      *
      * @param string $regexPattern Regex pattern
      * @return ZipFileInterface
-     * @throws InvalidArgumentException
      */
     public function deleteFromRegex($regexPattern);
 
@@ -576,7 +552,6 @@ interface ZipFileInterface extends \Countable, \ArrayAccess, \Iterator
      *
      * @param string $filename Output filename
      * @return ZipFileInterface
-     * @throws InvalidArgumentException
      * @throws ZipException
      */
     public function saveAsFile($filename);
@@ -608,14 +583,12 @@ interface ZipFileInterface extends \Countable, \ArrayAccess, \Iterator
      * @param string|null $mimeType Mime-Type
      * @param bool $attachment Http Header 'Content-Disposition' if true then attachment otherwise inline
      * @return ResponseInterface
-     * @throws InvalidArgumentException
      */
     public function outputAsResponse(ResponseInterface $response, $outputFilename, $mimeType = null, $attachment = true);
 
     /**
      * Returns the zip archive as a string.
      * @return string
-     * @throws InvalidArgumentException
      */
     public function outputAsString();
 

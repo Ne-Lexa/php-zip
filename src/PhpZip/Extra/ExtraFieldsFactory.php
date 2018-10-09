@@ -38,7 +38,7 @@ class ExtraFieldsFactory
     public static function createExtraFieldCollections($extra, ZipEntry $entry = null)
     {
         $extraFieldsCollection = new ExtraFieldsCollection();
-        if (null !== $extra) {
+        if ($extra !== null) {
             $extraLength = strlen($extra);
             if ($extraLength > 0xffff) {
                 throw new ZipException("Extra Fields too large: " . $extraLength);
@@ -63,6 +63,11 @@ class ExtraFieldsFactory
         return $extraFieldsCollection;
     }
 
+    /**
+     * @param ExtraFieldsCollection $extraFieldsCollection
+     * @return string
+     * @throws ZipException
+     */
     public static function createSerializedData(ExtraFieldsCollection $extraFieldsCollection)
     {
         $extraData = '';
@@ -102,7 +107,7 @@ class ExtraFieldsFactory
         if (isset(self::getRegistry()[$headerId])) {
             $extraClassName = self::getRegistry()[$headerId];
             $extraField = new $extraClassName;
-            if ($extraField::getHeaderId() !== $headerId) {
+            if ($headerId !== $extraField::getHeaderId()) {
                 throw new ZipException('Runtime error support headerId ' . $headerId);
             }
         } else {
@@ -118,7 +123,7 @@ class ExtraFieldsFactory
      */
     protected static function getRegistry()
     {
-        if (null === self::$registry) {
+        if (self::$registry === null) {
             self::$registry[WinZipAesEntryExtraField::getHeaderId()] = WinZipAesEntryExtraField::class;
             self::$registry[NtfsExtraField::getHeaderId()] = NtfsExtraField::class;
             self::$registry[Zip64ExtraField::getHeaderId()] = Zip64ExtraField::class;

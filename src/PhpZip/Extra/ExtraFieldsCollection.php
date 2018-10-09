@@ -129,6 +129,7 @@ class ExtraFieldsCollection implements \Countable, \ArrayAccess, \Iterator
      * </p>
      * @return mixed Can return all value types.
      * @since 5.0.0
+     * @throws ZipException
      */
     public function offsetGet($offset)
     {
@@ -145,13 +146,15 @@ class ExtraFieldsCollection implements \Countable, \ArrayAccess, \Iterator
      * The value to set.
      * </p>
      * @return void
-     * @throws InvalidArgumentException
+     * @throws ZipException
      * @since 5.0.0
      */
     public function offsetSet($offset, $value)
     {
         if ($value instanceof ExtraField) {
-            assert($offset == $value::getHeaderId());
+            if ($offset !== $value::getHeaderId()){
+                throw new InvalidArgumentException("Value header id !== array access key");
+            }
             $this->add($value);
         } else {
             throw new InvalidArgumentException('value is not instanceof ' . ExtraField::class);
@@ -166,6 +169,7 @@ class ExtraFieldsCollection implements \Countable, \ArrayAccess, \Iterator
      * </p>
      * @return void
      * @since 5.0.0
+     * @throws ZipException
      */
     public function offsetUnset($offset)
     {

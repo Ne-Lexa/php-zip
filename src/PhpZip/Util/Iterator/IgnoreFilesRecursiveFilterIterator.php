@@ -12,7 +12,6 @@ use PhpZip\Util\StringUtil;
  */
 class IgnoreFilesRecursiveFilterIterator extends \RecursiveFilterIterator
 {
-
     /**
      * Ignore list files
      *
@@ -65,6 +64,7 @@ class IgnoreFilesRecursiveFilterIterator extends \RecursiveFilterIterator
      */
     public function getChildren()
     {
+        /** @noinspection PhpUndefinedMethodInspection */
         return new self($this->getInnerIterator()->getChildren(), $this->ignoreFiles);
     }
 }

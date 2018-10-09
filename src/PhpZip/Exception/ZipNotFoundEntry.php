@@ -7,8 +7,8 @@ namespace PhpZip\Exception;
  *
  * @author Ne-Lexa alexey@nelexa.ru
  * @license MIT
- * @see \Exception
+ * @deprecated Rename class exception, using ZipEntryNotFoundException
  */
-class ZipNotFoundEntry extends ZipException
+class ZipNotFoundEntry extends ZipEntryNotFoundException
 {
 }

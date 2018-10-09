@@ -2,8 +2,6 @@
 
 namespace PhpZip\Util;
 
-use PhpZip\Exception\ZipException;
-
 /**
  * Pack util
  *
@@ -35,7 +33,6 @@ class PackUtil
     /**
      * @param string|int $value
      * @return int
-     * @throws ZipException
      */
     public static function unpackLongLE($value)
     {

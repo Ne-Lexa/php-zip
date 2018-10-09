@@ -22,8 +22,7 @@ use PhpZip\Util\StringUtil;
 use PhpZip\ZipFileInterface;
 
 /**
- * Write
- * ip file
+ * Write zip file
  *
  * @author Ne-Lexa alexey@nelexa.ru
  * @license MIT
@@ -43,7 +42,6 @@ class ZipOutputStream implements ZipOutputStreamInterface
      * ZipOutputStream constructor.
      * @param resource $out
      * @param ZipModel $zipModel
-     * @throws InvalidArgumentException
      */
     public function __construct($out, ZipModel $zipModel)
     {
@@ -54,6 +52,9 @@ class ZipOutputStream implements ZipOutputStreamInterface
         $this->zipModel = $zipModel;
     }
 
+    /**
+     * @throws ZipException
+     */
     public function writeZip()
     {
         $entries = $this->zipModel->getEntries();
@@ -123,7 +124,7 @@ class ZipOutputStream implements ZipOutputStreamInterface
         }
 
         $size = $nameLength + $extraLength;
-        if (0xffff < $size) {
+        if ($size > 0xffff) {
             throw new ZipException(
                 $entry->getName() . " (the total size of " . $size .
                 " bytes for the name, extra fields and comment " .
@@ -168,7 +169,7 @@ class ZipOutputStream implements ZipOutputStreamInterface
 
         if ($entry instanceof ZipChangesEntry && !$entry->isChangedContent()) {
             $entry->getSourceEntry()->getInputStream()->copyEntryData($entry->getSourceEntry(), $this);
-        } elseif (null !== $entryContent) {
+        } elseif ($entryContent !== null) {
             fwrite($this->out, $entryContent);
         }
 
@@ -186,7 +187,7 @@ class ZipOutputStream implements ZipOutputStreamInterface
             } else {
                 fwrite($this->out, pack('VV', $entry->getCompressedSize(), $entry->getSize()));
             }
-        } elseif ($entry->getCompressedSize() != $compressedSize) {
+        } elseif ($compressedSize != $entry->getCompressedSize()) {
             throw new ZipException(
                 $entry->getName() . " (expected compressed entry size of "
                 . $entry->getCompressedSize() . " bytes, " .
@@ -202,10 +203,10 @@ class ZipOutputStream implements ZipOutputStreamInterface
      */
     protected function entryCommitChangesAndReturnContent(ZipEntry $entry)
     {
-        if (ZipEntry::UNKNOWN === $entry->getPlatform()) {
+        if ($entry->getPlatform() === ZipEntry::UNKNOWN) {
             $entry->setPlatform(ZipEntry::PLATFORM_UNIX);
         }
-        if (ZipEntry::UNKNOWN === $entry->getTime()) {
+        if ($entry->getTime() === ZipEntry::UNKNOWN) {
             $entry->setTime(time());
         }
         $method = $entry->getMethod();
@@ -214,7 +215,7 @@ class ZipOutputStream implements ZipOutputStreamInterface
         // See appendix D of PKWARE's ZIP File Format Specification.
         $utf8 = true;
 
-        if ($encrypted && null === $entry->getPassword()) {
+        if ($encrypted && $entry->getPassword() === null) {
             throw new ZipException("Can not password from entry " . $entry->getName());
         }
 
@@ -232,12 +233,12 @@ class ZipOutputStream implements ZipOutputStreamInterface
                 $entry->setSize(strlen($entryContent));
                 $entry->setCrc(crc32($entryContent));
 
-                if ($encrypted && ZipEntry::METHOD_WINZIP_AES === $method) {
+                if ($encrypted && $method === ZipEntry::METHOD_WINZIP_AES) {
                     /**
                      * @var WinZipAesEntryExtraField $field
                      */
                     $field = $extraFieldsCollection->get(WinZipAesEntryExtraField::getHeaderId());
-                    if (null !== $field) {
+                    if ($field !== null) {
                         $method = $field->getMethod();
                     }
                 }
@@ -269,7 +270,7 @@ class ZipOutputStream implements ZipOutputStreamInterface
                         throw new ZipException($entry->getName() . " (unsupported compression method " . $method . ")");
                 }
 
-                if (ZipFileInterface::METHOD_DEFLATED === $method) {
+                if ($method === ZipFileInterface::METHOD_DEFLATED) {
                     $bit1 = false;
                     $bit2 = false;
                     switch ($entry->getCompressionLevel()) {
@@ -302,7 +303,7 @@ class ZipOutputStream implements ZipOutputStreamInterface
                         $field->setKeyStrength($keyStrength);
                         $field->setMethod($method);
                         $size = $entry->getSize();
-                        if (20 <= $size && ZipFileInterface::METHOD_BZIP2 !== $method) {
+                        if ($size >= 20 && $method !== ZipFileInterface::METHOD_BZIP2) {
                             $field->setVendorVersion(WinZipAesEntryExtraField::VV_AE_1);
                         } else {
                             $field->setVendorVersion(WinZipAesEntryExtraField::VV_AE_2);
@@ -343,7 +344,7 @@ class ZipOutputStream implements ZipOutputStreamInterface
      */
     protected function determineBestCompressionMethod(ZipEntry $entry, $content)
     {
-        if (null !== $content) {
+        if ($content !== null) {
             $entryContent = gzdeflate($content, $entry->getCompressionLevel());
             if (strlen($entryContent) < strlen($content)) {
                 $entry->setMethod(ZipFileInterface::METHOD_DEFLATED);
@@ -358,8 +359,6 @@ class ZipOutputStream implements ZipOutputStreamInterface
      * Writes a Central File Header record.
      *
      * @param OutputOffsetEntry $outEntry
-     * @throws RuntimeException
-     * @internal param OutPosEntry $entry
      */
     protected function writeCentralDirectoryHeader(OutputOffsetEntry $outEntry)
     {
@@ -368,7 +367,7 @@ class ZipOutputStream implements ZipOutputStreamInterface
         $size = $entry->getSize();
         // This test MUST NOT include the CRC-32 because VV_AE_2 sets it to
         // UNKNOWN!
-        if (ZipEntry::UNKNOWN === ($compressedSize | $size)) {
+        if (($compressedSize | $size) === ZipEntry::UNKNOWN) {
             throw new RuntimeException("invalid entry");
         }
         $extra = $entry->getExtra();
@@ -415,11 +414,11 @@ class ZipOutputStream implements ZipOutputStreamInterface
         );
         // file name (variable size)
         fwrite($this->out, $entry->getName());
-        if (0 < $extraSize) {
+        if ($extraSize > 0) {
             // extra field (variable size)
             fwrite($this->out, $extra);
         }
-        if (0 < $commentLength) {
+        if ($commentLength > 0) {
             // file comment (variable size)
             fwrite($this->out, $entry->getComment());
         }

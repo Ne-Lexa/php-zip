@@ -7,8 +7,8 @@ namespace PhpZip\Exception;
  *
  * @author Ne-Lexa alexey@nelexa.ru
  * @license MIT
- * @see \Exception
+ * @deprecated Rename exception class, using ZipUnsupportMethodException
  */
-class ZipUnsupportMethod extends ZipException
+class ZipUnsupportMethod extends ZipUnsupportMethodException
 {
 }

@@ -29,7 +29,7 @@ class Zip64ExtraField implements ExtraField
      */
     public function __construct(ZipEntry $entry = null)
     {
-        if (null !== $entry) {
+        if ($entry !== null) {
             $this->setEntry($entry);
         }
     }
@@ -57,11 +57,10 @@ class Zip64ExtraField implements ExtraField
     /**
      * Serializes a Data Block.
      * @return string
-     * @throws RuntimeException
      */
     public function serialize()
     {
-        if (null === $this->entry) {
+        if ($this->entry === null) {
             throw new RuntimeException("entry is null");
         }
         $data = '';
@@ -86,11 +85,11 @@ class Zip64ExtraField implements ExtraField
     /**
      * Initializes this Extra Field by deserializing a Data Block.
      * @param string $data
-     * @throws RuntimeException
+     * @throws \PhpZip\Exception\ZipException
      */
     public function deserialize($data)
     {
-        if (null === $this->entry) {
+        if ($this->entry === null) {
             throw new RuntimeException("entry is null");
         }
         $off = 0;
