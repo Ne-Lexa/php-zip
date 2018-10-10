@@ -99,7 +99,7 @@ catch(\PhpZip\Exception\ZipException $e){
     // обработка исключения
 }
 finally{
-    $zip->close();
+    $zipFile->close();
 }
 ```
 Другие примеры можно посмотреть в папке `tests/`.
