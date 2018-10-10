@@ -311,7 +311,7 @@ class ZipInputStream implements ZipInputStreamInterface
             fread($this->in, 42)
         );
 
-//        $utf8 = 0 !== ($data['gpbf'] & self::GPBF_UTF8);
+//        $utf8 = ($data['gpbf'] & ZipEntry::GPBF_UTF8) !== 0;
 
         // See appendix D of PKWARE's ZIP File Format Specification.
         $name = fread($this->in, $data['fileLength']);
