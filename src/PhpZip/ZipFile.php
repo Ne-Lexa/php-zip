@@ -7,6 +7,7 @@ use PhpZip\Exception\ZipEntryNotFoundException;
 use PhpZip\Exception\ZipException;
 use PhpZip\Exception\ZipUnsupportMethodException;
 use PhpZip\Model\Entry\ZipNewEntry;
+use PhpZip\Model\Entry\ZipNewFileEntry;
 use PhpZip\Model\ZipEntry;
 use PhpZip\Model\ZipEntryMatcher;
 use PhpZip\Model\ZipInfo;
@@ -414,12 +415,7 @@ class ZipFile implements ZipFileInterface
      */
     public function addFile($filename, $localName = null, $compressionMethod = null)
     {
-        if ($filename === null) {
-            throw new InvalidArgumentException("Filename is null");
-        }
-        if (!is_file($filename)) {
-            throw new ZipException("File $filename is not exists");
-        }
+        $entry = new ZipNewFileEntry($filename);
 
         if ($compressionMethod === null) {
             if (function_exists('mime_content_type')) {
@@ -442,14 +438,24 @@ class ZipFile implements ZipFileInterface
             throw new ZipUnsupportMethodException('Unsupported compression method ' . $compressionMethod);
         }
 
-        if (!($handle = @fopen($filename, 'rb'))) {
-            throw new ZipException('File ' . $filename . ' can not open.');
-        }
         if ($localName === null) {
             $localName = basename($filename);
         }
-        $this->addFromStream($handle, $localName, $compressionMethod);
-        $this->zipModel->getEntry($localName)->setTime(filemtime($filename));
+        $localName = ltrim((string)$localName, "\\/");
+        if (strlen($localName) === 0) {
+            throw new InvalidArgumentException("Empty entry name");
+        }
+
+        $stat = stat($filename);
+        $mode = sprintf('%o', $stat['mode']);
+        $externalAttributes = (octdec($mode) & 0xffff) << 16;
+
+        $entry->setName($localName);
+        $entry->setMethod($compressionMethod);
+        $entry->setTime($stat['mtime']);
+        $entry->setExternalAttributes($externalAttributes);
+
+        $this->zipModel->addEntry($entry);
         return $this;
     }
 

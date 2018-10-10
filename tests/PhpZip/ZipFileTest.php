@@ -34,7 +34,7 @@ class ZipFileTest extends ZipTestCase
     public function testOpenFileCantOpen()
     {
         /** @noinspection PhpComposerExtensionStubsInspection */
-        if (0 === posix_getuid()) {
+        if (posix_getuid() === 0) {
             $this->markTestSkipped('Skip the test for a user with root privileges');
         }
 
@@ -1060,7 +1060,7 @@ class ZipFileTest extends ZipTestCase
     public function testExtractFail3()
     {
         /** @noinspection PhpComposerExtensionStubsInspection */
-        if (0 === posix_getuid()) {
+        if (posix_getuid() === 0) {
             $this->markTestSkipped('Skip the test for a user with root privileges');
         }
 
@@ -1241,7 +1241,7 @@ class ZipFileTest extends ZipTestCase
 
     /**
      * @expectedException \PhpZip\Exception\InvalidArgumentException
-     * @expectedExceptionMessage Filename is null
+     * @expectedExceptionMessage file is null
      * @throws ZipException
      */
     public function testAddFileNullFileName()
@@ -1252,7 +1252,7 @@ class ZipFileTest extends ZipTestCase
 
     /**
      * @expectedException \PhpZip\Exception\ZipException
-     * @expectedExceptionMessage is not exists
+     * @expectedExceptionMessage does not exist
      */
     public function testAddFileCantExists()
     {
@@ -1273,7 +1273,7 @@ class ZipFileTest extends ZipTestCase
 
     /**
      * @expectedException \PhpZip\Exception\ZipException
-     * @expectedExceptionMessage can not open
+     * @expectedExceptionMessage file could not be read
      * @throws ZipException
      */
     public function testAddFileCantOpen()
@@ -1593,7 +1593,7 @@ class ZipFileTest extends ZipTestCase
     public function testSaveAsFileNotWritable()
     {
         /** @noinspection PhpComposerExtensionStubsInspection */
-        if (0 === posix_getuid()) {
+        if (posix_getuid() === 0) {
             $this->markTestSkipped('Skip the test for a user with root privileges');
         }
 

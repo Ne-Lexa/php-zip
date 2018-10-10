@@ -43,7 +43,7 @@ class ZipPasswordTest extends ZipFileAddDirTest
                 $zipFile[$entryName];
                 $this->fail("Expected Exception has not been raised.");
             } catch (ZipAuthenticationException $ae) {
-                $this->assertNotNull($ae);
+                $this->assertContains('Bad password for entry', $ae->getMessage());
             }
         }
 

@@ -6,9 +6,6 @@ use PhpZip\Exception\InvalidArgumentException;
 use PhpZip\ZipFileInterface;
 
 /**
- * Abstract class for new zip entry.
- *
- * @see https://pkware.cachefly.net/webdocs/casestudies/APPNOTE.TXT .ZIP File Format Specification
  * @author Ne-Lexa alexey@nelexa.ru
  * @license MIT
  */
