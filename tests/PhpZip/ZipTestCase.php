@@ -79,7 +79,9 @@ class ZipTestCase extends \PHPUnit_Framework_TestCase
 
                     $command = "7z t -p" . escapeshellarg($password) . " " . escapeshellarg($filename);
                     exec($command, $output, $returnCode);
-
+                    /**
+                     * @var array $output
+                     */
                     $output = implode(PHP_EOL, $output);
 
                     self::assertEquals($returnCode, 0);
@@ -121,7 +123,7 @@ class ZipTestCase extends \PHPUnit_Framework_TestCase
      * @param bool $showErrors
      * @return bool|null If null - can not install zipalign
      */
-    public static function doZipAlignVerify($filename, $showErrors = false)
+    public static function assertVerifyZipAlign($filename, $showErrors = false)
     {
         if (DIRECTORY_SEPARATOR !== '\\' && `which zipalign`) {
             exec("zipalign -c -v 4 " . escapeshellarg($filename), $output, $returnCode);

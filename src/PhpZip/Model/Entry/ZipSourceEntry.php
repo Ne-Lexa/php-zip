@@ -57,22 +57,23 @@ class ZipSourceEntry extends ZipAbstractEntry
      * Returns an string content of the given entry.
      *
      * @return string
-     * @throws ZipException
      */
     public function getEntryContent()
     {
-        if (null === $this->entryContent) {
+        if ($this->entryContent === null) {
+            // In order not to unpack again, we cache the content in memory or on disk
             $content = $this->inputStream->readEntryContent($this);
             if ($this->getSize() < self::MAX_SIZE_CACHED_CONTENT_IN_MEMORY) {
                 $this->entryContent = $content;
             } else {
-                $this->entryContent = fopen('php://temp', 'rb');
+                $this->entryContent = fopen('php://temp', 'r+b');
                 fwrite($this->entryContent, $content);
             }
             return $content;
         }
         if (is_resource($this->entryContent)) {
-            return stream_get_contents($this->entryContent, -1, 0);
+            rewind($this->entryContent);
+            return stream_get_contents($this->entryContent);
         }
         return $this->entryContent;
     }
@@ -88,7 +89,7 @@ class ZipSourceEntry extends ZipAbstractEntry
 
     public function __destruct()
     {
-        if (!$this->clone && null !== $this->entryContent && is_resource($this->entryContent)) {
+        if (!$this->clone && $this->entryContent !== null && is_resource($this->entryContent)) {
             fclose($this->entryContent);
         }
     }

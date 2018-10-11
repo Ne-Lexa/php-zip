@@ -44,7 +44,7 @@ class JarMarkerExtraField implements ExtraField
      */
     public function deserialize($data)
     {
-        if (0 !== strlen($data)) {
+        if (strlen($data) !== 0) {
             throw new ZipException("JarMarker doesn't expect any data");
         }
     }

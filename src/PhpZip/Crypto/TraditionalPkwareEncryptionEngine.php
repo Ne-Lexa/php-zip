@@ -176,6 +176,7 @@ class TraditionalPkwareEncryptionEngine implements ZipEncryptionEngine
      *
      * @param string $data
      * @return string
+     * @throws ZipCryptoException
      */
     public function encrypt($data)
     {
@@ -202,7 +203,7 @@ class TraditionalPkwareEncryptionEngine implements ZipEncryptionEngine
      */
     private function encryptData($content)
     {
-        if (null === $content) {
+        if ($content === null) {
             throw new ZipCryptoException('content is null');
         }
         $buff = '';

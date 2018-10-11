@@ -55,7 +55,7 @@ class NtfsExtraField implements ExtraField
     public function deserialize($data)
     {
         $unpack = unpack('vtag/vsizeAttr', substr($data, 0, 4));
-        if (24 === $unpack['sizeAttr']) {
+        if ($unpack['sizeAttr'] === 24) {
             $tagData = substr($data, 4, $unpack['sizeAttr']);
             $this->mtime = PackUtil::unpackLongLE(substr($tagData, 0, 8)) / 10000000 - 11644473600;
             $this->atime = PackUtil::unpackLongLE(substr($tagData, 8, 8)) / 10000000 - 11644473600;
@@ -70,7 +70,7 @@ class NtfsExtraField implements ExtraField
     public function serialize()
     {
         $serialize = '';
-        if (null !== $this->mtime && null !== $this->atime && null !== $this->ctime) {
+        if ($this->mtime !== null && $this->atime !== null && $this->ctime !== null) {
             $mtimeLong = ($this->mtime + 11644473600) * 10000000;
             $atimeLong = ($this->atime + 11644473600) * 10000000;
             $ctimeLong = ($this->ctime + 11644473600) * 10000000;

@@ -78,21 +78,29 @@ Latest stable version: [![Latest Stable Version](https://poser.pugx.org/nelexa/z
 ```php
 // create new archive
 $zipFile = new \PhpZip\ZipFile();
-$zipFile
-    ->addFromString("zip/entry/filename", "Is file content") // add an entry from the string
-    ->addFile("/path/to/file", "data/tofile") // add an entry from the file
-    ->addDir(__DIR__, "to/path/") // add files from the directory
-    ->saveAsFile($outputFilename) // save the archive to a file
-    ->close(); // close archive
-        
-// open archive, extract, add files, set password and output to browser.
-$zipFile
-    ->openFile($outputFilename) // open archive from file
-    ->extractTo($outputDirExtract) // extract files to the specified directory
-    ->deleteFromRegex('~^\.~') // delete all hidden (Unix) files
-    ->addFromString('dir/file.txt', 'Test file') // add a new entry from the string
-    ->setPassword('password') // set password for all entries
-    ->outputAsAttachment('library.jar'); // output to the browser without saving to a file
+try{
+    $zipFile
+        ->addFromString("zip/entry/filename", "Is file content") // add an entry from the string
+        ->addFile("/path/to/file", "data/tofile") // add an entry from the file
+        ->addDir(__DIR__, "to/path/") // add files from the directory
+        ->saveAsFile($outputFilename) // save the archive to a file
+        ->close(); // close archive
+            
+    // open archive, extract, add files, set password and output to browser.
+    $zipFile
+        ->openFile($outputFilename) // open archive from file
+        ->extractTo($outputDirExtract) // extract files to the specified directory
+        ->deleteFromRegex('~^\.~') // delete all hidden (Unix) files
+        ->addFromString('dir/file.txt', 'Test file') // add a new entry from the string
+        ->setPassword('password') // set password for all entries
+        ->outputAsAttachment('library.jar'); // output to the browser without saving to a file
+}
+catch(\PhpZip\Exception\ZipException $e){
+    // handle exception
+}
+finally{
+    $zipFile->close();
+}
 ```
 Other examples can be found in the `tests/` folder
 

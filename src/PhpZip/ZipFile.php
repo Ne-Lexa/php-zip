@@ -3,10 +3,11 @@
 namespace PhpZip;
 
 use PhpZip\Exception\InvalidArgumentException;
+use PhpZip\Exception\ZipEntryNotFoundException;
 use PhpZip\Exception\ZipException;
-use PhpZip\Exception\ZipNotFoundEntry;
-use PhpZip\Exception\ZipUnsupportMethod;
+use PhpZip\Exception\ZipUnsupportMethodException;
 use PhpZip\Model\Entry\ZipNewEntry;
+use PhpZip\Model\Entry\ZipNewFileEntry;
 use PhpZip\Model\ZipEntry;
 use PhpZip\Model\ZipEntryMatcher;
 use PhpZip\Model\ZipInfo;
@@ -34,8 +35,7 @@ use Psr\Http\Message\ResponseInterface;
 class ZipFile implements ZipFileInterface
 {
     /**
-     * Allow compression methods.
-     * @var int[]
+     * @var int[] Allow compression methods.
      */
     private static $allowCompressionMethods = [
         self::METHOD_STORED,
@@ -45,8 +45,7 @@ class ZipFile implements ZipFileInterface
     ];
 
     /**
-     * Allow encryption methods.
-     * @var int[]
+     * @var int[] Allow encryption methods.
      */
     private static $allowEncryptionMethods = [
         self::ENCRYPTION_METHOD_TRADITIONAL,
@@ -56,9 +55,7 @@ class ZipFile implements ZipFileInterface
     ];
 
     /**
-     * Default mime types.
-     *
-     * @var array
+     * @var array Default mime types.
      */
     private static $defaultMimeTypes = [
         'zip' => 'application/zip',
@@ -69,9 +66,7 @@ class ZipFile implements ZipFileInterface
     ];
 
     /**
-     * Input seekable input stream.
-     *
-     * @var ZipInputStreamInterface
+     * @var ZipInputStreamInterface Input seekable input stream.
      */
     protected $inputStream;
     /**
@@ -92,13 +87,12 @@ class ZipFile implements ZipFileInterface
      *
      * @param string $filename
      * @return ZipFileInterface
-     * @throws InvalidArgumentException if file doesn't exists.
-     * @throws ZipException             if can't open file.
+     * @throws ZipException if can't open file.
      */
     public function openFile($filename)
     {
         if (!file_exists($filename)) {
-            throw new InvalidArgumentException("File $filename does not exist.");
+            throw new ZipException("File $filename does not exist.");
         }
         if (!($handle = @fopen($filename, 'rb'))) {
             throw new ZipException("File $filename can't open.");
@@ -112,13 +106,12 @@ class ZipFile implements ZipFileInterface
      *
      * @param string $data
      * @return ZipFileInterface
-     * @throws InvalidArgumentException if data not available.
-     * @throws ZipException             if can't open temp stream.
+     * @throws ZipException if can't open temp stream.
      */
     public function openFromString($data)
     {
-        if (null === $data || strlen($data) === 0) {
-            throw new InvalidArgumentException("Data not available");
+        if ($data === null || strlen($data) === 0) {
+            throw new InvalidArgumentException("Empty string passed");
         }
         if (!($handle = fopen('php://temp', 'r+b'))) {
             throw new ZipException("Can't open temp stream.");
@@ -134,8 +127,7 @@ class ZipFile implements ZipFileInterface
      *
      * @param resource $handle
      * @return ZipFileInterface
-     * @throws InvalidArgumentException Invalid stream resource
-     *         or resource cannot seekable stream
+     * @throws ZipException
      */
     public function openFromStream($handle)
     {
@@ -143,11 +135,11 @@ class ZipFile implements ZipFileInterface
             throw new InvalidArgumentException("Invalid stream resource.");
         }
         $type = get_resource_type($handle);
-        if ('stream' !== $type) {
+        if ($type !== 'stream') {
             throw new InvalidArgumentException("Invalid resource type - $type.");
         }
         $meta = stream_get_meta_data($handle);
-        if ('dir' === $meta['stream_type']) {
+        if ($meta['stream_type'] === 'dir') {
             throw new InvalidArgumentException("Invalid stream type - {$meta['stream_type']}.");
         }
         if (!$meta['seekable']) {
@@ -189,7 +181,6 @@ class ZipFile implements ZipFileInterface
      *
      * @param null|string $comment
      * @return ZipFileInterface
-     * @throws InvalidArgumentException Length comment out of range
      */
     public function setArchiveComment($comment = null)
     {
@@ -204,7 +195,7 @@ class ZipFile implements ZipFileInterface
      *
      * @param string $entryName
      * @return bool
-     * @throws ZipNotFoundEntry
+     * @throws ZipEntryNotFoundException
      */
     public function isDirectory($entryName)
     {
@@ -216,7 +207,7 @@ class ZipFile implements ZipFileInterface
      *
      * @param string $entryName
      * @return string
-     * @throws ZipNotFoundEntry
+     * @throws ZipEntryNotFoundException
      */
     public function getEntryComment($entryName)
     {
@@ -229,7 +220,8 @@ class ZipFile implements ZipFileInterface
      * @param string $entryName
      * @param string|null $comment
      * @return ZipFileInterface
-     * @throws ZipNotFoundEntry
+     * @throws ZipException
+     * @throws ZipEntryNotFoundException
      */
     public function setEntryComment($entryName, $comment = null)
     {
@@ -242,6 +234,7 @@ class ZipFile implements ZipFileInterface
      *
      * @param string $entryName
      * @return string
+     * @throws ZipException
      */
     public function getEntryContents($entryName)
     {
@@ -264,7 +257,8 @@ class ZipFile implements ZipFileInterface
      *
      * @param string|ZipEntry $entryName
      * @return ZipInfo
-     * @throws ZipNotFoundEntry
+     * @throws ZipEntryNotFoundException
+     * @throws ZipException
      */
     public function getEntryInfo($entryName)
     {
@@ -347,7 +341,7 @@ class ZipFile implements ZipFileInterface
                 chmod($dir, 0755);
                 touch($dir, $entry->getTime());
             }
-            if (false === file_put_contents($file, $entry->getEntryContent())) {
+            if (file_put_contents($file, $entry->getEntryContent()) === false) {
                 throw new ZipException('Can not extract file ' . $entry->getName());
             }
             touch($file, $entry->getTime());
@@ -361,34 +355,36 @@ class ZipFile implements ZipFileInterface
      * @param string $localName Zip entry name.
      * @param string $contents String contents.
      * @param int|null $compressionMethod Compression method.
-     *                 Use ZipFile::METHOD_STORED, ZipFile::METHOD_DEFLATED or ZipFile::METHOD_BZIP2.
-     *                 If null, then auto choosing method.
+     *       Use {@see ZipFile::METHOD_STORED}, {@see ZipFile::METHOD_DEFLATED} or {@see ZipFile::METHOD_BZIP2}.
+     *       If null, then auto choosing method.
      * @return ZipFileInterface
-     * @throws InvalidArgumentException If incorrect data or entry name.
-     * @throws ZipUnsupportMethod
+     * @throws ZipException
      * @see ZipFileInterface::METHOD_STORED
      * @see ZipFileInterface::METHOD_DEFLATED
      * @see ZipFileInterface::METHOD_BZIP2
      */
     public function addFromString($localName, $contents, $compressionMethod = null)
     {
-        if (null === $contents) {
+        if ($contents === null) {
             throw new InvalidArgumentException("Contents is null");
         }
-        $localName = (string)$localName;
-        if (null === $localName || 0 === strlen($localName)) {
-            throw new InvalidArgumentException("Incorrect entry name " . $localName);
+        if ($localName === null) {
+            throw new InvalidArgumentException("Entry name is null");
+        }
+        $localName = ltrim((string)$localName, "\\/");
+        if (strlen($localName) === 0) {
+            throw new InvalidArgumentException("Empty entry name");
         }
         $contents = (string)$contents;
         $length = strlen($contents);
-        if (null === $compressionMethod) {
+        if ($compressionMethod === null) {
             if ($length >= 512) {
                 $compressionMethod = ZipEntry::UNKNOWN;
             } else {
-                $compressionMethod = ZipFileInterface::METHOD_STORED;
+                $compressionMethod = self::METHOD_STORED;
             }
         } elseif (!in_array($compressionMethod, self::$allowCompressionMethods, true)) {
-            throw new ZipUnsupportMethod('Unsupported compression method ' . $compressionMethod);
+            throw new ZipUnsupportMethodException('Unsupported compression method ' . $compressionMethod);
         }
         $externalAttributes = 0100644 << 16;
 
@@ -411,49 +407,54 @@ class ZipFile implements ZipFileInterface
      *                 Use ZipFile::METHOD_STORED, ZipFile::METHOD_DEFLATED or ZipFile::METHOD_BZIP2.
      *                 If null, then auto choosing method.
      * @return ZipFileInterface
-     * @throws InvalidArgumentException
-     * @throws ZipUnsupportMethod
+     * @throws ZipException
      * @see ZipFileInterface::METHOD_STORED
      * @see ZipFileInterface::METHOD_DEFLATED
      * @see ZipFileInterface::METHOD_BZIP2
      */
     public function addFile($filename, $localName = null, $compressionMethod = null)
     {
-        if (null === $filename) {
-            throw new InvalidArgumentException("Filename is null");
-        }
-        if (!is_file($filename)) {
-            throw new InvalidArgumentException("File $filename is not exists");
-        }
+        $entry = new ZipNewFileEntry($filename);
 
-        if (null === $compressionMethod) {
+        if ($compressionMethod === null) {
             if (function_exists('mime_content_type')) {
+                /** @noinspection PhpComposerExtensionStubsInspection */
                 $mimeType = @mime_content_type($filename);
                 $type = strtok($mimeType, '/');
-                if ('image' === $type) {
-                    $compressionMethod = ZipFileInterface::METHOD_STORED;
-                } elseif ('text' === $type && filesize($filename) < 150) {
-                    $compressionMethod = ZipFileInterface::METHOD_STORED;
+                if ($type === 'image') {
+                    $compressionMethod = self::METHOD_STORED;
+                } elseif ($type === 'text' && filesize($filename) < 150) {
+                    $compressionMethod = self::METHOD_STORED;
                 } else {
                     $compressionMethod = ZipEntry::UNKNOWN;
                 }
-            } elseif (@filesize($filename) >= 512) {
+            } elseif (filesize($filename) >= 512) {
                 $compressionMethod = ZipEntry::UNKNOWN;
             } else {
-                $compressionMethod = ZipFileInterface::METHOD_STORED;
+                $compressionMethod = self::METHOD_STORED;
             }
         } elseif (!in_array($compressionMethod, self::$allowCompressionMethods, true)) {
-            throw new ZipUnsupportMethod('Unsupported method ' . $compressionMethod);
+            throw new ZipUnsupportMethodException('Unsupported compression method ' . $compressionMethod);
         }
 
-        if (!($handle = @fopen($filename, 'rb'))) {
-            throw new InvalidArgumentException('File ' . $filename . ' can not open.');
-        }
-        if (null === $localName) {
+        if ($localName === null) {
             $localName = basename($filename);
         }
-        $this->addFromStream($handle, $localName, $compressionMethod);
-        $this->zipModel->getEntry($localName)->setTime(filemtime($filename));
+        $localName = ltrim((string)$localName, "\\/");
+        if (strlen($localName) === 0) {
+            throw new InvalidArgumentException("Empty entry name");
+        }
+
+        $stat = stat($filename);
+        $mode = sprintf('%o', $stat['mode']);
+        $externalAttributes = (octdec($mode) & 0xffff) << 16;
+
+        $entry->setName($localName);
+        $entry->setMethod($compressionMethod);
+        $entry->setTime($stat['mtime']);
+        $entry->setExternalAttributes($externalAttributes);
+
+        $this->zipModel->addEntry($entry);
         return $this;
     }
 
@@ -466,8 +467,7 @@ class ZipFile implements ZipFileInterface
      *                 Use ZipFile::METHOD_STORED, ZipFile::METHOD_DEFLATED or ZipFile::METHOD_BZIP2.
      *                 If null, then auto choosing method.
      * @return ZipFileInterface
-     * @throws InvalidArgumentException
-     * @throws ZipUnsupportMethod
+     * @throws ZipException
      * @see ZipFileInterface::METHOD_STORED
      * @see ZipFileInterface::METHOD_DEFLATED
      * @see ZipFileInterface::METHOD_BZIP2
@@ -475,22 +475,25 @@ class ZipFile implements ZipFileInterface
     public function addFromStream($stream, $localName, $compressionMethod = null)
     {
         if (!is_resource($stream)) {
-            throw new InvalidArgumentException("stream is not resource");
+            throw new InvalidArgumentException("Stream is not resource");
         }
-        $localName = (string)$localName;
-        if (empty($localName)) {
-            throw new InvalidArgumentException("Incorrect entry name " . $localName);
+        if ($localName === null) {
+            throw new InvalidArgumentException("Entry name is null");
+        }
+        $localName = ltrim((string)$localName, "\\/");
+        if (strlen($localName) === 0) {
+            throw new InvalidArgumentException("Empty entry name");
         }
         $fstat = fstat($stream);
         $length = $fstat['size'];
-        if (null === $compressionMethod) {
+        if ($compressionMethod === null) {
             if ($length >= 512) {
                 $compressionMethod = ZipEntry::UNKNOWN;
             } else {
-                $compressionMethod = ZipFileInterface::METHOD_STORED;
+                $compressionMethod = self::METHOD_STORED;
             }
         } elseif (!in_array($compressionMethod, self::$allowCompressionMethods, true)) {
-            throw new ZipUnsupportMethod('Unsupported method ' . $compressionMethod);
+            throw new ZipUnsupportMethodException('Unsupported method ' . $compressionMethod);
         }
 
         $mode = sprintf('%o', $fstat['mode']);
@@ -511,21 +514,24 @@ class ZipFile implements ZipFileInterface
      *
      * @param string $dirName
      * @return ZipFileInterface
-     * @throws InvalidArgumentException
+     * @throws ZipException
      */
     public function addEmptyDir($dirName)
     {
-        $dirName = (string)$dirName;
-        if (strlen($dirName) === 0) {
-            throw new InvalidArgumentException("DirName empty");
+        if ($dirName === null) {
+            throw new InvalidArgumentException("Dir name is null");
         }
-        $dirName = rtrim($dirName, '/') . '/';
+        $dirName = ltrim((string)$dirName, "\\/");
+        if (strlen($dirName) === 0) {
+            throw new InvalidArgumentException("Empty dir name");
+        }
+        $dirName = rtrim($dirName, '\\/') . '/';
         $externalAttributes = 040755 << 16;
 
         $entry = new ZipNewEntry();
         $entry->setName($dirName);
         $entry->setTime(time());
-        $entry->setMethod(ZipFileInterface::METHOD_STORED);
+        $entry->setMethod(self::METHOD_STORED);
         $entry->setSize(0);
         $entry->setCompressedSize(0);
         $entry->setCrc(0);
@@ -544,12 +550,15 @@ class ZipFile implements ZipFileInterface
      *                 Use ZipFile::METHOD_STORED, ZipFile::METHOD_DEFLATED or ZipFile::METHOD_BZIP2.
      *                 If null, then auto choosing method.
      * @return ZipFileInterface
-     * @throws InvalidArgumentException
+     * @throws ZipException
      */
     public function addDir($inputDir, $localPath = "/", $compressionMethod = null)
     {
+        if ($inputDir === null) {
+            throw new InvalidArgumentException('Input dir is null');
+        }
         $inputDir = (string)$inputDir;
-        if (null === $inputDir || strlen($inputDir) === 0) {
+        if (strlen($inputDir) === 0) {
             throw new InvalidArgumentException('The input directory is not specified');
         }
         if (!is_dir($inputDir)) {
@@ -570,16 +579,18 @@ class ZipFile implements ZipFileInterface
      *                 Use ZipFile::METHOD_STORED, ZipFile::METHOD_DEFLATED or ZipFile::METHOD_BZIP2.
      *                 If null, then auto choosing method.
      * @return ZipFileInterface
-     * @throws InvalidArgumentException
-     * @throws ZipUnsupportMethod
+     * @throws ZipException
      * @see ZipFileInterface::METHOD_STORED
      * @see ZipFileInterface::METHOD_DEFLATED
      * @see ZipFileInterface::METHOD_BZIP2
      */
     public function addDirRecursive($inputDir, $localPath = "/", $compressionMethod = null)
     {
+        if ($inputDir === null) {
+            throw new InvalidArgumentException('Input dir is null');
+        }
         $inputDir = (string)$inputDir;
-        if (null === $inputDir || strlen($inputDir) === 0) {
+        if (strlen($inputDir) === 0) {
             throw new InvalidArgumentException('The input directory is not specified');
         }
         if (!is_dir($inputDir)) {
@@ -600,8 +611,7 @@ class ZipFile implements ZipFileInterface
      *                 Use ZipFile::METHOD_STORED, ZipFile::METHOD_DEFLATED or ZipFile::METHOD_BZIP2.
      *                 If null, then auto choosing method.
      * @return ZipFileInterface
-     * @throws InvalidArgumentException
-     * @throws ZipUnsupportMethod
+     * @throws ZipException
      * @see ZipFileInterface::METHOD_STORED
      * @see ZipFileInterface::METHOD_DEFLATED
      * @see ZipFileInterface::METHOD_BZIP2
@@ -612,8 +622,8 @@ class ZipFile implements ZipFileInterface
         $compressionMethod = null
     ) {
         $localPath = (string)$localPath;
-        if (null !== $localPath && 0 !== strlen($localPath)) {
-            $localPath = rtrim($localPath, '/');
+        if (strlen($localPath) !== 0) {
+            $localPath = trim($localPath, '\\/');
         } else {
             $localPath = "";
         }
@@ -628,10 +638,10 @@ class ZipFile implements ZipFileInterface
         $files = [];
         foreach ($iterator as $file) {
             if ($file instanceof \SplFileInfo) {
-                if ('..' === $file->getBasename()) {
+                if ($file->getBasename() === '..') {
                     continue;
                 }
-                if ('.' === $file->getBasename()) {
+                if ($file->getBasename() === '.') {
                     $files[] = dirname($file->getPathname());
                 } else {
                     $files[] = $file->getPathname();
@@ -646,9 +656,9 @@ class ZipFile implements ZipFileInterface
         $path = array_shift($files);
         foreach ($files as $file) {
             $relativePath = str_replace($path, $localPath, $file);
-            $relativePath = ltrim($relativePath, '/');
-            if (is_dir($file)) {
-                FilesUtil::isEmptyDir($file) && $this->addEmptyDir($relativePath);
+            $relativePath = ltrim($relativePath, '\\/');
+            if (is_dir($file) && FilesUtil::isEmptyDir($file)) {
+                $this->addEmptyDir($relativePath);
             } elseif (is_file($file)) {
                 $this->addFile($file, $relativePath, $compressionMethod);
             }
@@ -666,7 +676,7 @@ class ZipFile implements ZipFileInterface
      *                 Use ZipFile::METHOD_STORED, ZipFile::METHOD_DEFLATED or ZipFile::METHOD_BZIP2.
      *                 If null, then auto choosing method.
      * @return ZipFileInterface
-     * @throws InvalidArgumentException
+     * @throws ZipException
      * @sse https://en.wikipedia.org/wiki/Glob_(programming) Glob pattern syntax
      */
     public function addFilesFromGlob($inputDir, $globPattern, $localPath = '/', $compressionMethod = null)
@@ -685,7 +695,7 @@ class ZipFile implements ZipFileInterface
      *                 Use ZipFile::METHOD_STORED, ZipFile::METHOD_DEFLATED or ZipFile::METHOD_BZIP2.
      *                 If null, then auto choosing method.
      * @return ZipFileInterface
-     * @throws InvalidArgumentException
+     * @throws ZipException
      * @sse https://en.wikipedia.org/wiki/Glob_(programming) Glob pattern syntax
      */
     private function addGlob(
@@ -695,8 +705,11 @@ class ZipFile implements ZipFileInterface
         $recursive = true,
         $compressionMethod = null
     ) {
+        if ($inputDir === null) {
+            throw new InvalidArgumentException('Input dir is null');
+        }
         $inputDir = (string)$inputDir;
-        if (null === $inputDir || 0 === strlen($inputDir)) {
+        if (strlen($inputDir) === 0) {
             throw new InvalidArgumentException('The input directory is not specified');
         }
         if (!is_dir($inputDir)) {
@@ -711,11 +724,11 @@ class ZipFile implements ZipFileInterface
         $globPattern = $inputDir . $globPattern;
 
         $filesFound = FilesUtil::globFileSearch($globPattern, GLOB_BRACE, $recursive);
-        if (false === $filesFound || empty($filesFound)) {
+        if ($filesFound === false || empty($filesFound)) {
             return $this;
         }
         if (!empty($localPath) && is_string($localPath)) {
-            $localPath = rtrim($localPath, '/') . '/';
+            $localPath = trim($localPath, '/\\') . '/';
         } else {
             $localPath = "/";
         }
@@ -725,9 +738,9 @@ class ZipFile implements ZipFileInterface
          */
         foreach ($filesFound as $file) {
             $filename = str_replace($inputDir, $localPath, $file);
-            $filename = ltrim($filename, '/');
-            if (is_dir($file)) {
-                FilesUtil::isEmptyDir($file) && $this->addEmptyDir($filename);
+            $filename = ltrim($filename, '\\/');
+            if (is_dir($file) && FilesUtil::isEmptyDir($file)) {
+                $this->addEmptyDir($filename);
             } elseif (is_file($file)) {
                 $this->addFile($file, $filename, $compressionMethod);
             }
@@ -745,7 +758,7 @@ class ZipFile implements ZipFileInterface
      *                 Use ZipFile::METHOD_STORED, ZipFile::METHOD_DEFLATED or ZipFile::METHOD_BZIP2.
      *                 If null, then auto choosing method.
      * @return ZipFileInterface
-     * @throws InvalidArgumentException
+     * @throws ZipException
      * @sse https://en.wikipedia.org/wiki/Glob_(programming) Glob pattern syntax
      */
     public function addFilesFromGlobRecursive($inputDir, $globPattern, $localPath = '/', $compressionMethod = null)
@@ -763,6 +776,7 @@ class ZipFile implements ZipFileInterface
      *                 Use ZipFile::METHOD_STORED, ZipFile::METHOD_DEFLATED or ZipFile::METHOD_BZIP2.
      *                 If null, then auto choosing method.
      * @return ZipFileInterface
+     * @throws ZipException
      * @internal param bool $recursive Recursive search.
      */
     public function addFilesFromRegex($inputDir, $regexPattern, $localPath = "/", $compressionMethod = null)
@@ -781,7 +795,7 @@ class ZipFile implements ZipFileInterface
      *                 Use ZipFile::METHOD_STORED, ZipFile::METHOD_DEFLATED or ZipFile::METHOD_BZIP2.
      *                 If null, then auto choosing method.
      * @return ZipFileInterface
-     * @throws InvalidArgumentException
+     * @throws ZipException
      */
     private function addRegex(
         $inputDir,
@@ -795,7 +809,7 @@ class ZipFile implements ZipFileInterface
             throw new InvalidArgumentException('The regex pattern is not specified');
         }
         $inputDir = (string)$inputDir;
-        if (null === $inputDir || 0 === strlen($inputDir)) {
+        if (strlen($inputDir) === 0) {
             throw new InvalidArgumentException('The input directory is not specified');
         }
         if (!is_dir($inputDir)) {
@@ -804,11 +818,11 @@ class ZipFile implements ZipFileInterface
         $inputDir = rtrim($inputDir, '/\\') . DIRECTORY_SEPARATOR;
 
         $files = FilesUtil::regexFileSearch($inputDir, $regexPattern, $recursive);
-        if (false === $files || empty($files)) {
+        if (empty($files)) {
             return $this;
         }
         if (!empty($localPath) && is_string($localPath)) {
-            $localPath = rtrim($localPath, '/') . '/';
+            $localPath = trim($localPath, '\\/') . '/';
         } else {
             $localPath = "/";
         }
@@ -819,9 +833,9 @@ class ZipFile implements ZipFileInterface
          */
         foreach ($files as $file) {
             $filename = str_replace($inputDir, $localPath, $file);
-            $filename = ltrim($filename, '/');
-            if (is_dir($file)) {
-                FilesUtil::isEmptyDir($file) && $this->addEmptyDir($filename);
+            $filename = ltrim($filename, '\\/');
+            if (is_dir($file) && FilesUtil::isEmptyDir($file)) {
+                $this->addEmptyDir($filename);
             } elseif (is_file($file)) {
                 $this->addFile($file, $filename, $compressionMethod);
             }
@@ -839,6 +853,7 @@ class ZipFile implements ZipFileInterface
      *                 Use ZipFile::METHOD_STORED, ZipFile::METHOD_DEFLATED or ZipFile::METHOD_BZIP2.
      *                 If null, then auto choosing method.
      * @return ZipFileInterface
+     * @throws ZipException
      * @internal param bool $recursive Recursive search.
      */
     public function addFilesFromRegexRecursive($inputDir, $regexPattern, $localPath = "/", $compressionMethod = null)
@@ -866,14 +881,15 @@ class ZipFile implements ZipFileInterface
      * @param string $oldName Old entry name.
      * @param string $newName New entry name.
      * @return ZipFileInterface
-     * @throws InvalidArgumentException
-     * @throws ZipNotFoundEntry
+     * @throws ZipException
      */
     public function rename($oldName, $newName)
     {
-        if (null === $oldName || null === $newName) {
+        if ($oldName === null || $newName === null) {
             throw new InvalidArgumentException("name is null");
         }
+        $oldName = ltrim((string)$oldName, '\\/');
+        $newName = ltrim((string)$newName, '\\/');
         if ($oldName !== $newName) {
             $this->zipModel->renameEntry($oldName, $newName);
         }
@@ -885,13 +901,13 @@ class ZipFile implements ZipFileInterface
      *
      * @param string $entryName Zip Entry name.
      * @return ZipFileInterface
-     * @throws ZipNotFoundEntry If entry not found.
+     * @throws ZipEntryNotFoundException If entry not found.
      */
     public function deleteFromName($entryName)
     {
-        $entryName = (string)$entryName;
+        $entryName = ltrim((string)$entryName, '\\/');
         if (!$this->zipModel->deleteEntry($entryName)) {
-            throw new ZipNotFoundEntry("Entry " . $entryName . ' not found!');
+            throw new ZipEntryNotFoundException($entryName);
         }
         return $this;
     }
@@ -901,13 +917,12 @@ class ZipFile implements ZipFileInterface
      *
      * @param string $globPattern Glob pattern
      * @return ZipFileInterface
-     * @throws InvalidArgumentException
      * @sse https://en.wikipedia.org/wiki/Glob_(programming) Glob pattern syntax
      */
     public function deleteFromGlob($globPattern)
     {
-        if (null === $globPattern || !is_string($globPattern) || empty($globPattern)) {
-            throw new InvalidArgumentException("Glob pattern is empty");
+        if ($globPattern === null || !is_string($globPattern) || empty($globPattern)) {
+            throw new InvalidArgumentException("The glob pattern is not specified");
         }
         $globPattern = '~' . FilesUtil::convertGlobToRegEx($globPattern) . '~si';
         $this->deleteFromRegex($globPattern);
@@ -919,12 +934,11 @@ class ZipFile implements ZipFileInterface
      *
      * @param string $regexPattern Regex pattern
      * @return ZipFileInterface
-     * @throws InvalidArgumentException
      */
     public function deleteFromRegex($regexPattern)
     {
-        if (null === $regexPattern || !is_string($regexPattern) || empty($regexPattern)) {
-            throw new InvalidArgumentException("Regex pattern is empty.");
+        if ($regexPattern === null || !is_string($regexPattern) || empty($regexPattern)) {
+            throw new InvalidArgumentException("The regex pattern is not specified");
         }
         $this->matcher()->match($regexPattern)->delete();
         return $this;
@@ -945,19 +959,18 @@ class ZipFile implements ZipFileInterface
      *
      * @param int $compressionLevel
      * @return ZipFileInterface
-     * @throws InvalidArgumentException
      * @see ZipFileInterface::LEVEL_DEFAULT_COMPRESSION
      * @see ZipFileInterface::LEVEL_SUPER_FAST
      * @see ZipFileInterface::LEVEL_FAST
      * @see ZipFileInterface::LEVEL_BEST_COMPRESSION
      */
-    public function setCompressionLevel($compressionLevel = ZipFileInterface::LEVEL_DEFAULT_COMPRESSION)
+    public function setCompressionLevel($compressionLevel = self::LEVEL_DEFAULT_COMPRESSION)
     {
-        if ($compressionLevel < ZipFileInterface::LEVEL_DEFAULT_COMPRESSION ||
-            $compressionLevel > ZipFileInterface::LEVEL_BEST_COMPRESSION
+        if ($compressionLevel < self::LEVEL_DEFAULT_COMPRESSION ||
+            $compressionLevel > self::LEVEL_BEST_COMPRESSION
         ) {
             throw new InvalidArgumentException('Invalid compression level. Minimum level ' .
-                ZipFileInterface::LEVEL_DEFAULT_COMPRESSION . '. Maximum level ' . ZipFileInterface::LEVEL_BEST_COMPRESSION);
+                self::LEVEL_DEFAULT_COMPRESSION . '. Maximum level ' . self::LEVEL_BEST_COMPRESSION);
         }
         $this->matcher()->all()->invoke(function ($entry) use ($compressionLevel) {
             $this->setCompressionLevelEntry($entry, $compressionLevel);
@@ -977,15 +990,15 @@ class ZipFile implements ZipFileInterface
      */
     public function setCompressionLevelEntry($entryName, $compressionLevel)
     {
-        if (null !== $compressionLevel) {
+        if ($compressionLevel !== null) {
             if ($compressionLevel < ZipFileInterface::LEVEL_DEFAULT_COMPRESSION ||
                 $compressionLevel > ZipFileInterface::LEVEL_BEST_COMPRESSION
             ) {
                 throw new InvalidArgumentException('Invalid compression level. Minimum level ' .
-                    ZipFileInterface::LEVEL_DEFAULT_COMPRESSION . '. Maximum level ' . ZipFileInterface::LEVEL_BEST_COMPRESSION);
+                    self::LEVEL_DEFAULT_COMPRESSION . '. Maximum level ' . self::LEVEL_BEST_COMPRESSION);
             }
             $entry = $this->zipModel->getEntry($entryName);
-            if ($entry->getCompressionLevel() !== $compressionLevel) {
+            if ($compressionLevel !== $entry->getCompressionLevel()) {
                 $entry = $this->zipModel->getEntryForChanges($entry);
                 $entry->setCompressionLevel($compressionLevel);
             }
@@ -1005,10 +1018,10 @@ class ZipFile implements ZipFileInterface
     public function setCompressionMethodEntry($entryName, $compressionMethod)
     {
         if (!in_array($compressionMethod, self::$allowCompressionMethods, true)) {
-            throw new ZipUnsupportMethod('Unsupported method ' . $compressionMethod);
+            throw new ZipUnsupportMethodException('Unsupported method ' . $compressionMethod);
         }
         $entry = $this->zipModel->getEntry($entryName);
-        if ($entry->getMethod() !== $compressionMethod) {
+        if ($compressionMethod !== $entry->getMethod()) {
             $this->zipModel
                 ->getEntryForChanges($entry)
                 ->setMethod($compressionMethod);
@@ -1034,6 +1047,7 @@ class ZipFile implements ZipFileInterface
      *
      * @param string $password Password
      * @return ZipFileInterface
+     * @throws ZipException
      * @deprecated using ZipFileInterface::setReadPassword()
      */
     public function withReadPassword($password)
@@ -1046,6 +1060,7 @@ class ZipFile implements ZipFileInterface
      *
      * @param string $password Password
      * @return ZipFileInterface
+     * @throws ZipException
      */
     public function setReadPassword($password)
     {
@@ -1059,6 +1074,7 @@ class ZipFile implements ZipFileInterface
      * @param string $entryName
      * @param string $password Password
      * @return ZipFileInterface
+     * @throws ZipException
      */
     public function setReadPasswordEntry($entryName, $password)
     {
@@ -1073,6 +1089,7 @@ class ZipFile implements ZipFileInterface
      * @param int|null $encryptionMethod Encryption method
      * @return ZipFileInterface
      * @deprecated using ZipFileInterface::setPassword()
+     * @throws ZipException
      */
     public function withNewPassword($password, $encryptionMethod = self::ENCRYPTION_METHOD_WINZIP_AES_256)
     {
@@ -1090,9 +1107,9 @@ class ZipFile implements ZipFileInterface
     public function setPassword($password, $encryptionMethod = self::ENCRYPTION_METHOD_WINZIP_AES_256)
     {
         $this->zipModel->setWritePassword($password);
-        if (null !== $encryptionMethod) {
-            if (!in_array($encryptionMethod, self::$allowEncryptionMethods)) {
-                throw new ZipException('Invalid encryption method');
+        if ($encryptionMethod !== null) {
+            if (!in_array($encryptionMethod, self::$allowEncryptionMethods, true)) {
+                throw new ZipException('Invalid encryption method "' . $encryptionMethod . '"');
             }
             $this->zipModel->setEncryptionMethod($encryptionMethod);
         }
@@ -1110,9 +1127,9 @@ class ZipFile implements ZipFileInterface
      */
     public function setPasswordEntry($entryName, $password, $encryptionMethod = null)
     {
-        if (null !== $encryptionMethod) {
-            if (!in_array($encryptionMethod, self::$allowEncryptionMethods)) {
-                throw new ZipException('Invalid encryption method');
+        if ($encryptionMethod !== null) {
+            if (!in_array($encryptionMethod, self::$allowEncryptionMethods, true)) {
+                throw new ZipException('Invalid encryption method "' . $encryptionMethod . '"');
             }
         }
         $this->matcher()->add($entryName)->setPassword($password, $encryptionMethod);
@@ -1187,7 +1204,6 @@ class ZipFile implements ZipFileInterface
      *
      * @param string $filename Output filename
      * @return ZipFileInterface
-     * @throws InvalidArgumentException
      * @throws ZipException
      */
     public function saveAsFile($filename)
@@ -1201,6 +1217,9 @@ class ZipFile implements ZipFileInterface
         $this->saveAsStream($handle);
 
         if (!@rename($tempFilename, $filename)) {
+            if (is_file($tempFilename)) {
+                unlink($tempFilename);
+            }
             throw new ZipException('Can not move ' . $tempFilename . ' to ' . $filename);
         }
         return $this;
@@ -1231,7 +1250,7 @@ class ZipFile implements ZipFileInterface
      * @param string $outputFilename Output filename
      * @param string|null $mimeType Mime-Type
      * @param bool $attachment Http Header 'Content-Disposition' if true then attachment otherwise inline
-     * @throws InvalidArgumentException
+     * @throws ZipException
      */
     public function outputAsAttachment($outputFilename, $mimeType = null, $attachment = true)
     {
@@ -1270,7 +1289,7 @@ class ZipFile implements ZipFileInterface
      * @param string|null $mimeType Mime-Type
      * @param bool $attachment Http Header 'Content-Disposition' if true then attachment otherwise inline
      * @return ResponseInterface
-     * @throws InvalidArgumentException
+     * @throws ZipException
      */
     public function outputAsResponse(ResponseInterface $response, $outputFilename, $mimeType = null, $attachment = true)
     {
@@ -1307,10 +1326,13 @@ class ZipFile implements ZipFileInterface
     }
 
     /**
-     * @param $handle
+     * @param resource $handle
+     * @throws ZipException
      */
     protected function writeZipToStream($handle)
     {
+        $this->onBeforeSave();
+
         $output = new ZipOutputStream($handle, $this->zipModel);
         $output->writeZip();
     }
@@ -1318,7 +1340,7 @@ class ZipFile implements ZipFileInterface
     /**
      * Returns the zip archive as a string.
      * @return string
-     * @throws InvalidArgumentException
+     * @throws ZipException
      */
     public function outputAsString()
     {
@@ -1333,11 +1355,18 @@ class ZipFile implements ZipFileInterface
     }
 
     /**
+     * Event before save or output.
+     */
+    protected function onBeforeSave()
+    {
+    }
+
+    /**
      * Close zip archive and release input stream.
      */
     public function close()
     {
-        if (null !== $this->inputStream) {
+        if ($this->inputStream !== null) {
             $this->inputStream->close();
             $this->inputStream = null;
             $this->zipModel = new ZipModel();
@@ -1351,22 +1380,22 @@ class ZipFile implements ZipFileInterface
      */
     public function rewrite()
     {
-        if (null === $this->inputStream) {
+        if ($this->inputStream === null) {
             throw new ZipException('input stream is null');
         }
         $meta = stream_get_meta_data($this->inputStream->getStream());
         $content = $this->outputAsString();
         $this->close();
-        if ('plainfile' === $meta['wrapper_type']) {
+        if ($meta['wrapper_type'] === 'plainfile') {
             /**
              * @var resource $uri
              */
             $uri = $meta['uri'];
             if (file_put_contents($uri, $content) === false) {
-                throw new ZipException("Can not overwrite the zip file in the {$uri} file.");
+                throw new ZipException("Can not overwrite the zip file in the $uri file.");
             }
             if (!($handle = @fopen($uri, 'rb'))) {
-                throw new ZipException("File {$uri} can't open.");
+                throw new ZipException("File $uri can't open.");
             }
             return $this->openFromStream($handle);
         }
@@ -1386,7 +1415,7 @@ class ZipFile implements ZipFileInterface
      * @link http://php.net/manual/en/arrayaccess.offsetset.php
      * @param string $entryName The offset to assign the value to.
      * @param mixed $contents The value to set.
-     * @throws InvalidArgumentException
+     * @throws ZipException
      * @see ZipFile::addFromString
      * @see ZipFile::addEmptyDir
      * @see ZipFile::addFile
@@ -1394,10 +1423,10 @@ class ZipFile implements ZipFileInterface
      */
     public function offsetSet($entryName, $contents)
     {
-        if (null === $entryName) {
+        if ($entryName === null) {
             throw new InvalidArgumentException('entryName is null');
         }
-        $entryName = (string)$entryName;
+        $entryName = ltrim((string)$entryName, "\\/");
         if (strlen($entryName) === 0) {
             throw new InvalidArgumentException('entryName is empty');
         }
@@ -1414,8 +1443,7 @@ class ZipFile implements ZipFileInterface
         } elseif (is_resource($contents)) {
             $this->addFromStream($contents, $entryName);
         } else {
-            $contents = (string)$contents;
-            $this->addFromString($entryName, $contents);
+            $this->addFromString($entryName, (string)$contents);
         }
     }
 
@@ -1423,7 +1451,7 @@ class ZipFile implements ZipFileInterface
      * Offset to unset
      * @link http://php.net/manual/en/arrayaccess.offsetunset.php
      * @param string $entryName The offset to unset.
-     * @throws ZipUnsupportMethod
+     * @throws ZipEntryNotFoundException
      */
     public function offsetUnset($entryName)
     {
@@ -1435,6 +1463,7 @@ class ZipFile implements ZipFileInterface
      * @link http://php.net/manual/en/iterator.current.php
      * @return mixed Can return any type.
      * @since 5.0.0
+     * @throws ZipException
      */
     public function current()
     {
@@ -1446,7 +1475,7 @@ class ZipFile implements ZipFileInterface
      * @link http://php.net/manual/en/arrayaccess.offsetget.php
      * @param string $entryName The offset to retrieve.
      * @return string|null
-     * @throws ZipNotFoundEntry
+     * @throws ZipException
      */
     public function offsetGet($entryName)
     {

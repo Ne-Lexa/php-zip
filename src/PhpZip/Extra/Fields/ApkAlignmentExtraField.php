@@ -61,7 +61,6 @@ class ApkAlignmentExtraField implements ExtraField
     /**
      * Initializes this Extra Field by deserializing a Data Block.
      * @param string $data
-     * @throws InvalidArgumentException
      */
     public function deserialize($data)
     {

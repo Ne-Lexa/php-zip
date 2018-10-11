@@ -21,6 +21,7 @@
         }
     ],
     "require": {
+        "ext-zlib": "*",
         "php": "^5.5 || ^7.0",
         "psr/http-message": "^1.0"
     },
@@ -41,7 +42,8 @@
     "suggest": {
         "ext-openssl": "Needed to support encrypt zip entries or use ext-mcrypt",
         "ext-mcrypt": "Needed to support encrypt zip entries or use ext-openssl",
-        "ext-bz2": "Needed to support BZIP2 compression"
+        "ext-bz2": "Needed to support BZIP2 compression",
+        "ext-fileinfo": "Needed to get mime-type file"
     },
     "minimum-stability": "stable"
 }

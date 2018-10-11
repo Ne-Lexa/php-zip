@@ -37,8 +37,14 @@ class Crc32Exception extends ZipException
      */
     public function __construct($name, $expected, $actual)
     {
-        parent::__construct($name . " (expected CRC32 value 0x" .
-            dechex($expected) . ", but is actually 0x" . dechex($actual) . ")");
+        parent::__construct(
+            sprintf(
+                "%s (expected CRC32 value 0x%x, but is actually 0x%x)",
+                $name,
+                $expected,
+                $actual
+            )
+        );
         assert($expected != $actual);
         $this->expectedCrc = $expected;
         $this->actualCrc = $actual;

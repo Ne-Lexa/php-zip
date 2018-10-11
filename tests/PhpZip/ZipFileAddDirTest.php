@@ -2,6 +2,7 @@
 
 namespace PhpZip;
 
+use PhpZip\Exception\ZipException;
 use PhpZip\Util\Iterator\IgnoreFilesFilterIterator;
 use PhpZip\Util\Iterator\IgnoreFilesRecursiveFilterIterator;
 
@@ -72,6 +73,9 @@ class ZipFileAddDirTest extends ZipTestCase
         self::assertEmpty($actualResultFiles);
     }
 
+    /**
+     * @throws ZipException
+     */
     public function testAddDirWithLocalPath()
     {
         $localPath = 'to/path';
@@ -81,10 +85,10 @@ class ZipFileAddDirTest extends ZipTestCase
         $zipFile->saveAsFile($this->outputFilename);
         $zipFile->close();
 
-        self::assertCorrectZipArchive($this->outputFilename);
+        $this->assertCorrectZipArchive($this->outputFilename);
 
         $zipFile->openFile($this->outputFilename);
-        self::assertFilesResult($zipFile, [
+        $this->assertFilesResult($zipFile, [
             '.hidden',
             'text file.txt',
             'Текстовый документ.txt',
@@ -93,6 +97,9 @@ class ZipFileAddDirTest extends ZipTestCase
         $zipFile->close();
     }
 
+    /**
+     * @throws ZipException
+     */
     public function testAddDirWithoutLocalPath()
     {
         $zipFile = new ZipFile();
@@ -100,10 +107,10 @@ class ZipFileAddDirTest extends ZipTestCase
         $zipFile->saveAsFile($this->outputFilename);
         $zipFile->close();
 
-        self::assertCorrectZipArchive($this->outputFilename);
+        $this->assertCorrectZipArchive($this->outputFilename);
 
         $zipFile->openFile($this->outputFilename);
-        self::assertFilesResult($zipFile, [
+        $this->assertFilesResult($zipFile, [
             '.hidden',
             'text file.txt',
             'Текстовый документ.txt',
@@ -112,6 +119,9 @@ class ZipFileAddDirTest extends ZipTestCase
         $zipFile->close();
     }
 
+    /**
+     * @throws ZipException
+     */
     public function testAddFilesFromIterator()
     {
         $localPath = 'to/project';
@@ -123,10 +133,10 @@ class ZipFileAddDirTest extends ZipTestCase
         $zipFile->saveAsFile($this->outputFilename);
         $zipFile->close();
 
-        self::assertCorrectZipArchive($this->outputFilename);
+        $this->assertCorrectZipArchive($this->outputFilename);
 
         $zipFile->openFile($this->outputFilename);
-        self::assertFilesResult($zipFile, [
+        $this->assertFilesResult($zipFile, [
             '.hidden',
             'text file.txt',
             'Текстовый документ.txt',
@@ -135,6 +145,9 @@ class ZipFileAddDirTest extends ZipTestCase
         $zipFile->close();
     }
 
+    /**
+     * @throws ZipException
+     */
     public function testAddFilesFromIteratorEmptyLocalPath()
     {
         $localPath = '';
@@ -146,10 +159,10 @@ class ZipFileAddDirTest extends ZipTestCase
         $zipFile->saveAsFile($this->outputFilename);
         $zipFile->close();
 
-        self::assertCorrectZipArchive($this->outputFilename);
+        $this->assertCorrectZipArchive($this->outputFilename);
 
         $zipFile->openFile($this->outputFilename);
-        self::assertFilesResult($zipFile, [
+        $this->assertFilesResult($zipFile, [
             '.hidden',
             'text file.txt',
             'Текстовый документ.txt',
@@ -158,6 +171,9 @@ class ZipFileAddDirTest extends ZipTestCase
         $zipFile->close();
     }
 
+    /**
+     * @throws ZipException
+     */
     public function testAddFilesFromRecursiveIterator()
     {
         $localPath = 'to/project';
@@ -169,13 +185,16 @@ class ZipFileAddDirTest extends ZipTestCase
         $zipFile->saveAsFile($this->outputFilename);
         $zipFile->close();
 
-        self::assertCorrectZipArchive($this->outputFilename);
+        $this->assertCorrectZipArchive($this->outputFilename);
 
         $zipFile->openFile($this->outputFilename);
-        self::assertFilesResult($zipFile, array_keys(self::$files), $localPath);
+        $this->assertFilesResult($zipFile, array_keys(self::$files), $localPath);
         $zipFile->close();
     }
 
+    /**
+     * @throws ZipException
+     */
     public function testAddRecursiveDirWithLocalPath()
     {
         $localPath = 'to/path';
@@ -185,13 +204,16 @@ class ZipFileAddDirTest extends ZipTestCase
         $zipFile->saveAsFile($this->outputFilename);
         $zipFile->close();
 
-        self::assertCorrectZipArchive($this->outputFilename);
+        $this->assertCorrectZipArchive($this->outputFilename);
 
         $zipFile->openFile($this->outputFilename);
-        self::assertFilesResult($zipFile, array_keys(self::$files), $localPath);
+        $this->assertFilesResult($zipFile, array_keys(self::$files), $localPath);
         $zipFile->close();
     }
 
+    /**
+     * @throws ZipException
+     */
     public function testAddRecursiveDirWithoutLocalPath()
     {
         $zipFile = new ZipFile();
@@ -199,13 +221,16 @@ class ZipFileAddDirTest extends ZipTestCase
         $zipFile->saveAsFile($this->outputFilename);
         $zipFile->close();
 
-        self::assertCorrectZipArchive($this->outputFilename);
+        $this->assertCorrectZipArchive($this->outputFilename);
 
         $zipFile->openFile($this->outputFilename);
-        self::assertFilesResult($zipFile, array_keys(self::$files));
+        $this->assertFilesResult($zipFile, array_keys(self::$files));
         $zipFile->close();
     }
 
+    /**
+     * @throws ZipException
+     */
     public function testAddFilesFromIteratorWithIgnoreFiles()
     {
         $localPath = 'to/project';
@@ -222,16 +247,19 @@ class ZipFileAddDirTest extends ZipTestCase
         $zipFile->saveAsFile($this->outputFilename);
         $zipFile->close();
 
-        self::assertCorrectZipArchive($this->outputFilename);
+        $this->assertCorrectZipArchive($this->outputFilename);
 
         $zipFile->openFile($this->outputFilename);
-        self::assertFilesResult($zipFile, [
+        $this->assertFilesResult($zipFile, [
             '.hidden',
             'text file.txt',
         ], $localPath);
         $zipFile->close();
     }
 
+    /**
+     * @throws ZipException
+     */
     public function testAddFilesFromRecursiveIteratorWithIgnoreFiles()
     {
         $localPath = 'to/project';
@@ -250,10 +278,10 @@ class ZipFileAddDirTest extends ZipTestCase
         $zipFile->saveAsFile($this->outputFilename);
         $zipFile->close();
 
-        self::assertCorrectZipArchive($this->outputFilename);
+        $this->assertCorrectZipArchive($this->outputFilename);
 
         $zipFile->openFile($this->outputFilename);
-        self::assertFilesResult($zipFile, [
+        $this->assertFilesResult($zipFile, [
             'text file.txt',
             'Текстовый документ.txt',
             'empty dir/',
@@ -268,6 +296,7 @@ class ZipFileAddDirTest extends ZipTestCase
 
     /**
      * Create archive and add files from glob pattern
+     * @throws ZipException
      */
     public function testAddFilesFromGlob()
     {
@@ -278,10 +307,10 @@ class ZipFileAddDirTest extends ZipTestCase
         $zipFile->saveAsFile($this->outputFilename);
         $zipFile->close();
 
-        self::assertCorrectZipArchive($this->outputFilename);
+        $this->assertCorrectZipArchive($this->outputFilename);
 
         $zipFile->openFile($this->outputFilename);
-        self::assertFilesResult($zipFile, [
+        $this->assertFilesResult($zipFile, [
             'text file.txt',
             'Текстовый документ.txt',
         ], $localPath);
@@ -290,6 +319,7 @@ class ZipFileAddDirTest extends ZipTestCase
 
     /**
      * Create archive and add recursively files from glob pattern
+     * @throws ZipException
      */
     public function testAddFilesFromGlobRecursive()
     {
@@ -300,10 +330,10 @@ class ZipFileAddDirTest extends ZipTestCase
         $zipFile->saveAsFile($this->outputFilename);
         $zipFile->close();
 
-        self::assertCorrectZipArchive($this->outputFilename);
+        $this->assertCorrectZipArchive($this->outputFilename);
 
         $zipFile->openFile($this->outputFilename);
-        self::assertFilesResult($zipFile, [
+        $this->assertFilesResult($zipFile, [
             'text file.txt',
             'Текстовый документ.txt',
             'category/list.txt',
@@ -317,6 +347,7 @@ class ZipFileAddDirTest extends ZipTestCase
 
     /**
      * Create archive and add files from regex pattern
+     * @throws ZipException
      */
     public function testAddFilesFromRegex()
     {
@@ -327,10 +358,10 @@ class ZipFileAddDirTest extends ZipTestCase
         $zipFile->saveAsFile($this->outputFilename);
         $zipFile->close();
 
-        self::assertCorrectZipArchive($this->outputFilename);
+        $this->assertCorrectZipArchive($this->outputFilename);
 
         $zipFile->openFile($this->outputFilename);
-        self::assertFilesResult($zipFile, [
+        $this->assertFilesResult($zipFile, [
             'text file.txt',
             'Текстовый документ.txt',
         ], $localPath);
@@ -339,6 +370,7 @@ class ZipFileAddDirTest extends ZipTestCase
 
     /**
      * Create archive and add files recursively from regex pattern
+     * @throws ZipException
      */
     public function testAddFilesFromRegexRecursive()
     {
@@ -349,10 +381,10 @@ class ZipFileAddDirTest extends ZipTestCase
         $zipFile->saveAsFile($this->outputFilename);
         $zipFile->close();
 
-        self::assertCorrectZipArchive($this->outputFilename);
+        $this->assertCorrectZipArchive($this->outputFilename);
 
         $zipFile->openFile($this->outputFilename);
-        self::assertFilesResult($zipFile, [
+        $this->assertFilesResult($zipFile, [
             'text file.txt',
             'Текстовый документ.txt',
             'category/list.txt',
@@ -364,6 +396,9 @@ class ZipFileAddDirTest extends ZipTestCase
         $zipFile->close();
     }
 
+    /**
+     * @throws ZipException
+     */
     public function testArrayAccessAddDir()
     {
         $localPath = 'path/to';
@@ -374,10 +409,10 @@ class ZipFileAddDirTest extends ZipTestCase
         $zipFile->saveAsFile($this->outputFilename);
         $zipFile->close();
 
-        self::assertCorrectZipArchive($this->outputFilename);
+        $this->assertCorrectZipArchive($this->outputFilename);
 
         $zipFile->openFile($this->outputFilename);
-        self::assertFilesResult($zipFile, array_keys(self::$files), $localPath);
+        $this->assertFilesResult($zipFile, array_keys(self::$files), $localPath);
         $zipFile->close();
     }
 }

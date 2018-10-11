@@ -2,6 +2,7 @@
 
 namespace PhpZip;
 
+use PhpZip\Exception\ZipException;
 use PhpZip\Util\CryptoUtil;
 
 /**
@@ -9,14 +10,17 @@ use PhpZip\Util\CryptoUtil;
  */
 class ZipAlignTest extends ZipTestCase
 {
+    /**
+     * @throws ZipException
+     */
     public function testApkAlignedAndSetZipAlignAndReSave()
     {
         $filename = __DIR__ . '/resources/test.apk';
 
-        self::assertCorrectZipArchive($filename);
-        $result = self::doZipAlignVerify($filename);
+        $this->assertCorrectZipArchive($filename);
+        $result = $this->assertVerifyZipAlign($filename);
         if (null !== $result) {
-            self::assertTrue($result);
+            $this->assertTrue($result);
         }
 
         $zipFile = new ZipFile();
@@ -25,15 +29,16 @@ class ZipAlignTest extends ZipTestCase
         $zipFile->saveAsFile($this->outputFilename);
         $zipFile->close();
 
-        self::assertCorrectZipArchive($this->outputFilename);
-        $result = self::doZipAlignVerify($this->outputFilename, true);
+        $this->assertCorrectZipArchive($this->outputFilename);
+        $result = $this->assertVerifyZipAlign($this->outputFilename, true);
         if (null !== $result) {
-            self::assertTrue($result);
+            $this->assertTrue($result);
         }
     }
 
     /**
      * Test zip alignment.
+     * @throws ZipException
      */
     public function testZipAlignSourceZip()
     {
@@ -48,30 +53,33 @@ class ZipAlignTest extends ZipTestCase
         $zipFile->saveAsFile($this->outputFilename);
         $zipFile->close();
 
-        self::assertCorrectZipArchive($this->outputFilename);
+        $this->assertCorrectZipArchive($this->outputFilename);
 
-        $result = self::doZipAlignVerify($this->outputFilename);
+        $result = $this->assertVerifyZipAlign($this->outputFilename);
         if ($result === null) {
             return;
         } // zip align not installed
 
         // check not zip align
-        self::assertFalse($result);
+        $this->assertFalse($result);
 
         $zipFile->openFile($this->outputFilename);
         $zipFile->setZipAlign(4);
         $zipFile->saveAsFile($this->outputFilename);
         $zipFile->close();
 
-        self::assertCorrectZipArchive($this->outputFilename);
+        $this->assertCorrectZipArchive($this->outputFilename);
 
-        $result = self::doZipAlignVerify($this->outputFilename, true);
-        self::assertNotNull($result);
+        $result = $this->assertVerifyZipAlign($this->outputFilename, true);
+        $this->assertNotNull($result);
 
         // check zip align
-        self::assertTrue($result);
+        $this->assertTrue($result);
     }
 
+    /**
+     * @throws ZipException
+     */
     public function testZipAlignNewFiles()
     {
         $zipFile = new ZipFile();
@@ -86,16 +94,19 @@ class ZipAlignTest extends ZipTestCase
         $zipFile->saveAsFile($this->outputFilename);
         $zipFile->close();
 
-        self::assertCorrectZipArchive($this->outputFilename);
+        $this->assertCorrectZipArchive($this->outputFilename);
 
-        $result = self::doZipAlignVerify($this->outputFilename);
+        $result = $this->assertVerifyZipAlign($this->outputFilename);
         if ($result === null) {
             return;
         } // zip align not installed
         // check not zip align
-        self::assertTrue($result);
+        $this->assertTrue($result);
     }
 
+    /**
+     * @throws ZipException
+     */
     public function testZipAlignFromModifiedZipArchive()
     {
         $zipFile = new ZipFile();
@@ -109,15 +120,15 @@ class ZipAlignTest extends ZipTestCase
         $zipFile->saveAsFile($this->outputFilename);
         $zipFile->close();
 
-        self::assertCorrectZipArchive($this->outputFilename);
+        $this->assertCorrectZipArchive($this->outputFilename);
 
-        $result = self::doZipAlignVerify($this->outputFilename);
+        $result = $this->assertVerifyZipAlign($this->outputFilename);
         if ($result === null) {
             return;
         } // zip align not installed
 
         // check not zip align
-        self::assertFalse($result);
+        $this->assertFalse($result);
 
         $zipFile->openFile($this->outputFilename);
         $zipFile->deleteFromRegex("~entry2[\d]+\.txt$~s");
@@ -136,12 +147,12 @@ class ZipAlignTest extends ZipTestCase
         $zipFile->saveAsFile($this->outputFilename);
         $zipFile->close();
 
-        self::assertCorrectZipArchive($this->outputFilename);
+        $this->assertCorrectZipArchive($this->outputFilename);
 
-        $result = self::doZipAlignVerify($this->outputFilename, true);
-        self::assertNotNull($result);
+        $result = $this->assertVerifyZipAlign($this->outputFilename, true);
+        $this->assertNotNull($result);
 
         // check zip align
-        self::assertTrue($result);
+        $this->assertTrue($result);
     }
 }

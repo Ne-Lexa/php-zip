@@ -20,6 +20,8 @@ class ZipChangesEntry extends ZipAbstractEntry
     /**
      * ZipChangesEntry constructor.
      * @param ZipSourceEntry $entry
+     * @throws ZipException
+     * @throws \PhpZip\Exception\InvalidArgumentException
      */
     public function __construct(ZipSourceEntry $entry)
     {

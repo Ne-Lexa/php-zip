@@ -78,21 +78,29 @@
 ```php
 // создание нового архива
 $zipFile = new \PhpZip\ZipFile();
-$zipFile
-    ->addFromString("zip/entry/filename", "Is file content") // добавить запись из строки
-    ->addFile("/path/to/file", "data/tofile") // добавить запись из файла
-    ->addDir(__DIR__, "to/path/") // добавить файлы из директории
-    ->saveAsFile($outputFilename) // сохранить архив в файл
-    ->close(); // закрыть архив
-        
-// открытие архива, извлечение файлов, удаление файлов, добавление файлов, установка пароля и вывод архива в браузер.
-$zipFile
-    ->openFile($outputFilename) // открыть архив из файла
-    ->extractTo($outputDirExtract) // извлечь файлы в заданную директорию
-    ->deleteFromRegex('~^\.~') // удалить все скрытые (Unix) файлы
-    ->addFromString('dir/file.txt', 'Test file') // добавить новую запись из строки
-    ->setPassword('password') // установить пароль на все записи
-    ->outputAsAttachment('library.jar'); // вывести в браузер без сохранения в файл
+try{
+    $zipFile
+        ->addFromString("zip/entry/filename", "Is file content") // добавить запись из строки
+        ->addFile("/path/to/file", "data/tofile") // добавить запись из файла
+        ->addDir(__DIR__, "to/path/") // добавить файлы из директории
+        ->saveAsFile($outputFilename) // сохранить архив в файл
+        ->close(); // закрыть архив
+            
+    // открытие архива, извлечение файлов, удаление файлов, добавление файлов, установка пароля и вывод архива в браузер.
+    $zipFile
+        ->openFile($outputFilename) // открыть архив из файла
+        ->extractTo($outputDirExtract) // извлечь файлы в заданную директорию
+        ->deleteFromRegex('~^\.~') // удалить все скрытые (Unix) файлы
+        ->addFromString('dir/file.txt', 'Test file') // добавить новую запись из строки
+        ->setPassword('password') // установить пароль на все записи
+        ->outputAsAttachment('library.jar'); // вывести в браузер без сохранения в файл
+}
+catch(\PhpZip\Exception\ZipException $e){
+    // обработка исключения
+}
+finally{
+    $zipFile->close();
+}
 ```
 Другие примеры можно посмотреть в папке `tests/`.
 

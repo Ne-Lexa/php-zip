@@ -5,6 +5,7 @@ namespace PhpZip\Crypto;
 use PhpZip\Exception\RuntimeException;
 use PhpZip\Exception\ZipAuthenticationException;
 use PhpZip\Exception\ZipCryptoException;
+use PhpZip\Exception\ZipException;
 use PhpZip\Extra\Fields\WinZipAesEntryExtraField;
 use PhpZip\Model\ZipEntry;
 use PhpZip\Util\CryptoUtil;
@@ -49,6 +50,7 @@ class WinZipAesEngine implements ZipEncryptionEngine
      * @return string
      * @throws ZipAuthenticationException
      * @throws ZipCryptoException
+     * @throws \PhpZip\Exception\ZipException
      */
     public function decrypt($content)
     {
@@ -129,26 +131,26 @@ class WinZipAesEngine implements ZipEncryptionEngine
                 " (authenticated WinZip AES entry content has been tampered with)");
         }
 
-        return self::aesCtrSegmentIntegerCounter(false, $content, $key, $iv);
+        return self::aesCtrSegmentIntegerCounter($content, $key, $iv, false);
     }
 
     /**
      * Decryption or encryption AES-CTR with Segment Integer Count (SIC).
      *
-     * @param bool $encrypted If true encryption else decryption
      * @param string $str Data
      * @param string $key Key
      * @param string $iv IV
+     * @param bool $encrypted If true encryption else decryption
      * @return string
      */
-    private static function aesCtrSegmentIntegerCounter($encrypted = true, $str, $key, $iv)
+    private static function aesCtrSegmentIntegerCounter($str, $key, $iv, $encrypted = true)
     {
         $numOfBlocks = ceil(strlen($str) / 16);
         $ctrStr = '';
         for ($i = 0; $i < $numOfBlocks; ++$i) {
             for ($j = 0; $j < 16; ++$j) {
                 $n = ord($iv[$j]);
-                if (0x100 === ++$n) {
+                if (++$n === 0x100) {
                     // overflow, set this one to 0, increment next
                     $iv[$j] = chr(0);
                 } else {
@@ -172,14 +174,16 @@ class WinZipAesEngine implements ZipEncryptionEngine
      * @param string $key Aes key
      * @param string $iv Aes IV
      * @return string Encrypted data
-     * @throws RuntimeException
      */
     private static function encryptCtr($data, $key, $iv)
     {
         if (extension_loaded("openssl")) {
             $numBits = strlen($key) * 8;
+            /** @noinspection PhpComposerExtensionStubsInspection */
             return openssl_encrypt($data, 'AES-' . $numBits . '-CTR', $key, OPENSSL_RAW_DATA, $iv);
         } elseif (extension_loaded("mcrypt")) {
+            /** @noinspection PhpDeprecationInspection */
+            /** @noinspection PhpComposerExtensionStubsInspection */
             return mcrypt_encrypt(MCRYPT_RIJNDAEL_128, $key, $data, "ctr", $iv);
         } else {
             throw new RuntimeException('Extension openssl or mcrypt not loaded');
@@ -193,14 +197,16 @@ class WinZipAesEngine implements ZipEncryptionEngine
      * @param string $key Aes key
      * @param string $iv Aes IV
      * @return string Raw data
-     * @throws RuntimeException
      */
     private static function decryptCtr($data, $key, $iv)
     {
         if (extension_loaded("openssl")) {
             $numBits = strlen($key) * 8;
+            /** @noinspection PhpComposerExtensionStubsInspection */
             return openssl_decrypt($data, 'AES-' . $numBits . '-CTR', $key, OPENSSL_RAW_DATA, $iv);
         } elseif (extension_loaded("mcrypt")) {
+            /** @noinspection PhpDeprecationInspection */
+            /** @noinspection PhpComposerExtensionStubsInspection */
             return mcrypt_decrypt(MCRYPT_RIJNDAEL_128, $key, $data, "ctr", $iv);
         } else {
             throw new RuntimeException('Extension openssl or mcrypt not loaded');
@@ -212,12 +218,15 @@ class WinZipAesEngine implements ZipEncryptionEngine
      *
      * @param string $content
      * @return string
+     * @throws \PhpZip\Exception\ZipException
      */
     public function encrypt($content)
     {
         // Init key strength.
         $password = $this->entry->getPassword();
-        assert($password !== null);
+        if ($password === null) {
+            throw new ZipException('No password was set for the entry "'.$this->entry->getName().'"');
+        }
 
         // WinZip 99-character limit
         // @see https://sourceforge.net/p/p7zip/discussion/383044/thread/c859a2f0/
@@ -225,8 +234,6 @@ class WinZipAesEngine implements ZipEncryptionEngine
 
         $keyStrengthBits = WinZipAesEntryExtraField::getKeyStrangeFromEncryptionMethod($this->entry->getEncryptionMethod());
         $keyStrengthBytes = $keyStrengthBits / 8;
-
-        assert(self::AES_BLOCK_SIZE_BITS <= $keyStrengthBits);
 
         $salt = CryptoUtil::randomBytes($keyStrengthBytes / 2);
 
@@ -239,7 +246,7 @@ class WinZipAesEngine implements ZipEncryptionEngine
 
         $key = substr($keyParam, 0, $keyStrengthBytes);
 
-        $content = self::aesCtrSegmentIntegerCounter(true, $content, $key, $iv);
+        $content = self::aesCtrSegmentIntegerCounter($content, $key, $iv, true);
 
         $mac = hash_hmac('sha1', $content, $sha1HMacParam, true);
 

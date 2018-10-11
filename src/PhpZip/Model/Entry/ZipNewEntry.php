@@ -3,13 +3,9 @@
 namespace PhpZip\Model\Entry;
 
 use PhpZip\Exception\InvalidArgumentException;
-use PhpZip\Exception\ZipException;
 use PhpZip\ZipFileInterface;
 
 /**
- * Abstract class for new zip entry.
- *
- * @see https://pkware.cachefly.net/webdocs/casestudies/APPNOTE.TXT .ZIP File Format Specification
  * @author Ne-Lexa alexey@nelexa.ru
  * @license MIT
  */
@@ -27,7 +23,6 @@ class ZipNewEntry extends ZipAbstractEntry
     /**
      * ZipNewEntry constructor.
      * @param string|resource|null $content
-     * @throws InvalidArgumentException
      */
     public function __construct($content = null)
     {
@@ -42,12 +37,12 @@ class ZipNewEntry extends ZipAbstractEntry
      * Returns an string content of the given entry.
      *
      * @return null|string
-     * @throws ZipException
      */
     public function getEntryContent()
     {
         if (is_resource($this->content)) {
-            return stream_get_contents($this->content, -1, 0);
+            rewind($this->content);
+            return stream_get_contents($this->content);
         }
         return $this->content;
     }
@@ -81,7 +76,7 @@ class ZipNewEntry extends ZipAbstractEntry
 
     public function __destruct()
     {
-        if (!$this->clone && null !== $this->content && is_resource($this->content)) {
+        if (!$this->clone && $this->content !== null && is_resource($this->content)) {
             fclose($this->content);
             $this->content = null;
         }

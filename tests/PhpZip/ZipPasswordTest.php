@@ -3,6 +3,8 @@
 namespace PhpZip;
 
 use PhpZip\Exception\ZipAuthenticationException;
+use PhpZip\Exception\ZipEntryNotFoundException;
+use PhpZip\Exception\ZipException;
 use PhpZip\Model\ZipInfo;
 use PhpZip\Util\CryptoUtil;
 
@@ -13,6 +15,7 @@ class ZipPasswordTest extends ZipFileAddDirTest
 {
     /**
      * Test archive password.
+     * @throws ZipException
      */
     public function testSetPassword()
     {
@@ -30,7 +33,7 @@ class ZipPasswordTest extends ZipFileAddDirTest
         $zipFile->saveAsFile($this->outputFilename);
         $zipFile->close();
 
-        self::assertCorrectZipArchive($this->outputFilename, $password);
+        $this->assertCorrectZipArchive($this->outputFilename, $password);
 
         // check bad password for ZipCrypto
         $zipFile->openFile($this->outputFilename);
@@ -38,20 +41,20 @@ class ZipPasswordTest extends ZipFileAddDirTest
         foreach ($zipFile->getListFiles() as $entryName) {
             try {
                 $zipFile[$entryName];
-                self::fail("Expected Exception has not been raised.");
+                $this->fail("Expected Exception has not been raised.");
             } catch (ZipAuthenticationException $ae) {
-                self::assertNotNull($ae);
+                $this->assertContains('Bad password for entry', $ae->getMessage());
             }
         }
 
         // check correct password for ZipCrypto
         $zipFile->setReadPassword($password);
         foreach ($zipFile->getAllInfo() as $info) {
-            self::assertTrue($info->isEncrypted());
-            self::assertContains('ZipCrypto', $info->getMethodName());
+            $this->assertTrue($info->isEncrypted());
+            $this->assertContains('ZipCrypto', $info->getMethodName());
             $decryptContent = $zipFile[$info->getName()];
-            self::assertNotEmpty($decryptContent);
-            self::assertContains('<?php', $decryptContent);
+            $this->assertNotEmpty($decryptContent);
+            $this->assertContains('<?php', $decryptContent);
         }
 
         // change encryption method to WinZip Aes and update file
@@ -59,7 +62,7 @@ class ZipPasswordTest extends ZipFileAddDirTest
         $zipFile->saveAsFile($this->outputFilename);
         $zipFile->close();
 
-        self::assertCorrectZipArchive($this->outputFilename, $password);
+        $this->assertCorrectZipArchive($this->outputFilename, $password);
 
         // check from WinZip AES encryption
         $zipFile->openFile($this->outputFilename);
@@ -68,20 +71,20 @@ class ZipPasswordTest extends ZipFileAddDirTest
         foreach ($zipFile->getListFiles() as $entryName) {
             try {
                 $zipFile[$entryName];
-                self::fail("Expected Exception has not been raised.");
+                $this->fail("Expected Exception has not been raised.");
             } catch (ZipAuthenticationException $ae) {
-                self::assertNotNull($ae);
+                $this->assertNotNull($ae);
             }
         }
 
         // set correct password WinZip AES
         $zipFile->setReadPassword($password);
         foreach ($zipFile->getAllInfo() as $info) {
-            self::assertTrue($info->isEncrypted());
-            self::assertContains('WinZip', $info->getMethodName());
+            $this->assertTrue($info->isEncrypted());
+            $this->assertContains('WinZip', $info->getMethodName());
             $decryptContent = $zipFile[$info->getName()];
-            self::assertNotEmpty($decryptContent);
-            self::assertContains('<?php', $decryptContent);
+            $this->assertNotEmpty($decryptContent);
+            $this->assertContains('<?php', $decryptContent);
         }
 
         // clear password
@@ -91,16 +94,19 @@ class ZipPasswordTest extends ZipFileAddDirTest
         $zipFile->saveAsFile($this->outputFilename);
         $zipFile->close();
 
-        self::assertCorrectZipArchive($this->outputFilename);
+        $this->assertCorrectZipArchive($this->outputFilename);
 
         // check remove password
         $zipFile->openFile($this->outputFilename);
         foreach ($zipFile->getAllInfo() as $info) {
-            self::assertFalse($info->isEncrypted());
+            $this->assertFalse($info->isEncrypted());
         }
         $zipFile->close();
     }
 
+    /**
+     * @throws ZipException
+     */
     public function testTraditionalEncryption()
     {
         if (PHP_INT_SIZE === 4) {
@@ -115,15 +121,15 @@ class ZipPasswordTest extends ZipFileAddDirTest
         $zip->saveAsFile($this->outputFilename);
         $zip->close();
 
-        self::assertCorrectZipArchive($this->outputFilename, $password);
+        $this->assertCorrectZipArchive($this->outputFilename, $password);
 
         $zip->openFile($this->outputFilename);
         $zip->setReadPassword($password);
-        self::assertFilesResult($zip, array_keys(self::$files));
+        $this->assertFilesResult($zip, array_keys(self::$files));
         foreach ($zip->getAllInfo() as $info) {
             if (!$info->isFolder()) {
-                self::assertTrue($info->isEncrypted());
-                self::assertContains('ZipCrypto', $info->getMethodName());
+                $this->assertTrue($info->isEncrypted());
+                $this->assertContains('ZipCrypto', $info->getMethodName());
             }
         }
         $zip->close();
@@ -133,6 +139,7 @@ class ZipPasswordTest extends ZipFileAddDirTest
      * @dataProvider winZipKeyStrengthProvider
      * @param int $encryptionMethod
      * @param int $bitSize
+     * @throws ZipException
      */
     public function testWinZipAesEncryption($encryptionMethod, $bitSize)
     {
@@ -144,16 +151,16 @@ class ZipPasswordTest extends ZipFileAddDirTest
         $zip->saveAsFile($this->outputFilename);
         $zip->close();
 
-        self::assertCorrectZipArchive($this->outputFilename, $password);
+        $this->assertCorrectZipArchive($this->outputFilename, $password);
 
         $zip->openFile($this->outputFilename);
         $zip->setReadPassword($password);
-        self::assertFilesResult($zip, array_keys(self::$files));
+        $this->assertFilesResult($zip, array_keys(self::$files));
         foreach ($zip->getAllInfo() as $info) {
             if (!$info->isFolder()) {
-                self::assertTrue($info->isEncrypted());
-                self::assertEquals($info->getEncryptionMethod(), $encryptionMethod);
-                self::assertContains('WinZip AES-' . $bitSize, $info->getMethodName());
+                $this->assertTrue($info->isEncrypted());
+                $this->assertEquals($info->getEncryptionMethod(), $encryptionMethod);
+                $this->assertContains('WinZip AES-' . $bitSize, $info->getMethodName());
             }
         }
         $zip->close();
@@ -172,6 +179,10 @@ class ZipPasswordTest extends ZipFileAddDirTest
         ];
     }
 
+    /**
+     * @throws Exception\ZipEntryNotFoundException
+     * @throws ZipException
+     */
     public function testEncryptionEntries()
     {
         if (PHP_INT_SIZE === 4) {
@@ -191,7 +202,7 @@ class ZipPasswordTest extends ZipFileAddDirTest
         $zip->openFile($this->outputFilename);
         $zip->setReadPasswordEntry('.hidden', $password1);
         $zip->setReadPasswordEntry('text file.txt', $password2);
-        self::assertFilesResult($zip, [
+        $this->assertFilesResult($zip, [
             '.hidden',
             'text file.txt',
             'Текстовый документ.txt',
@@ -199,19 +210,23 @@ class ZipPasswordTest extends ZipFileAddDirTest
         ]);
 
         $info = $zip->getEntryInfo('.hidden');
-        self::assertTrue($info->isEncrypted());
-        self::assertContains('ZipCrypto', $info->getMethodName());
+        $this->assertTrue($info->isEncrypted());
+        $this->assertContains('ZipCrypto', $info->getMethodName());
 
         $info = $zip->getEntryInfo('text file.txt');
-        self::assertTrue($info->isEncrypted());
-        self::assertContains('WinZip AES', $info->getMethodName());
+        $this->assertTrue($info->isEncrypted());
+        $this->assertContains('WinZip AES', $info->getMethodName());
 
-        self::assertFalse($zip->getEntryInfo('Текстовый документ.txt')->isEncrypted());
-        self::assertFalse($zip->getEntryInfo('empty dir/')->isEncrypted());
+        $this->assertFalse($zip->getEntryInfo('Текстовый документ.txt')->isEncrypted());
+        $this->assertFalse($zip->getEntryInfo('empty dir/')->isEncrypted());
 
         $zip->close();
     }
 
+    /**
+     * @throws Exception\ZipEntryNotFoundException
+     * @throws ZipException
+     */
     public function testEncryptionEntriesWithDefaultPassword()
     {
         if (PHP_INT_SIZE === 4) {
@@ -234,7 +249,7 @@ class ZipPasswordTest extends ZipFileAddDirTest
         $zip->setReadPassword($defaultPassword);
         $zip->setReadPasswordEntry('.hidden', $password1);
         $zip->setReadPasswordEntry('text file.txt', $password2);
-        self::assertFilesResult($zip, [
+        $this->assertFilesResult($zip, [
             '.hidden',
             'text file.txt',
             'Текстовый документ.txt',
@@ -242,18 +257,18 @@ class ZipPasswordTest extends ZipFileAddDirTest
         ]);
 
         $info = $zip->getEntryInfo('.hidden');
-        self::assertTrue($info->isEncrypted());
-        self::assertContains('ZipCrypto', $info->getMethodName());
+        $this->assertTrue($info->isEncrypted());
+        $this->assertContains('ZipCrypto', $info->getMethodName());
 
         $info = $zip->getEntryInfo('text file.txt');
-        self::assertTrue($info->isEncrypted());
-        self::assertContains('WinZip AES', $info->getMethodName());
+        $this->assertTrue($info->isEncrypted());
+        $this->assertContains('WinZip AES', $info->getMethodName());
 
         $info = $zip->getEntryInfo('Текстовый документ.txt');
-        self::assertTrue($info->isEncrypted());
-        self::assertContains('WinZip AES', $info->getMethodName());
+        $this->assertTrue($info->isEncrypted());
+        $this->assertContains('WinZip AES', $info->getMethodName());
 
-        self::assertFalse($zip->getEntryInfo('empty dir/')->isEncrypted());
+        $this->assertFalse($zip->getEntryInfo('empty dir/')->isEncrypted());
 
         $zip->close();
     }
@@ -271,28 +286,32 @@ class ZipPasswordTest extends ZipFileAddDirTest
         $zipFile->outputAsString();
     }
 
+    /**
+     * @throws Exception\ZipEntryNotFoundException
+     * @throws ZipException
+     */
     public function testEntryPassword()
     {
         $zipFile = new ZipFile();
         $zipFile->setPassword('pass');
         $zipFile['file'] = 'content';
-        self::assertFalse($zipFile->getEntryInfo('file')->isEncrypted());
+        $this->assertFalse($zipFile->getEntryInfo('file')->isEncrypted());
         for ($i = 1; $i <= 10; $i++) {
             $zipFile['file' . $i] = 'content';
             if ($i < 6) {
                 $zipFile->setPasswordEntry('file' . $i, 'pass');
-                self::assertTrue($zipFile->getEntryInfo('file' . $i)->isEncrypted());
+                $this->assertTrue($zipFile->getEntryInfo('file' . $i)->isEncrypted());
             } else {
-                self::assertFalse($zipFile->getEntryInfo('file' . $i)->isEncrypted());
+                $this->assertFalse($zipFile->getEntryInfo('file' . $i)->isEncrypted());
             }
         }
         $zipFile->disableEncryptionEntry('file3');
-        self::assertFalse($zipFile->getEntryInfo('file3')->isEncrypted());
-        self::asserttrue($zipFile->getEntryInfo('file2')->isEncrypted());
+        $this->assertFalse($zipFile->getEntryInfo('file3')->isEncrypted());
+        $this->asserttrue($zipFile->getEntryInfo('file2')->isEncrypted());
         $zipFile->disableEncryption();
         $infoList = $zipFile->getAllInfo();
         array_walk($infoList, function (ZipInfo $zipInfo) {
-            self::assertFalse($zipInfo->isEncrypted());
+            $this->assertFalse($zipInfo->isEncrypted());
         });
         $zipFile->close();
     }
@@ -308,6 +327,10 @@ class ZipPasswordTest extends ZipFileAddDirTest
         $zipFile->setPasswordEntry('file', 'pass', 99);
     }
 
+    /**
+     * @throws ZipEntryNotFoundException
+     * @throws ZipException
+     */
     public function testArchivePasswordUpdateWithoutSetReadPassword()
     {
         $zipFile = new ZipFile();
@@ -318,37 +341,38 @@ class ZipPasswordTest extends ZipFileAddDirTest
         $zipFile->saveAsFile($this->outputFilename);
         $zipFile->close();
 
-        self::assertCorrectZipArchive($this->outputFilename, 'password');
+        $this->assertCorrectZipArchive($this->outputFilename, 'password');
 
         $zipFile->openFile($this->outputFilename);
-        self::assertCount(3, $zipFile);
+        $this->assertCount(3, $zipFile);
         foreach ($zipFile->getAllInfo() as $info) {
-            self::assertTrue($info->isEncrypted());
+            $this->assertTrue($info->isEncrypted());
         }
         unset($zipFile['file3']);
         $zipFile['file4'] = 'content';
         $zipFile->rewrite();
 
-        self::assertCorrectZipArchive($this->outputFilename, 'password');
+        $this->assertCorrectZipArchive($this->outputFilename, 'password');
 
-        self::assertCount(3, $zipFile);
-        self::assertFalse(isset($zipFile['file3']));
-        self::assertTrue(isset($zipFile['file4']));
-        self::assertTrue($zipFile->getEntryInfo('file1')->isEncrypted());
-        self::assertTrue($zipFile->getEntryInfo('file2')->isEncrypted());
-        self::assertFalse($zipFile->getEntryInfo('file4')->isEncrypted());
-        self::assertEquals($zipFile['file4'], 'content');
+        $this->assertCount(3, $zipFile);
+        $this->assertFalse(isset($zipFile['file3']));
+        $this->assertTrue(isset($zipFile['file4']));
+        $this->assertTrue($zipFile->getEntryInfo('file1')->isEncrypted());
+        $this->assertTrue($zipFile->getEntryInfo('file2')->isEncrypted());
+        $this->assertFalse($zipFile->getEntryInfo('file4')->isEncrypted());
+        $this->assertEquals($zipFile['file4'], 'content');
 
         $zipFile->extractTo($this->outputDirname, ['file4']);
 
-        self::assertTrue(file_exists($this->outputDirname . DIRECTORY_SEPARATOR . 'file4'));
-        self::assertEquals(file_get_contents($this->outputDirname . DIRECTORY_SEPARATOR . 'file4'), $zipFile['file4']);
+        $this->assertTrue(file_exists($this->outputDirname . DIRECTORY_SEPARATOR . 'file4'));
+        $this->assertEquals(file_get_contents($this->outputDirname . DIRECTORY_SEPARATOR . 'file4'), $zipFile['file4']);
 
         $zipFile->close();
     }
 
     /**
      * @see https://github.com/Ne-Lexa/php-zip/issues/9
+     * @throws ZipException
      */
     public function testIssues9()
     {
@@ -371,6 +395,10 @@ class ZipPasswordTest extends ZipFileAddDirTest
         $zipFile->close();
     }
 
+    /**
+     * @throws ZipEntryNotFoundException
+     * @throws ZipException
+     */
     public function testReadAesEncryptedAndRewriteArchive()
     {
         $file = __DIR__ . '/resources/aes_password_archive.zip';

@@ -145,7 +145,7 @@ class ZipEntryMatcher implements \Countable
             $entry = $this->zipModel->getEntry($entry);
             if (!$entry->isDirectory()) {
                 $entry = $this->zipModel->getEntryForChanges($entry);
-                $entry->clearEncryption();
+                $entry->disableEncryption();
             }
         });
     }
