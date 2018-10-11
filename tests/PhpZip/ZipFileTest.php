@@ -19,7 +19,7 @@ class ZipFileTest extends ZipTestCase
 
     /**
      * @expectedException \PhpZip\Exception\ZipException
-     * @expectedExceptionMessage can't exists
+     * @expectedExceptionMessage does not exist
      */
     public function testOpenFileCantExists()
     {
@@ -1292,7 +1292,7 @@ class ZipFileTest extends ZipTestCase
 
     /**
      * @expectedException \PhpZip\Exception\InvalidArgumentException
-     * @expectedExceptionMessage Input dir is null
+     * @expectedExceptionMessage The input directory is not specified
      * @throws ZipException
      */
     public function testAddDirNullDirname()
@@ -1303,7 +1303,7 @@ class ZipFileTest extends ZipTestCase
 
     /**
      * @expectedException \PhpZip\Exception\InvalidArgumentException
-     * @expectedExceptionMessage Input dir empty
+     * @expectedExceptionMessage The input directory is not specified
      * @throws ZipException
      */
     public function testAddDirEmptyDirname()
@@ -1314,7 +1314,8 @@ class ZipFileTest extends ZipTestCase
 
     /**
      * @expectedException \PhpZip\Exception\ZipException
-     * @expectedExceptionMessage can't exists
+     * @expectedExceptionMessage does not exist
+     * @throws ZipException
      */
     public function testAddDirCantExists()
     {
@@ -1324,7 +1325,7 @@ class ZipFileTest extends ZipTestCase
 
     /**
      * @expectedException \PhpZip\Exception\InvalidArgumentException
-     * @expectedExceptionMessage Input dir empty
+     * @expectedExceptionMessage The input directory is not specified
      * @throws ZipException
      */
     public function testAddDirRecursiveNullDirname()
@@ -1335,7 +1336,7 @@ class ZipFileTest extends ZipTestCase
 
     /**
      * @expectedException \PhpZip\Exception\InvalidArgumentException
-     * @expectedExceptionMessage Input dir empty
+     * @expectedExceptionMessage The input directory is not specified
      * @throws ZipException
      */
     public function testAddDirRecursiveEmptyDirname()
@@ -1346,7 +1347,7 @@ class ZipFileTest extends ZipTestCase
 
     /**
      * @expectedException \PhpZip\Exception\InvalidArgumentException
-     * @expectedExceptionMessage can't exists
+     * @expectedExceptionMessage does not exist
      * @throws ZipException
      */
     public function testAddDirRecursiveCantExists()
@@ -1357,7 +1358,7 @@ class ZipFileTest extends ZipTestCase
 
     /**
      * @expectedException \PhpZip\Exception\InvalidArgumentException
-     * @expectedExceptionMessage Input dir empty
+     * @expectedExceptionMessage The input directory is not specified
      * @throws ZipException
      */
     public function testAddFilesFromGlobNull()
@@ -1368,7 +1369,7 @@ class ZipFileTest extends ZipTestCase
 
     /**
      * @expectedException \PhpZip\Exception\InvalidArgumentException
-     * @expectedExceptionMessage Input dir empty
+     * @expectedExceptionMessage The input directory is not specified
      * @throws ZipException
      */
     public function testAddFilesFromGlobEmpty()
@@ -1378,8 +1379,9 @@ class ZipFileTest extends ZipTestCase
     }
 
     /**
-     * @expectedException \PhpZip\Exception\ZipException
-     * @expectedExceptionMessage can't exists
+     * @expectedException \PhpZip\Exception\InvalidArgumentException
+     * @expectedExceptionMessage does not exist
+     * @throws ZipException
      */
     public function testAddFilesFromGlobCantExists()
     {
@@ -1389,7 +1391,7 @@ class ZipFileTest extends ZipTestCase
 
     /**
      * @expectedException \PhpZip\Exception\InvalidArgumentException
-     * @expectedExceptionMessage glob pattern empty
+     * @expectedExceptionMessage The glob pattern is not specified
      * @throws ZipException
      */
     public function testAddFilesFromGlobNullPattern()
@@ -1400,7 +1402,7 @@ class ZipFileTest extends ZipTestCase
 
     /**
      * @expectedException \PhpZip\Exception\InvalidArgumentException
-     * @expectedExceptionMessage glob pattern empty
+     * @expectedExceptionMessage The glob pattern is not specified
      * @throws ZipException
      */
     public function testAddFilesFromGlobEmptyPattern()
@@ -1411,7 +1413,7 @@ class ZipFileTest extends ZipTestCase
 
     /**
      * @expectedException \PhpZip\Exception\InvalidArgumentException
-     * @expectedExceptionMessage Input dir empty
+     * @expectedExceptionMessage The input directory is not specified
      * @throws ZipException
      */
     public function testAddFilesFromGlobRecursiveNull()
@@ -1422,7 +1424,7 @@ class ZipFileTest extends ZipTestCase
 
     /**
      * @expectedException \PhpZip\Exception\InvalidArgumentException
-     * @expectedExceptionMessage Input dir empty
+     * @expectedExceptionMessage The input directory is not specified
      * @throws ZipException
      */
     public function testAddFilesFromGlobRecursiveEmpty()
@@ -1432,8 +1434,8 @@ class ZipFileTest extends ZipTestCase
     }
 
     /**
-     * @expectedException \PhpZip\Exception\ZipException
-     * @expectedExceptionMessage can't exists
+     * @expectedException \PhpZip\Exception\InvalidArgumentException
+     * @expectedExceptionMessage does not exist
      * @throws ZipException
      */
     public function testAddFilesFromGlobRecursiveCantExists()
@@ -1444,7 +1446,7 @@ class ZipFileTest extends ZipTestCase
 
     /**
      * @expectedException \PhpZip\Exception\InvalidArgumentException
-     * @expectedExceptionMessage glob pattern empty
+     * @expectedExceptionMessage The glob pattern is not specified
      * @throws ZipException
      */
     public function testAddFilesFromGlobRecursiveNullPattern()
@@ -1455,7 +1457,7 @@ class ZipFileTest extends ZipTestCase
 
     /**
      * @expectedException \PhpZip\Exception\InvalidArgumentException
-     * @expectedExceptionMessage glob pattern empty
+     * @expectedExceptionMessage The glob pattern is not specified
      * @throws ZipException
      */
     public function testAddFilesFromGlobRecursiveEmptyPattern()
@@ -1466,7 +1468,7 @@ class ZipFileTest extends ZipTestCase
 
     /**
      * @expectedException \PhpZip\Exception\InvalidArgumentException
-     * @expectedExceptionMessage Input dir empty
+     * @expectedExceptionMessage The input directory is not specified
      * @throws ZipException
      */
     public function testAddFilesFromRegexDirectoryNull()
@@ -1477,7 +1479,7 @@ class ZipFileTest extends ZipTestCase
 
     /**
      * @expectedException \PhpZip\Exception\InvalidArgumentException
-     * @expectedExceptionMessage Input dir empty
+     * @expectedExceptionMessage The input directory is not specified
      * @throws ZipException
      */
     public function testAddFilesFromRegexDirectoryEmpty()
@@ -1488,7 +1490,7 @@ class ZipFileTest extends ZipTestCase
 
     /**
      * @expectedException \PhpZip\Exception\InvalidArgumentException
-     * @expectedExceptionMessage can't exists
+     * @expectedExceptionMessage does not exist
      * @throws ZipException
      */
     public function testAddFilesFromRegexCantExists()
@@ -1499,7 +1501,7 @@ class ZipFileTest extends ZipTestCase
 
     /**
      * @expectedException \PhpZip\Exception\InvalidArgumentException
-     * @expectedExceptionMessage regex pattern empty
+     * @expectedExceptionMessage The regex pattern is not specified
      * @throws ZipException
      */
     public function testAddFilesFromRegexNullPattern()
@@ -1510,7 +1512,7 @@ class ZipFileTest extends ZipTestCase
 
     /**
      * @expectedException \PhpZip\Exception\InvalidArgumentException
-     * @expectedExceptionMessage regex pattern empty
+     * @expectedExceptionMessage The regex pattern is not specified
      * @throws ZipException
      */
     public function testAddFilesFromRegexEmptyPattern()
@@ -1521,7 +1523,7 @@ class ZipFileTest extends ZipTestCase
 
     /**
      * @expectedException \PhpZip\Exception\InvalidArgumentException
-     * @expectedExceptionMessage Input dir empty
+     * @expectedExceptionMessage The input directory is not specified
      * @throws ZipException
      */
     public function testAddFilesFromRegexRecursiveDirectoryNull()
@@ -1532,7 +1534,7 @@ class ZipFileTest extends ZipTestCase
 
     /**
      * @expectedException \PhpZip\Exception\InvalidArgumentException
-     * @expectedExceptionMessage Input dir empty
+     * @expectedExceptionMessage The input directory is not specified
      * @throws ZipException
      */
     public function testAddFilesFromRegexRecursiveEmpty()
@@ -1543,7 +1545,8 @@ class ZipFileTest extends ZipTestCase
 
     /**
      * @expectedException \PhpZip\Exception\ZipException
-     * @expectedExceptionMessage can't exists
+     * @expectedExceptionMessage does not exist
+     * @throws ZipException
      */
     public function testAddFilesFromRegexRecursiveCantExists()
     {
@@ -1553,7 +1556,7 @@ class ZipFileTest extends ZipTestCase
 
     /**
      * @expectedException \PhpZip\Exception\InvalidArgumentException
-     * @expectedExceptionMessage regex pattern empty
+     * @expectedExceptionMessage The regex pattern is not specified
      * @throws ZipException
      */
     public function testAddFilesFromRegexRecursiveNullPattern()
@@ -1564,7 +1567,7 @@ class ZipFileTest extends ZipTestCase
 
     /**
      * @expectedException \PhpZip\Exception\InvalidArgumentException
-     * @expectedExceptionMessage regex pattern empty
+     * @expectedExceptionMessage The regex pattern is not specified
      * @throws ZipException
      */
     public function testAddFilesFromRegexRecursiveEmptyPattern()
