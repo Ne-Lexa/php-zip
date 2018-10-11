@@ -92,7 +92,7 @@ class ZipFile implements ZipFileInterface
     public function openFile($filename)
     {
         if (!file_exists($filename)) {
-            throw new InvalidArgumentException("File $filename does not exist.");
+            throw new ZipException("File $filename does not exist.");
         }
         if (!($handle = @fopen($filename, 'rb'))) {
             throw new ZipException("File $filename can't open.");

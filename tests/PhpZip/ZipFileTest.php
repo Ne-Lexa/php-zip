@@ -606,7 +606,7 @@ class ZipFileTest extends ZipTestCase
 
     /**
      * @expectedException \PhpZip\Exception\InvalidArgumentException
-     * @expectedExceptionMessage Glob pattern is empty
+     * @expectedExceptionMessage The glob pattern is not specified
      */
     public function testDeleteFromGlobFailNull()
     {
@@ -616,7 +616,7 @@ class ZipFileTest extends ZipTestCase
 
     /**
      * @expectedException \PhpZip\Exception\InvalidArgumentException
-     * @expectedExceptionMessage Glob pattern is empty
+     * @expectedExceptionMessage The glob pattern is not specified
      */
     public function testDeleteFromGlobFailEmpty()
     {
@@ -657,7 +657,7 @@ class ZipFileTest extends ZipTestCase
 
     /**
      * @expectedException \PhpZip\Exception\InvalidArgumentException
-     * @expectedExceptionMessage Regex pattern is empty.
+     * @expectedExceptionMessage The regex pattern is not specified
      */
     public function testDeleteFromRegexFailNull()
     {
@@ -667,7 +667,7 @@ class ZipFileTest extends ZipTestCase
 
     /**
      * @expectedException \PhpZip\Exception\InvalidArgumentException
-     * @expectedExceptionMessage Regex pattern is empty.
+     * @expectedExceptionMessage The regex pattern is not specified
      */
     public function testDeleteFromRegexFailEmpty()
     {
@@ -1292,7 +1292,7 @@ class ZipFileTest extends ZipTestCase
 
     /**
      * @expectedException \PhpZip\Exception\InvalidArgumentException
-     * @expectedExceptionMessage The input directory is not specified
+     * @expectedExceptionMessage Input dir is null
      * @throws ZipException
      */
     public function testAddDirNullDirname()
@@ -1313,7 +1313,7 @@ class ZipFileTest extends ZipTestCase
     }
 
     /**
-     * @expectedException \PhpZip\Exception\ZipException
+     * @expectedException \PhpZip\Exception\InvalidArgumentException
      * @expectedExceptionMessage does not exist
      * @throws ZipException
      */
@@ -1325,7 +1325,7 @@ class ZipFileTest extends ZipTestCase
 
     /**
      * @expectedException \PhpZip\Exception\InvalidArgumentException
-     * @expectedExceptionMessage The input directory is not specified
+     * @expectedExceptionMessage Input dir is null
      * @throws ZipException
      */
     public function testAddDirRecursiveNullDirname()
@@ -1358,7 +1358,7 @@ class ZipFileTest extends ZipTestCase
 
     /**
      * @expectedException \PhpZip\Exception\InvalidArgumentException
-     * @expectedExceptionMessage The input directory is not specified
+     * @expectedExceptionMessage Input dir is null
      * @throws ZipException
      */
     public function testAddFilesFromGlobNull()
@@ -1413,7 +1413,7 @@ class ZipFileTest extends ZipTestCase
 
     /**
      * @expectedException \PhpZip\Exception\InvalidArgumentException
-     * @expectedExceptionMessage The input directory is not specified
+     * @expectedExceptionMessage Input dir is null
      * @throws ZipException
      */
     public function testAddFilesFromGlobRecursiveNull()
@@ -1544,7 +1544,7 @@ class ZipFileTest extends ZipTestCase
     }
 
     /**
-     * @expectedException \PhpZip\Exception\ZipException
+     * @expectedException \PhpZip\Exception\InvalidArgumentException
      * @expectedExceptionMessage does not exist
      * @throws ZipException
      */
