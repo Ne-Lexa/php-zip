@@ -145,7 +145,7 @@ class ZipInputStream implements ZipInputStreamInterface
             }
             // .ZIP file comment       (variable size)
             if (0 < $data['commentLength']) {
-                $comment = fread($this->in, $data['commentLength']);
+                $comment = stream_get_contents($this->in, $data['commentLength']);
             }
             $this->preamble = $endOfCentralDirRecordPos;
             $this->postamble = $size - ftell($this->in);
@@ -314,7 +314,7 @@ class ZipInputStream implements ZipInputStreamInterface
 //        $utf8 = ($data['gpbf'] & ZipEntry::GPBF_UTF8) !== 0;
 
         // See appendix D of PKWARE's ZIP File Format Specification.
-        $name = fread($this->in, $data['fileLength']);
+        $name = stream_get_contents($this->in, $data['fileLength']);
 
         $entry = new ZipSourceEntry($this);
         $entry->setName($name);
@@ -329,10 +329,10 @@ class ZipInputStream implements ZipInputStreamInterface
         $entry->setExternalAttributes($data['rawExternalAttributes']);
         $entry->setOffset($data['lfhOff']); // must be unmapped!
         if ($data['extraLength'] > 0) {
-            $entry->setExtra(fread($this->in, $data['extraLength']));
+            $entry->setExtra(stream_get_contents($this->in, $data['extraLength']));
         }
         if ($data['commentLength'] > 0) {
-            $entry->setComment(fread($this->in, $data['commentLength']));
+            $entry->setComment(stream_get_contents($this->in, $data['commentLength']));
         }
         return $entry;
     }
@@ -383,7 +383,7 @@ class ZipInputStream implements ZipInputStreamInterface
         $compressedSize = $entry->getCompressedSize();
         $compressedSize = PHP_INT_SIZE === 4 ? sprintf('%u', $compressedSize) : $compressedSize;
         if ($compressedSize > 0) {
-            $content = fread($this->in, $compressedSize);
+            $content = stream_get_contents($this->in, $compressedSize);
         } else {
             $content = '';
         }
@@ -498,7 +498,7 @@ class ZipInputStream implements ZipInputStreamInterface
         if ($sourceExtraLength > 0) {
             // read Local File Header extra fields
             fseek($this->in, $pos + ZipEntry::LOCAL_FILE_HEADER_MIN_LEN + $nameLength, SEEK_SET);
-            $extra = fread($this->in, $sourceExtraLength);
+            $extra = stream_get_contents($this->in, $sourceExtraLength);
             $extraFieldsCollection = ExtraFieldsFactory::createExtraFieldCollections($extra, $entry);
             if (isset($extraFieldsCollection[ApkAlignmentExtraField::getHeaderId()]) && $this->zipModel->isZipAlign()) {
                 unset($extraFieldsCollection[ApkAlignmentExtraField::getHeaderId()]);
