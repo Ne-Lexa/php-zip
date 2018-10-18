@@ -1,7 +1,7 @@
 | Q             | A
 | ------------- | ---
 | Bug fix?      | yes/no
-| New feature?  | yes/no <!-- don't forget to update src/**/CHANGELOG.md files -->
+| New feature?  | yes/no <!-- don't forget to update CHANGELOG.md file -->
 
 <!--
 Write a short README entry for your feature/bugfix here (replace this comment block.)
