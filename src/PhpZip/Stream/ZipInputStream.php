@@ -483,6 +483,14 @@ class ZipInputStream implements ZipInputStreamInterface
                 throw new ZipUnsupportMethodException($entry->getName() .
                     " (compression method " . $method . " is not supported)");
         }
+
+        if ($content === false) {
+            throw new ZipException(sprintf(
+                'Failed to get the contents of the zip entry "%s"',
+                $entry->getName()
+            ));
+        }
+
         if (!$skipCheckCrc) {
             $localCrc = crc32($content);
             $localCrc = PHP_INT_SIZE === 4 ? sprintf('%u', $localCrc) : $localCrc;
