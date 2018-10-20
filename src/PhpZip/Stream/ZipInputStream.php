@@ -144,8 +144,14 @@ class ZipInputStream implements ZipInputStreamInterface
                 );
             }
             // .ZIP file comment       (variable size)
-            if (0 < $data['commentLength']) {
-                $comment = fread($this->in, $data['commentLength']);
+            if ($data['commentLength'] > 0) {
+                $comment = '';
+                $offset = 0;
+                while ($offset < $data['commentLength']) {
+                    $read = min(8192 /* chunk size */, $data['commentLength'] - $offset);
+                    $comment .= fread($this->in, $read);
+                    $offset += $read;
+                }
             }
             $this->preamble = $endOfCentralDirRecordPos;
             $this->postamble = $size - ftell($this->in);
@@ -314,7 +320,13 @@ class ZipInputStream implements ZipInputStreamInterface
 //        $utf8 = ($data['gpbf'] & ZipEntry::GPBF_UTF8) !== 0;
 
         // See appendix D of PKWARE's ZIP File Format Specification.
-        $name = fread($this->in, $data['fileLength']);
+        $name = '';
+        $offset = 0;
+        while ($offset < $data['fileLength']) {
+            $read = min(8192 /* chunk size */, $data['fileLength'] - $offset);
+            $name .= fread($this->in, $read);
+            $offset += $read;
+        }
 
         $entry = new ZipSourceEntry($this);
         $entry->setName($name);
@@ -329,10 +341,24 @@ class ZipInputStream implements ZipInputStreamInterface
         $entry->setExternalAttributes($data['rawExternalAttributes']);
         $entry->setOffset($data['lfhOff']); // must be unmapped!
         if ($data['extraLength'] > 0) {
-            $entry->setExtra(fread($this->in, $data['extraLength']));
+            $extra = '';
+            $offset = 0;
+            while ($offset < $data['extraLength']) {
+                $read = min(8192 /* chunk size */, $data['extraLength'] - $offset);
+                $extra .= fread($this->in, $read);
+                $offset += $read;
+            }
+            $entry->setExtra($extra);
         }
         if ($data['commentLength'] > 0) {
-            $entry->setComment(fread($this->in, $data['commentLength']));
+            $comment = '';
+            $offset = 0;
+            while ($offset < $data['commentLength']) {
+                $read = min(8192 /* chunk size */, $data['commentLength'] - $offset);
+                $comment .= fread($this->in, $read);
+                $offset += $read;
+            }
+            $entry->setComment($comment);
         }
         return $entry;
     }
@@ -382,10 +408,14 @@ class ZipInputStream implements ZipInputStreamInterface
         // Get raw entry content
         $compressedSize = $entry->getCompressedSize();
         $compressedSize = PHP_INT_SIZE === 4 ? sprintf('%u', $compressedSize) : $compressedSize;
+        $content = '';
         if ($compressedSize > 0) {
-            $content = fread($this->in, $compressedSize);
-        } else {
-            $content = '';
+            $offset = 0;
+            while ($offset < $compressedSize) {
+                $read = min(8192 /* chunk size */, $compressedSize - $offset);
+                $content .= fread($this->in, $read);
+                $offset += $read;
+            }
         }
 
         $skipCheckCrc = false;
@@ -498,7 +528,13 @@ class ZipInputStream implements ZipInputStreamInterface
         if ($sourceExtraLength > 0) {
             // read Local File Header extra fields
             fseek($this->in, $pos + ZipEntry::LOCAL_FILE_HEADER_MIN_LEN + $nameLength, SEEK_SET);
-            $extra = fread($this->in, $sourceExtraLength);
+            $extra = '';
+            $offset = 0;
+            while ($offset < $sourceExtraLength) {
+                $read = min(8192 /* chunk size */, $sourceExtraLength - $offset);
+                $extra .= fread($this->in, $read);
+                $offset += $read;
+            }
             $extraFieldsCollection = ExtraFieldsFactory::createExtraFieldCollections($extra, $entry);
             if (isset($extraFieldsCollection[ApkAlignmentExtraField::getHeaderId()]) && $this->zipModel->isZipAlign()) {
                 unset($extraFieldsCollection[ApkAlignmentExtraField::getHeaderId()]);
