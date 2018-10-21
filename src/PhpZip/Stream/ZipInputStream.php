@@ -7,7 +7,7 @@ use PhpZip\Crypto\WinZipAesEngine;
 use PhpZip\Exception\Crc32Exception;
 use PhpZip\Exception\InvalidArgumentException;
 use PhpZip\Exception\RuntimeException;
-use PhpZip\Exception\ZipCryptoException;
+use PhpZip\Exception\ZipAuthenticationException;
 use PhpZip\Exception\ZipException;
 use PhpZip\Exception\ZipUnsupportMethodException;
 use PhpZip\Extra\ExtraFieldsCollection;
@@ -470,7 +470,7 @@ class ZipInputStream implements ZipInputStreamInterface
             case ZipFileInterface::METHOD_STORED:
                 break;
             case ZipFileInterface::METHOD_DEFLATED:
-                $content = gzinflate($content);
+                $content = @gzinflate($content);
                 break;
             case ZipFileInterface::METHOD_BZIP2:
                 if (!extension_loaded('bz2')) {
@@ -478,6 +478,9 @@ class ZipInputStream implements ZipInputStreamInterface
                 }
                 /** @noinspection PhpComposerExtensionStubsInspection */
                 $content = bzdecompress($content);
+                if (is_int($content)) { // decompress error
+                    $content = false;
+                }
                 break;
             default:
                 throw new ZipUnsupportMethodException($entry->getName() .
@@ -485,6 +488,12 @@ class ZipInputStream implements ZipInputStreamInterface
         }
 
         if ($content === false) {
+            if ($isEncrypted) {
+                throw new ZipAuthenticationException(sprintf(
+                    'Invalid password for zip entry "%s"',
+                    $entry->getName()
+                ));
+            }
             throw new ZipException(sprintf(
                 'Failed to get the contents of the zip entry "%s"',
                 $entry->getName()
@@ -497,7 +506,10 @@ class ZipInputStream implements ZipInputStreamInterface
             $crc = PHP_INT_SIZE === 4 ? sprintf('%u', $entry->getCrc()) : $entry->getCrc();
             if ($crc != $localCrc) {
                 if ($isEncrypted) {
-                    throw new ZipCryptoException("Wrong password");
+                    throw new ZipAuthenticationException(sprintf(
+                        'Invalid password for zip entry "%s"',
+                        $entry->getName()
+                    ));
                 }
                 throw new Crc32Exception($entry->getName(), $crc, $localCrc);
             }

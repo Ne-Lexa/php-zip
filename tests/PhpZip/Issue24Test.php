@@ -53,7 +53,7 @@ class DummyFileSystemStream
      */
     private $fp;
 
-    function stream_open($path, $mode, $options, &$opened_path)
+    public function stream_open($path, $mode, $options, &$opened_path)
     {
 //        echo "DummyFileSystemStream->stream_open($path, $mode, $options)" . PHP_EOL;
 
@@ -64,7 +64,7 @@ class DummyFileSystemStream
         return true;
     }
 
-    function stream_read($count)
+    public function stream_read($count)
     {
 //        echo "DummyFileSystemStream->stream_read($count)" . PHP_EOL;
         $position = ftell($this->fp);
@@ -77,26 +77,26 @@ class DummyFileSystemStream
         return $ret;
     }
 
-    function stream_tell()
+    public function stream_tell()
     {
 //        echo "DummyFileSystemStream->stream_tell()" . PHP_EOL;
         return ftell($this->fp);
     }
 
-    function stream_eof()
+    public function stream_eof()
     {
 //        echo "DummyFileSystemStream->stream_eof()" . PHP_EOL;
         $isfeof = feof($this->fp);
         return $isfeof;
     }
 
-    function stream_seek($offset, $whence)
+    public function stream_seek($offset, $whence)
     {
 //        echo "DummyFileSystemStream->stream_seek($offset, $whence)" . PHP_EOL;
         fseek($this->fp, $offset, $whence);
     }
 
-    function stream_stat()
+    public function stream_stat()
     {
 //        echo "DummyFileSystemStream->stream_stat()" . PHP_EOL;
         return fstat($this->fp);
