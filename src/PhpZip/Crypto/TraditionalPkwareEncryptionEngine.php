@@ -148,7 +148,10 @@ class TraditionalPkwareEncryptionEngine implements ZipEncryptionEngine
             $checkByte = ($this->entry->getCrc() >> 24) & 0xff;
         }
         if ($byte !== $checkByte) {
-            throw new ZipAuthenticationException("Bad password for entry " . $this->entry->getName());
+            throw new ZipAuthenticationException(sprintf(
+                'Invalid password for zip entry "%s"',
+                $this->entry->getName()
+            ));
         }
 
         $outputContent = "";

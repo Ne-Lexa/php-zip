@@ -101,7 +101,7 @@ class PhpZipExtResourceTest extends ZipTestCase
      * Bug #70752 (Depacking with wrong password leaves 0 length files)
      * @see https://github.com/php/php-src/blob/master/ext/zip/tests/bug70752.phpt
      * @expectedException \PhpZip\Exception\ZipAuthenticationException
-     * @expectedExceptionMessage Bad password for entry bug70752.txt
+     * @expectedExceptionMessage nvalid password for zip entry "bug70752.txt"
      * @throws ZipException
      */
     public function testBug70752()

@@ -2,6 +2,7 @@
 
 namespace PhpZip\Stream;
 
+use PhpZip\Exception\ZipException;
 use PhpZip\Model\ZipEntry;
 use PhpZip\Model\ZipModel;
 
@@ -26,6 +27,7 @@ interface ZipInputStreamInterface
     /**
      * @param ZipEntry $entry
      * @return string
+     * @throws ZipException
      */
     public function readEntryContent(ZipEntry $entry);
 
