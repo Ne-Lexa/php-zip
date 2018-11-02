@@ -41,7 +41,9 @@ class ZipNewEntry extends ZipAbstractEntry
     public function getEntryContent()
     {
         if (is_resource($this->content)) {
-            rewind($this->content);
+            if (stream_get_meta_data($this->content)['seekable']) {
+                rewind($this->content);
+            }
             return stream_get_contents($this->content);
         }
         return $this->content;
