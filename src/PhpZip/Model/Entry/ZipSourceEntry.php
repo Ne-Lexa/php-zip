@@ -17,7 +17,7 @@ class ZipSourceEntry extends ZipAbstractEntry
     /**
      * Max size cached content in memory.
      */
-    const MAX_SIZE_CACHED_CONTENT_IN_MEMORY = 524288; // 512 kb
+    const DEFAULT_MAX_SIZE_CACHED_CONTENT_IN_MEMORY = 524288; // 512 kb
     /**
      * @var ZipInputStreamInterface
      */
@@ -36,6 +36,11 @@ class ZipSourceEntry extends ZipAbstractEntry
     private $clone = false;
 
     /**
+     * @var int
+     */
+    private $maxCacheContentSize;
+
+    /**
      * ZipSourceEntry constructor.
      * @param ZipInputStreamInterface $inputStream
      */
@@ -43,6 +48,7 @@ class ZipSourceEntry extends ZipAbstractEntry
     {
         parent::__construct();
         $this->inputStream = $inputStream;
+        $this->maxCacheContentSize = self::DEFAULT_MAX_SIZE_CACHED_CONTENT_IN_MEMORY;
     }
 
     /**
@@ -63,7 +69,7 @@ class ZipSourceEntry extends ZipAbstractEntry
         if ($this->entryContent === null) {
             // In order not to unpack again, we cache the content in memory or on disk
             $content = $this->inputStream->readEntryContent($this);
-            if ($this->getSize() < self::MAX_SIZE_CACHED_CONTENT_IN_MEMORY) {
+            if ($this->getSize() < $this->maxCacheContentSize) {
                 $this->entryContent = $content;
             } else {
                 $this->entryContent = fopen('php://temp', 'r+b');
@@ -76,6 +82,15 @@ class ZipSourceEntry extends ZipAbstractEntry
             return stream_get_contents($this->entryContent);
         }
         return $this->entryContent;
+    }
+
+    /**
+     * Sets the maximum byte size content can be to be kept in memory
+     * @param $size
+     */
+    public function setMaximumCacheContentSize($size)
+    {
+        $this->maxCacheContentSize = $size;
     }
 
     /**

@@ -20,6 +20,7 @@ use PhpZip\Model\EndOfCentralDirectory;
 use PhpZip\Model\Entry\ZipSourceEntry;
 use PhpZip\Model\ZipEntry;
 use PhpZip\Model\ZipModel;
+use PhpZip\Util\OptionsUtil;
 use PhpZip\Util\PackUtil;
 use PhpZip\Util\StringUtil;
 use PhpZip\ZipFileInterface;
@@ -32,6 +33,8 @@ use PhpZip\ZipFileInterface;
  */
 class ZipInputStream implements ZipInputStreamInterface
 {
+    const MAX_CACHED_ENTRY_SIZE = 'max_cached_entry_size';
+
     /**
      * @var resource
      */
@@ -54,16 +57,28 @@ class ZipInputStream implements ZipInputStreamInterface
     protected $zipModel;
 
     /**
+     * @var array
+     */
+    protected $options;
+
+    /**
      * ZipInputStream constructor.
      * @param resource $in
+     * @param array $options
      */
-    public function __construct($in)
+    public function __construct($in, $options = [])
     {
         if (!is_resource($in)) {
             throw new RuntimeException('$in must be resource');
         }
+
+        if (!is_array($options)) {
+            $options = [];
+        }
+
         $this->in = $in;
         $this->mapper = new PositionMapper();
+        $this->options = $options;
     }
 
     /**
@@ -340,6 +355,11 @@ class ZipInputStream implements ZipInputStreamInterface
         $entry->setSize($data['rawSize']);
         $entry->setExternalAttributes($data['rawExternalAttributes']);
         $entry->setOffset($data['lfhOff']); // must be unmapped!
+
+        if (($maxEntrySize = OptionsUtil::byKey(self::MAX_CACHED_ENTRY_SIZE, $this->options)) !== null) {
+            $entry->setMaximumCacheContentSize($maxEntrySize);
+        }
+
         if ($data['extraLength'] > 0) {
             $extra = '';
             $offset = 0;

@@ -17,6 +17,7 @@ use PhpZip\Stream\ZipInputStream;
 use PhpZip\Stream\ZipInputStreamInterface;
 use PhpZip\Stream\ZipOutputStream;
 use PhpZip\Util\FilesUtil;
+use PhpZip\Util\OptionsUtil;
 use PhpZip\Util\StringUtil;
 use Psr\Http\Message\ResponseInterface;
 
@@ -34,6 +35,8 @@ use Psr\Http\Message\ResponseInterface;
  */
 class ZipFile implements ZipFileInterface
 {
+    const OPTIONS_INPUT_STREAM = 'input_stream';
+
     /**
      * @var int[] Allow compression methods.
      */
@@ -75,10 +78,19 @@ class ZipFile implements ZipFileInterface
     protected $zipModel;
 
     /**
+     * @var array
+     */
+    protected $options;
+
+    /**
      * ZipFile constructor.
      */
-    public function __construct()
+    public function __construct($options = [])
     {
+        if (!is_array($options)) {
+            $options = [];
+        }
+        $this->options = $options;
         $this->zipModel = new ZipModel();
     }
 
@@ -145,7 +157,8 @@ class ZipFile implements ZipFileInterface
         if (!$meta['seekable']) {
             throw new InvalidArgumentException("Resource cannot seekable stream.");
         }
-        $this->inputStream = new ZipInputStream($handle);
+        $inputStreamOptions = OptionsUtil::byKey(self::OPTIONS_INPUT_STREAM, $this->options);
+        $this->inputStream = new ZipInputStream($handle, $inputStreamOptions);
         $this->zipModel = $this->inputStream->readZip();
         return $this;
     }

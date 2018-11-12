@@ -6,6 +6,8 @@ use PhpZip\Exception\ZipEntryNotFoundException;
 use PhpZip\Exception\ZipException;
 use PhpZip\Model\ZipEntry;
 use PhpZip\Model\ZipInfo;
+use PhpZip\Model\ZipModel;
+use PhpZip\Stream\ZipInputStream;
 use PhpZip\Util\CryptoUtil;
 use PhpZip\Util\FilesUtil;
 use Psr\Http\Message\ResponseInterface;
@@ -2134,5 +2136,49 @@ class ZipFileTest extends ZipTestCase
             $i++;
         }
         $zipFile->close();
+    }
+
+    /**
+     * Testing of entry contents can get get without caching data
+     * @throws ZipException
+     * @throws \ReflectionException
+     */
+    public function testExtractingGettingContentWithoutCaching()
+    {
+        $zipFile = new ZipFile();
+        $zipFile['file'] = 'content';
+        $zipFile->saveAsFile($this->outputFilename);
+        $zipFile->close();
+
+        $extractingZip = new ZipFile([
+            ZipFile::OPTIONS_INPUT_STREAM => [
+                ZipInputStream::MAX_CACHED_ENTRY_SIZE => 0
+            ]
+        ]);
+        $extractingZip->openFile($this->outputFilename);
+        $content = $extractingZip->getEntryContents('file');
+
+        /** @var ZipModel $zipModel */
+        $zipModel = $this->getPropertyThroughReflection($extractingZip, 'zipModel');
+        $entry = $zipModel->getEntry('file');
+        $entryContent = $this->getPropertyThroughReflection($entry, 'entryContent');
+
+        $extractingZip->close();
+
+        $this->assertSame('content', $content);
+        $this->assertInternalType('resource', $entryContent);
+    }
+
+    /**
+     * @param $object
+     * @param $propertyName
+     * @return mixed
+     * @throws \ReflectionException
+     */
+    private function getPropertyThroughReflection($object, $propertyName)
+    {
+        $reflection = new \ReflectionProperty($object, $propertyName);
+        $reflection->setAccessible(true);
+        return $reflection->getValue($object);
     }
 }
