@@ -34,6 +34,7 @@ use PhpZip\ZipFileInterface;
 class ZipInputStream implements ZipInputStreamInterface
 {
     const MAX_CACHED_ENTRY_SIZE = 'max_cached_entry_size';
+    const SHOULD_CACHE_ENTRY_CONTENT = 'cache_entry_content';
 
     /**
      * @var resource
@@ -355,6 +356,11 @@ class ZipInputStream implements ZipInputStreamInterface
         $entry->setSize($data['rawSize']);
         $entry->setExternalAttributes($data['rawExternalAttributes']);
         $entry->setOffset($data['lfhOff']); // must be unmapped!
+
+        if (($shouldCacheEntryContent = OptionsUtil::byKey(self::SHOULD_CACHE_ENTRY_CONTENT, $this->options)) !== null
+            && is_bool($shouldCacheEntryContent)) {
+            $entry->shouldCacheContent($shouldCacheEntryContent);
+        }
 
         if (($maxEntrySize = OptionsUtil::byKey(self::MAX_CACHED_ENTRY_SIZE, $this->options)) !== null) {
             $entry->setMaximumCacheContentSize($maxEntrySize);

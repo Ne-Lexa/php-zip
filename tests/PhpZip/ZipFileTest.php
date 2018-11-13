@@ -2143,7 +2143,7 @@ class ZipFileTest extends ZipTestCase
      * @throws ZipException
      * @throws \ReflectionException
      */
-    public function testExtractingGettingContentWithoutCaching()
+    public function testExtractingGettingContentWithoutCachingInMemory()
     {
         $zipFile = new ZipFile();
         $zipFile['file'] = 'content';
@@ -2167,6 +2167,37 @@ class ZipFileTest extends ZipTestCase
 
         $this->assertSame('content', $content);
         $this->assertInternalType('resource', $entryContent);
+    }
+
+    /**
+     * Testing of entry contents can get get without caching data
+     * @throws ZipException
+     * @throws \ReflectionException
+     */
+    public function testExtractingGettingContentWithoutCaching()
+    {
+        $zipFile = new ZipFile();
+        $zipFile['file'] = 'content';
+        $zipFile->saveAsFile($this->outputFilename);
+        $zipFile->close();
+
+        $extractingZip = new ZipFile([
+            ZipFile::OPTIONS_INPUT_STREAM => [
+                ZipInputStream::SHOULD_CACHE_ENTRY_CONTENT => false
+            ]
+        ]);
+        $extractingZip->openFile($this->outputFilename);
+        $content = $extractingZip->getEntryContents('file');
+
+        /** @var ZipModel $zipModel */
+        $zipModel = $this->getPropertyThroughReflection($extractingZip, 'zipModel');
+        $entry = $zipModel->getEntry('file');
+        $entryContent = $this->getPropertyThroughReflection($entry, 'entryContent');
+
+        $extractingZip->close();
+
+        $this->assertSame('content', $content);
+        $this->assertNull($entryContent);
     }
 
     /**
