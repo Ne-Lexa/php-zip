@@ -22,7 +22,7 @@ class ZipEventTest extends ZipTestCase
     public function testBeforeSave()
     {
         $zipFile = new ZipFileExtended();
-        $zipFile->openFile(__DIR__ . '/resources/test.apk');
+        $zipFile->openFile(__DIR__ . '/resources/apk.zip');
         $this->assertTrue(isset($zipFile['META-INF/MANIFEST.MF']));
         $this->assertTrue(isset($zipFile['META-INF/CERT.SF']));
         $this->assertTrue(isset($zipFile['META-INF/CERT.RSA']));
