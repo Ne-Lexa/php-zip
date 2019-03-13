@@ -15,7 +15,7 @@ class ZipAlignTest extends ZipTestCase
      */
     public function testApkAlignedAndSetZipAlignAndReSave()
     {
-        $filename = __DIR__ . '/resources/test.apk';
+        $filename = __DIR__ . '/resources/apk.zip';
 
         $this->assertCorrectZipArchive($filename);
         $result = $this->assertVerifyZipAlign($filename);
