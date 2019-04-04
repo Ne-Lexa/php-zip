@@ -567,7 +567,7 @@ $zipFile->rename($oldName, $newName);
 ```
 <a name="Documentation-ZipFile-setCompressionLevel"></a> **ZipFile::setCompressionLevel** - set the compression level for all files in the archive.
 
-> _Note that this method does not apply to entries that were added after this method was run._
+> _Note that this method does not apply to entries that are added after this method is run._
 
 By default, the compression level is -1 (`\PhpZip\ZipFile::LEVEL_DEFAULT_COMPRESSION`) or the compression level specified in the archive for Deflate compression.
 
@@ -671,7 +671,7 @@ $zipFile->setReadPasswordEntry($entryName, $password);
 ```
 <a name="Documentation-ZipFile-setPassword"></a> **ZipFile::setPassword** - sets a new password for all files in the archive.
 
-> _Note that this method does not apply to entries that were added after this method was run._
+> _Note that this method does not apply to entries that are added after this method is run._
 ```php
 $zipFile->setPassword($password);
 ```
@@ -691,7 +691,7 @@ $zipFile->setPasswordEntry($entryName, $password, $encryptionMethod);
 ```
 <a name="Documentation-ZipFile-disableEncryption"></a> **ZipFile::disableEncryption** - disable encryption for all entries that are already in the archive.
 
-> _Note that this method does not apply to entries that were added after this method was run._
+> _Note that this method does not apply to entries that are added after this method is run._
 ```php
 $zipFile->disableEncryption();
 ```
