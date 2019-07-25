@@ -297,13 +297,13 @@ class ZipFile implements ZipFileInterface
     public function extractTo($destination, $entries = null)
     {
         if (!file_exists($destination)) {
-            throw new ZipException("Destination " . $destination . " not found");
+            throw new ZipException(sprintf('Destination %s not found', $destination));
         }
         if (!is_dir($destination)) {
-            throw new ZipException("Destination is not directory");
+            throw new ZipException('Destination is not directory');
         }
         if (!is_writable($destination)) {
-            throw new ZipException("Destination is not writable directory");
+            throw new ZipException('Destination is not writable directory');
         }
 
         $zipEntries = $this->zipModel->getEntries();
@@ -315,18 +315,19 @@ class ZipFile implements ZipFileInterface
             if (is_array($entries)) {
                 $entries = array_unique($entries);
                 $flipEntries = array_flip($entries);
-                $zipEntries = array_filter($zipEntries, function (ZipEntry $zipEntry) use ($flipEntries) {
+                $zipEntries = array_filter($zipEntries, static function (ZipEntry $zipEntry) use ($flipEntries) {
                     return isset($flipEntries[$zipEntry->getName()]);
                 });
             }
         }
 
         foreach ($zipEntries as $entry) {
-            $file = $destination . DIRECTORY_SEPARATOR . $entry->getName();
+            $entryName = FilesUtil::normalizeZipPath($entry->getName());
+            $file = $destination . DIRECTORY_SEPARATOR . $entryName;
             if ($entry->isDirectory()) {
                 if (!is_dir($file)) {
-                    if (!mkdir($file, 0755, true)) {
-                        throw new ZipException("Can not create dir " . $file);
+                    if (!mkdir($file, 0755, true) && !is_dir($file)) {
+                        throw new ZipException('Can not create dir ' . $file);
                     }
                     chmod($file, 0755);
                     touch($file, $entry->getTime());
@@ -335,8 +336,8 @@ class ZipFile implements ZipFileInterface
             }
             $dir = dirname($file);
             if (!is_dir($dir)) {
-                if (!mkdir($dir, 0755, true)) {
-                    throw new ZipException("Can not create dir " . $dir);
+                if (!mkdir($dir, 0755, true) && !is_dir($dir)) {
+                    throw new ZipException('Can not create dir ' . $dir);
                 }
                 chmod($dir, 0755);
                 touch($dir, $entry->getTime());
@@ -1210,7 +1211,7 @@ class ZipFile implements ZipFileInterface
     {
         $filename = (string)$filename;
 
-        $tempFilename = $filename . '.temp' . uniqid();
+        $tempFilename = $filename . '.temp' . uniqid('', true);
         if (!($handle = @fopen($tempFilename, 'w+b'))) {
             throw new InvalidArgumentException("File " . $tempFilename . ' can not open from write.');
         }
@@ -1256,7 +1257,7 @@ class ZipFile implements ZipFileInterface
     {
         $outputFilename = (string)$outputFilename;
 
-        if (empty($mimeType) || !is_string($mimeType) && !empty($outputFilename)) {
+        if (empty($mimeType) || (!is_string($mimeType) && !empty($outputFilename))) {
             $ext = strtolower(pathinfo($outputFilename, PATHINFO_EXTENSION));
 
             if (!empty($ext) && isset(self::$defaultMimeTypes[$ext])) {
@@ -1295,7 +1296,7 @@ class ZipFile implements ZipFileInterface
     {
         $outputFilename = (string)$outputFilename;
 
-        if (empty($mimeType) || !is_string($mimeType) && !empty($outputFilename)) {
+        if (empty($mimeType) || (!is_string($mimeType) && !empty($outputFilename))) {
             $ext = strtolower(pathinfo($outputFilename, PATHINFO_EXTENSION));
 
             if (!empty($ext) && isset(self::$defaultMimeTypes[$ext])) {
