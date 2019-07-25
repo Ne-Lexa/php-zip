@@ -225,4 +225,23 @@ class FilesUtil
         }
         return number_format($size) . " bytes";
     }
+
+    /**
+     * Normalizes zip path.
+     *
+     * @param string $path Zip path
+     * @return string
+     */
+    public static function normalizeZipPath($path)
+    {
+        return implode(
+            '/',
+            array_filter(
+                explode('/', (string)$path),
+                static function ($part) {
+                    return $part !== '.' && $part !== '..';
+                }
+            )
+        );
+    }
 }
