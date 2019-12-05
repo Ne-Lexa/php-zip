@@ -9,34 +9,27 @@ use PhpZip\Stream\ZipInputStreamInterface;
  * This class is used to represent a ZIP file entry.
  *
  * @see https://pkware.cachefly.net/webdocs/casestudies/APPNOTE.TXT .ZIP File Format Specification
+ *
  * @author Ne-Lexa alexey@nelexa.ru
  * @license MIT
  */
 class ZipSourceEntry extends ZipAbstractEntry
 {
-    /**
-     * Max size cached content in memory.
-     */
+    /** Max size cached content in memory. */
     const MAX_SIZE_CACHED_CONTENT_IN_MEMORY = 524288; // 512 kb
-    /**
-     * @var ZipInputStreamInterface
-     */
+
+    /** @var ZipInputStreamInterface */
     protected $inputStream;
-    /**
-     * @var string|resource Cached entry content.
-     */
+
+    /** @var string|resource cached entry content */
     protected $entryContent;
-    /**
-     * @var string
-     */
-    protected $readPassword;
-    /**
-     * @var bool
-     */
+
+    /** @var bool */
     private $clone = false;
 
     /**
      * ZipSourceEntry constructor.
+     *
      * @param ZipInputStreamInterface $inputStream
      */
     public function __construct(ZipInputStreamInterface $inputStream)
@@ -56,6 +49,8 @@ class ZipSourceEntry extends ZipAbstractEntry
     /**
      * Returns an string content of the given entry.
      *
+     * @throws ZipException
+     *
      * @return string
      */
     public function getEntryContent()
@@ -63,23 +58,28 @@ class ZipSourceEntry extends ZipAbstractEntry
         if ($this->entryContent === null) {
             // In order not to unpack again, we cache the content in memory or on disk
             $content = $this->inputStream->readEntryContent($this);
+
             if ($this->getSize() < self::MAX_SIZE_CACHED_CONTENT_IN_MEMORY) {
                 $this->entryContent = $content;
             } else {
                 $this->entryContent = fopen('php://temp', 'r+b');
                 fwrite($this->entryContent, $content);
             }
+
             return $content;
         }
-        if (is_resource($this->entryContent)) {
+
+        if (\is_resource($this->entryContent)) {
             rewind($this->entryContent);
+
             return stream_get_contents($this->entryContent);
         }
+
         return $this->entryContent;
     }
 
     /**
-     * Clone extra fields
+     * Clone extra fields.
      */
     public function __clone()
     {
@@ -89,7 +89,7 @@ class ZipSourceEntry extends ZipAbstractEntry
 
     public function __destruct()
     {
-        if (!$this->clone && $this->entryContent !== null && is_resource($this->entryContent)) {
+        if (!$this->clone && $this->entryContent !== null && \is_resource($this->entryContent)) {
             fclose($this->entryContent);
         }
     }

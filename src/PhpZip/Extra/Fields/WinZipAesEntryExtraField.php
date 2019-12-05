@@ -9,42 +9,49 @@ use PhpZip\ZipFileInterface;
 /**
  * WinZip AES Extra Field.
  *
- * @see http://www.winzip.com/win/en/aes_info.htm AES Encryption Information: Encryption Specification AE-1 and AE-2 (WinZip Computing, S.L.)
+ * @see http://www.winzip.com/win/en/aes_info.htm AES Encryption Information: Encryption Specification AE-1 and AE-2
+ *     (WinZip Computing, S.L.)
  * @see http://www.winzip.com/win/en/aes_tips.htm AES Coding Tips for Developers (WinZip Computing, S.L.)
+ *
  * @author Ne-Lexa alexey@nelexa.ru
  * @license MIT
  */
 class WinZipAesEntryExtraField implements ExtraField
 {
     const DATA_SIZE = 7;
+
     const VENDOR_ID = 17729; // 'A' | ('E' << 8);
 
     /**
      * Entries of this type <em>do</em> include the standard ZIP CRC-32 value.
-     * For use with @see WinZipAesEntryExtraField::setVendorVersion()}/@see WinZipAesEntryExtraField::getVendorVersion().
+     * For use with @see WinZipAesEntryExtraField::setVendorVersion()}/@see
+     * WinZipAesEntryExtraField::getVendorVersion().
      */
     const VV_AE_1 = 1;
 
     /**
      * Entries of this type do <em>not</em> include the standard ZIP CRC-32 value.
-     * For use with @see WinZipAesEntryExtraField::setVendorVersion()}/@see WinZipAesEntryExtraField::getVendorVersion().
+     * For use with @see WinZipAesEntryExtraField::setVendorVersion()}/@see
+     * WinZipAesEntryExtraField::getVendorVersion().
      */
     const VV_AE_2 = 2;
 
     const KEY_STRENGTH_128BIT = 128;
+
     const KEY_STRENGTH_192BIT = 192;
+
     const KEY_STRENGTH_256BIT = 256;
 
     protected static $keyStrengths = [
         self::KEY_STRENGTH_128BIT => 0x01,
         self::KEY_STRENGTH_192BIT => 0x02,
-        self::KEY_STRENGTH_256BIT => 0x03
+        self::KEY_STRENGTH_256BIT => 0x03,
     ];
 
     protected static $encryptionMethods = [
         self::KEY_STRENGTH_128BIT => ZipFileInterface::ENCRYPTION_METHOD_WINZIP_AES_128,
         self::KEY_STRENGTH_192BIT => ZipFileInterface::ENCRYPTION_METHOD_WINZIP_AES_192,
-        self::KEY_STRENGTH_256BIT => ZipFileInterface::ENCRYPTION_METHOD_WINZIP_AES_256
+        self::KEY_STRENGTH_256BIT => ZipFileInterface::ENCRYPTION_METHOD_WINZIP_AES_256,
     ];
 
     /**
@@ -94,14 +101,16 @@ class WinZipAesEntryExtraField implements ExtraField
     /**
      * Sets the vendor version.
      *
+     * @param int $vendorVersion the vendor version
+     *
+     * @throws ZipException unsupport vendor version
+     *
      * @see    WinZipAesEntryExtraField::VV_AE_1
      * @see    WinZipAesEntryExtraField::VV_AE_2
-     * @param  int $vendorVersion the vendor version.
-     * @throws ZipException Unsupport vendor version.
      */
     public function setVendorVersion($vendorVersion)
     {
-        if ($vendorVersion < self::VV_AE_1 || self::VV_AE_2 < $vendorVersion) {
+        if ($vendorVersion < self::VV_AE_1 || $vendorVersion > self::VV_AE_2) {
             throw new ZipException($vendorVersion);
         }
         $this->vendorVersion = $vendorVersion;
@@ -118,8 +127,9 @@ class WinZipAesEntryExtraField implements ExtraField
     }
 
     /**
-     * @return bool|int
      * @throws ZipException
+     *
+     * @return bool|int
      */
     public function getKeyStrength()
     {
@@ -127,16 +137,20 @@ class WinZipAesEntryExtraField implements ExtraField
     }
 
     /**
-     * @param int $encryptionStrength Encryption strength as bits.
+     * @param int $encryptionStrength encryption strength as bits
+     *
+     * @throws ZipException if unsupport encryption strength
+     *
      * @return int
-     * @throws ZipException If unsupport encryption strength.
      */
     public static function keyStrength($encryptionStrength)
     {
         $flipKeyStrength = array_flip(self::$keyStrengths);
+
         if (!isset($flipKeyStrength[$encryptionStrength])) {
-            throw new ZipException("Unsupport encryption strength " . $encryptionStrength);
+            throw new ZipException('Unsupport encryption strength ' . $encryptionStrength);
         }
+
         return $flipKeyStrength[$encryptionStrength];
     }
 
@@ -153,8 +167,9 @@ class WinZipAesEntryExtraField implements ExtraField
     /**
      * Internal encryption method.
      *
-     * @return int
      * @throws ZipException
+     *
+     * @return int
      */
     public function getEncryptionMethod()
     {
@@ -165,15 +180,19 @@ class WinZipAesEntryExtraField implements ExtraField
 
     /**
      * @param int $encryptionMethod
-     * @return int
+     *
      * @throws ZipException
+     *
+     * @return int
      */
     public static function getKeyStrangeFromEncryptionMethod($encryptionMethod)
     {
         $flipKey = array_flip(self::$encryptionMethods);
+
         if (!isset($flipKey[$encryptionMethod])) {
-            throw new ZipException("Unsupport encryption method " . $encryptionMethod);
+            throw new ZipException('Unsupport encryption method ' . $encryptionMethod);
         }
+
         return $flipKey[$encryptionMethod];
     }
 
@@ -181,11 +200,12 @@ class WinZipAesEntryExtraField implements ExtraField
      * Sets compression method.
      *
      * @param int $compressionMethod Compression method
-     * @throws ZipException Compression method out of range.
+     *
+     * @throws ZipException compression method out of range
      */
     public function setMethod($compressionMethod)
     {
-        if (0x0000 > $compressionMethod || $compressionMethod > 0xffff) {
+        if ($compressionMethod < 0x0000 || $compressionMethod > 0xffff) {
             throw new ZipException('Compression method out of range');
         }
         $this->method = $compressionMethod;
@@ -204,7 +224,8 @@ class WinZipAesEntryExtraField implements ExtraField
     /**
      * Returns encryption strength.
      *
-     * @param int $keyStrength Key strength in bits.
+     * @param int $keyStrength key strength in bits
+     *
      * @return int
      */
     public static function encryptionStrength($keyStrength)
@@ -216,6 +237,7 @@ class WinZipAesEntryExtraField implements ExtraField
 
     /**
      * Serializes a Data Block.
+     *
      * @return string
      */
     public function serialize()
@@ -231,13 +253,16 @@ class WinZipAesEntryExtraField implements ExtraField
 
     /**
      * Initializes this Extra Field by deserializing a Data Block.
+     *
      * @param string $data
+     *
      * @throws ZipException
      */
     public function deserialize($data)
     {
-        $size = strlen($data);
-        if (self::DATA_SIZE !== $size) {
+        $size = \strlen($data);
+
+        if ($size !== self::DATA_SIZE) {
             throw new ZipException('WinZip AES Extra data invalid size: ' . $size . '. Must be ' . self::DATA_SIZE);
         }
 
@@ -249,7 +274,8 @@ class WinZipAesEntryExtraField implements ExtraField
          */
         $unpack = unpack('vvendorVersion/vvendorId/ckeyStrength/vmethod', $data);
         $this->setVendorVersion($unpack['vendorVersion']);
-        if (self::VENDOR_ID !== $unpack['vendorId']) {
+
+        if ($unpack['vendorId'] !== self::VENDOR_ID) {
             throw new ZipException('Vendor id invalid: ' . $unpack['vendorId'] . '. Must be ' . self::VENDOR_ID);
         }
         $this->setKeyStrength(self::keyStrength($unpack['keyStrength'])); // checked

@@ -2,32 +2,29 @@
 
 namespace PhpZip;
 
+use PHPUnit\Framework\TestCase;
 use PhpZip\Model\EndOfCentralDirectory;
 use PhpZip\Util\FilesUtil;
 
 /**
  * PHPUnit test case and helper methods.
  */
-class ZipTestCase extends \PHPUnit_Framework_TestCase
+abstract class ZipTestCase extends TestCase
 {
-    /**
-     * @var string
-     */
+    /** @var string */
     protected $outputFilename;
-    /**
-     * @var string
-     */
+
+    /** @var string */
     protected $outputDirname;
 
     /**
-     * Before test
+     * Before test.
      */
     protected function setUp()
     {
-        parent::setUp();
-
         $id = uniqid('phpzip', true);
         $tempDir = sys_get_temp_dir() . '/phpunit-phpzip';
+
         if (!is_dir($tempDir) && !mkdir($tempDir, 0755, true) && !is_dir($tempDir)) {
             throw new \RuntimeException('Dir ' . $tempDir . " can't created");
         }
@@ -36,7 +33,7 @@ class ZipTestCase extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * After test
+     * After test.
      */
     protected function tearDown()
     {
@@ -45,6 +42,7 @@ class ZipTestCase extends \PHPUnit_Framework_TestCase
         if ($this->outputFilename !== null && file_exists($this->outputFilename)) {
             unlink($this->outputFilename);
         }
+
         if ($this->outputDirname !== null && is_dir($this->outputDirname)) {
             FilesUtil::removeDir($this->outputDirname);
         }
@@ -53,25 +51,29 @@ class ZipTestCase extends \PHPUnit_Framework_TestCase
     /**
      * Assert correct zip archive.
      *
-     * @param string $filename
+     * @param string      $filename
      * @param string|null $password
      */
     public static function assertCorrectZipArchive($filename, $password = null)
     {
         if (self::existsProgram('unzip')) {
             $command = 'unzip';
+
             if ($password !== null) {
                 $command .= ' -P ' . escapeshellarg($password);
             }
             $command .= ' -t ' . escapeshellarg($filename);
             exec($command, $output, $returnCode);
 
-            $output = implode(PHP_EOL, $output);
+            $output = implode(\PHP_EOL, $output);
 
             if ($password !== null && $returnCode === 81) {
                 if (self::existsProgram('7z')) {
-                    // WinZip 99-character limit
-                    // @see https://sourceforge.net/p/p7zip/discussion/383044/thread/c859a2f0/
+                    /**
+                     * WinZip 99-character limit.
+                     *
+                     * @see https://sourceforge.net/p/p7zip/discussion/383044/thread/c859a2f0/
+                     */
                     $password = substr($password, 0, 99);
 
                     $command = '7z t -p' . escapeshellarg($password) . ' ' . escapeshellarg($filename);
@@ -79,31 +81,34 @@ class ZipTestCase extends \PHPUnit_Framework_TestCase
                     /**
                      * @var array $output
                      */
-                    $output = implode(PHP_EOL, $output);
+                    $output = implode(\PHP_EOL, $output);
 
-                    self::assertEquals($returnCode, 0);
-                    self::assertNotContains(' Errors', $output);
-                    self::assertContains(' Ok', $output);
+                    static::assertSame($returnCode, 0);
+                    static::assertNotContains(' Errors', $output);
+                    static::assertContains(' Ok', $output);
                 } else {
-                    fwrite(STDERR, 'Program unzip cannot support this function.' . PHP_EOL);
-                    fwrite(STDERR, 'Please install 7z. For Ubuntu-like: sudo apt-get install p7zip-full' . PHP_EOL);
+                    fwrite(\STDERR, 'Program unzip cannot support this function.' . \PHP_EOL);
+                    fwrite(\STDERR, 'Please install 7z. For Ubuntu-like: sudo apt-get install p7zip-full' . \PHP_EOL);
                 }
             } else {
-                self::assertEquals($returnCode, 0, $output);
-                self::assertNotContains('incorrect password', $output);
-                self::assertContains(' OK', $output);
-                self::assertContains('No errors', $output);
+                static::assertSame($returnCode, 0, $output);
+                static::assertNotContains('incorrect password', $output);
+                static::assertContains(' OK', $output);
+                static::assertContains('No errors', $output);
             }
         }
     }
 
     /**
      * @param string $program
+     *
      * @return bool
      */
-    private static function existsProgram($program){
-        if (DIRECTORY_SEPARATOR !== '\\') {
+    private static function existsProgram($program)
+    {
+        if (\DIRECTORY_SEPARATOR !== '\\') {
             exec('which ' . escapeshellarg($program), $output, $returnCode);
+
             return $returnCode === 0;
         }
         // false for Windows
@@ -120,30 +125,34 @@ class ZipTestCase extends \PHPUnit_Framework_TestCase
         if (self::existsProgram('zipinfo')) {
             exec('zipinfo ' . escapeshellarg($filename), $output, $returnCode);
 
-            $output = implode(PHP_EOL, $output);
+            $output = implode(\PHP_EOL, $output);
 
-            self::assertContains('Empty zipfile', $output);
+            static::assertContains('Empty zipfile', $output);
         }
         $actualEmptyZipData = pack('VVVVVv', EndOfCentralDirectory::END_OF_CENTRAL_DIRECTORY_RECORD_SIG, 0, 0, 0, 0, 0);
-        self::assertStringEqualsFile($filename, $actualEmptyZipData);
+        static::assertStringEqualsFile($filename, $actualEmptyZipData);
     }
 
     /**
      * @param string $filename
-     * @param bool $showErrors
-     * @return bool|null If null - can not install zipalign
+     * @param bool   $showErrors
+     *
+     * @return bool|null If null returned, then the zipalign program is not installed
      */
     public static function assertVerifyZipAlign($filename, $showErrors = false)
     {
         if (self::existsProgram('zipalign')) {
             exec('zipalign -c -v 4 ' . escapeshellarg($filename), $output, $returnCode);
+
             if ($showErrors && $returnCode !== 0) {
-                fwrite(STDERR, implode(PHP_EOL, $output));
+                fwrite(\STDERR, implode(\PHP_EOL, $output));
             }
+
             return $returnCode === 0;
         }
 
-        fwrite(STDERR, 'Can not find program "zipalign" for test' . PHP_EOL);
+        fwrite(\STDERR, "Cannot find the program 'zipalign' for the test" . \PHP_EOL);
+
         return null;
     }
 }

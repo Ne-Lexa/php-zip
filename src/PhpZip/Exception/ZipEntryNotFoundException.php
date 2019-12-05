@@ -10,21 +10,22 @@ namespace PhpZip\Exception;
  */
 class ZipEntryNotFoundException extends ZipException
 {
-    /**
-     * @var string
-     */
+    /** @var string */
     private $entryName;
 
     /**
      * ZipEntryNotFoundException constructor.
+     *
      * @param string $entryName
      */
     public function __construct($entryName)
     {
-        parent::__construct(sprintf(
-            "Zip Entry \"%s\" was not found in the archive.",
-            $entryName
-        ));
+        parent::__construct(
+            sprintf(
+                'Zip Entry "%s" was not found in the archive.',
+                $entryName
+            )
+        );
         $this->entryName = $entryName;
     }
 

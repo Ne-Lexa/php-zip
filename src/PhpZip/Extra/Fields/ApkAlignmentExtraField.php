@@ -6,7 +6,7 @@ use PhpZip\Exception\InvalidArgumentException;
 use PhpZip\Extra\ExtraField;
 
 /**
- * Apk Alignment Extra Field
+ * Apk Alignment Extra Field.
  *
  * @author Ne-Lexa alexey@nelexa.ru
  * @license MIT
@@ -21,13 +21,10 @@ class ApkAlignmentExtraField implements ExtraField
 
     const ANDROID_COMMON_PAGE_ALIGNMENT_BYTES = 4096;
 
-    /**
-     * @var int
-     */
+    /** @var int */
     private $multiple;
-    /**
-     * @var int
-     */
+
+    /** @var int */
     private $padding;
 
     /**
@@ -44,6 +41,7 @@ class ApkAlignmentExtraField implements ExtraField
 
     /**
      * Serializes a Data Block.
+     *
      * @return string
      */
     public function serialize()
@@ -53,25 +51,31 @@ class ApkAlignmentExtraField implements ExtraField
                 ['vc*', $this->multiple],
                 array_fill(2, $this->padding, 0)
             );
-            return call_user_func_array('pack', $args);
+
+            return \call_user_func_array('pack', $args);
         }
+
         return pack('v', $this->multiple);
     }
 
     /**
      * Initializes this Extra Field by deserializing a Data Block.
+     *
      * @param string $data
      */
     public function deserialize($data)
     {
-        $length = strlen($data);
+        $length = \strlen($data);
+
         if ($length < 2) {
             // This is APK alignment field.
             // FORMAT:
             //  * uint16 alignment multiple (in bytes)
             //  * remaining bytes -- padding to achieve alignment of data which starts after
             //    the extra field
-            throw new InvalidArgumentException("Minimum 6 bytes of the extensible data block/field used for alignment of uncompressed entries.");
+            throw new InvalidArgumentException(
+                'Minimum 6 bytes of the extensible data block/field used for alignment of uncompressed entries.'
+            );
         }
         $this->multiple = unpack('v', $data)[1];
         $this->padding = $length - 2;

@@ -12,17 +12,14 @@ use PhpZip\Model\ZipEntry;
  */
 class OutputOffsetEntry
 {
-    /**
-     * @var int
-     */
+    /** @var int */
     private $offset;
-    /**
-     * @var ZipEntry
-     */
+
+    /** @var ZipEntry */
     private $entry;
 
     /**
-     * @param int $pos
+     * @param int      $pos
      * @param ZipEntry $entry
      */
     public function __construct($pos, ZipEntry $entry)

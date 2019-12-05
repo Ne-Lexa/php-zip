@@ -3,22 +3,24 @@
 namespace PhpZip\Util;
 
 /**
- * Pack util
+ * Pack util.
  *
  * @author Ne-Lexa alexey@nelexa.ru
  * @license MIT
+ *
+ * @internal
  */
-class PackUtil
+final class PackUtil
 {
-
     /**
      * @param int|string $longValue
+     *
      * @return string
      */
     public static function packLongLE($longValue)
     {
-        if (PHP_INT_SIZE === 8 && PHP_VERSION_ID >= 506030) {
-            return pack("P", $longValue);
+        if (\PHP_INT_SIZE === 8 && \PHP_VERSION_ID >= 506030) {
+            return pack('P', $longValue);
         }
 
         $left = 0xffffffff00000000;
@@ -32,31 +34,36 @@ class PackUtil
 
     /**
      * @param string|int $value
+     *
      * @return int
      */
     public static function unpackLongLE($value)
     {
-        if (PHP_INT_SIZE === 8 && PHP_VERSION_ID >= 506030) {
+        if (\PHP_INT_SIZE === 8 && \PHP_VERSION_ID >= 506030) {
             return unpack('P', $value)[1];
         }
         $unpack = unpack('Va/Vb', $value);
+
         return $unpack['a'] + ($unpack['b'] << 32);
     }
 
     /**
-     * Cast to signed int 32-bit
+     * Cast to signed int 32-bit.
      *
      * @param int $int
+     *
      * @return int
      */
     public static function toSignedInt32($int)
     {
-        if (PHP_INT_SIZE === 8) {
-            $int = $int & 0xffffffff;
+        if (\PHP_INT_SIZE === 8) {
+            $int &= 0xffffffff;
+
             if ($int & 0x80000000) {
                 return $int - 0x100000000;
             }
         }
+
         return $int;
     }
 }

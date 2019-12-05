@@ -5,6 +5,12 @@ namespace PhpZip;
 use PhpZip\Exception\ZipException;
 use PhpZip\Util\CryptoUtil;
 
+/**
+ * @internal
+ *
+ * @small
+ * @covers
+ */
 class Issue24Test extends ZipTestCase
 {
     /**
@@ -12,7 +18,7 @@ class Issue24Test extends ZipTestCase
      */
     public static function setUpBeforeClass()
     {
-        stream_wrapper_register("dummyfs", DummyFileSystemStream::class);
+        stream_wrapper_register('dummyfs', Internal\DummyFileSystemStream::class);
     }
 
     /**
@@ -32,73 +38,13 @@ class Issue24Test extends ZipTestCase
         $zip->saveAsFile($this->outputFilename);
         $zip->close();
 
-        $this->assertCorrectZipArchive($this->outputFilename);
+        static::assertCorrectZipArchive($this->outputFilename);
 
         $stream = fopen('dummyfs://localhost/' . $this->outputFilename, 'rb');
-        $this->assertNotFalse($stream);
+        static::assertNotFalse($stream);
         $zip->openFromStream($stream);
-        $this->assertEquals($zip->getListFiles(), ['file.txt']);
-        $this->assertEquals($zip['file.txt'], $fileContents);
+        static::assertSame($zip->getListFiles(), ['file.txt']);
+        static::assertSame($zip['file.txt'], $fileContents);
         $zip->close();
-    }
-}
-
-/**
- * Try to load using dummy stream
- */
-class DummyFileSystemStream
-{
-    /**
-     * @var resource
-     */
-    private $fp;
-
-    public function stream_open($path, $mode, $options, &$opened_path)
-    {
-//        echo "DummyFileSystemStream->stream_open($path, $mode, $options)" . PHP_EOL;
-
-        $parsedUrl = parse_url($path);
-        $path = $parsedUrl['path'];
-        $this->fp = fopen($path, $mode);
-
-        return true;
-    }
-
-    public function stream_read($count)
-    {
-//        echo "DummyFileSystemStream->stream_read($count)" . PHP_EOL;
-        $position = ftell($this->fp);
-
-//        echo "Loading chunk " . $position . " to " . ($position + $count - 1) . PHP_EOL;
-        $ret = fread($this->fp, $count);
-
-//        echo "String length: " . strlen($ret) . PHP_EOL;
-
-        return $ret;
-    }
-
-    public function stream_tell()
-    {
-//        echo "DummyFileSystemStream->stream_tell()" . PHP_EOL;
-        return ftell($this->fp);
-    }
-
-    public function stream_eof()
-    {
-//        echo "DummyFileSystemStream->stream_eof()" . PHP_EOL;
-        $isfeof = feof($this->fp);
-        return $isfeof;
-    }
-
-    public function stream_seek($offset, $whence)
-    {
-//        echo "DummyFileSystemStream->stream_seek($offset, $whence)" . PHP_EOL;
-        fseek($this->fp, $offset, $whence);
-    }
-
-    public function stream_stat()
-    {
-//        echo "DummyFileSystemStream->stream_stat()" . PHP_EOL;
-        return fstat($this->fp);
     }
 }

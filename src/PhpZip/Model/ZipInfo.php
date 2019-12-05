@@ -1,14 +1,15 @@
-<?php /** @noinspection PhpMissingBreakStatementInspection */
+<?php
 
 namespace PhpZip\Model;
 
+use PhpZip\Exception\ZipException;
 use PhpZip\Extra\Fields\NtfsExtraField;
 use PhpZip\Extra\Fields\WinZipAesEntryExtraField;
 use PhpZip\Util\FilesUtil;
 use PhpZip\ZipFileInterface;
 
 /**
- * Zip info
+ * Zip info.
  *
  * @author Ne-Lexa alexey@nelexa.ru
  * @license MIT
@@ -17,51 +18,94 @@ class ZipInfo
 {
     // made by constants
     const MADE_BY_MS_DOS = 0;
+
     const MADE_BY_AMIGA = 1;
+
     const MADE_BY_OPEN_VMS = 2;
+
     const MADE_BY_UNIX = 3;
+
     const MADE_BY_VM_CMS = 4;
+
     const MADE_BY_ATARI = 5;
+
     const MADE_BY_OS_2 = 6;
+
     const MADE_BY_MACINTOSH = 7;
+
     const MADE_BY_Z_SYSTEM = 8;
+
     const MADE_BY_CP_M = 9;
+
     const MADE_BY_WINDOWS_NTFS = 10;
+
     const MADE_BY_MVS = 11;
+
     const MADE_BY_VSE = 12;
+
     const MADE_BY_ACORN_RISC = 13;
+
     const MADE_BY_VFAT = 14;
+
     const MADE_BY_ALTERNATE_MVS = 15;
+
     const MADE_BY_BEOS = 16;
+
     const MADE_BY_TANDEM = 17;
+
     const MADE_BY_OS_400 = 18;
+
     const MADE_BY_OS_X = 19;
+
     const MADE_BY_UNKNOWN = 20;
 
-    const UNX_IFMT = 0170000;    /* Unix file type mask */
-    const UNX_IFREG = 0100000;    /* Unix regular file */
-    const UNX_IFSOCK = 0140000;     /* Unix socket (BSD, not SysV or Amiga) */
-    const UNX_IFLNK = 0120000;    /* Unix symbolic link (not SysV, Amiga) */
-    const UNX_IFBLK = 0060000;    /* Unix block special       (not Amiga) */
-    const UNX_IFDIR = 0040000;    /* Unix directory */
-    const UNX_IFCHR = 0020000;    /* Unix character special   (not Amiga) */
-    const UNX_IFIFO = 0010000;    /* Unix fifo    (BCC, not MSC or Amiga) */
-    const UNX_ISUID = 04000;      /* Unix set user id on execution */
-    const UNX_ISGID = 02000;      /* Unix set group id on execution */
-    const UNX_ISVTX = 01000;      /* Unix directory permissions control */
-    const UNX_ENFMT = self::UNX_ISGID;  /* Unix record locking enforcement flag */
-    const UNX_IRWXU = 00700;      /* Unix read, write, execute: owner */
-    const UNX_IRUSR = 00400;      /* Unix read permission: owner */
-    const UNX_IWUSR = 00200;      /* Unix write permission: owner */
-    const UNX_IXUSR = 00100;      /* Unix execute permission: owner */
-    const UNX_IRWXG = 00070;      /* Unix read, write, execute: group */
-    const UNX_IRGRP = 00040;      /* Unix read permission: group */
-    const UNX_IWGRP = 00020;      /* Unix write permission: group */
-    const UNX_IXGRP = 00010;      /* Unix execute permission: group */
-    const UNX_IRWXO = 00007;      /* Unix read, write, execute: other */
-    const UNX_IROTH = 00004;      /* Unix read permission: other */
-    const UNX_IWOTH = 00002;      /* Unix write permission: other */
-    const UNX_IXOTH = 00001;      /* Unix execute permission: other */
+    const UNX_IFMT = 0170000;    // Unix file type mask
+
+    const UNX_IFREG = 0100000;    // Unix regular file
+
+    const UNX_IFSOCK = 0140000;     // Unix socket (BSD, not SysV or Amiga)
+
+    const UNX_IFLNK = 0120000;    // Unix symbolic link (not SysV, Amiga)
+
+    const UNX_IFBLK = 0060000;    // Unix block special       (not Amiga)
+
+    const UNX_IFDIR = 0040000;    // Unix directory
+
+    const UNX_IFCHR = 0020000;    // Unix character special   (not Amiga)
+
+    const UNX_IFIFO = 0010000;    // Unix fifo    (BCC, not MSC or Amiga)
+
+    const UNX_ISUID = 04000;      // Unix set user id on execution
+
+    const UNX_ISGID = 02000;      // Unix set group id on execution
+
+    const UNX_ISVTX = 01000;      // Unix directory permissions control
+
+    const UNX_ENFMT = self::UNX_ISGID;  // Unix record locking enforcement flag
+
+    const UNX_IRWXU = 00700;      // Unix read, write, execute: owner
+
+    const UNX_IRUSR = 00400;      // Unix read permission: owner
+
+    const UNX_IWUSR = 00200;      // Unix write permission: owner
+
+    const UNX_IXUSR = 00100;      // Unix execute permission: owner
+
+    const UNX_IRWXG = 00070;      // Unix read, write, execute: group
+
+    const UNX_IRGRP = 00040;      // Unix read permission: group
+
+    const UNX_IWGRP = 00020;      // Unix write permission: group
+
+    const UNX_IXGRP = 00010;      // Unix execute permission: group
+
+    const UNX_IRWXO = 00007;      // Unix read, write, execute: other
+
+    const UNX_IROTH = 00004;      // Unix read permission: other
+
+    const UNX_IWOTH = 00002;      // Unix write permission: other
+
+    const UNX_IXOTH = 00001;      // Unix execute permission: other
 
     private static $valuesMadeBy = [
         self::MADE_BY_MS_DOS => 'FAT',
@@ -113,80 +157,63 @@ class ZipInfo
         ZipEntry::METHOD_WINZIP_AES => 'WinZip AES',
     ];
 
-    /**
-     * @var string
-     */
+    /** @var string */
     private $name;
-    /**
-     * @var bool
-     */
+
+    /** @var bool */
     private $folder;
-    /**
-     * @var int
-     */
+
+    /** @var int */
     private $size;
-    /**
-     * @var int
-     */
+
+    /** @var int */
     private $compressedSize;
-    /**
-     * @var int
-     */
+
+    /** @var int */
     private $mtime;
-    /**
-     * @var int|null
-     */
+
+    /** @var int|null */
     private $ctime;
-    /**
-     * @var int|null
-     */
+
+    /** @var int|null */
     private $atime;
-    /**
-     * @var bool
-     */
+
+    /** @var bool */
     private $encrypted;
-    /**
-     * @var string|null
-     */
+
+    /** @var string|null */
     private $comment;
-    /**
-     * @var int
-     */
+
+    /** @var int */
     private $crc;
-    /**
-     * @var string
-     */
+
+    /** @var string */
     private $methodName;
-    /**
-     * @var int
-     */
+
+    /** @var int */
     private $compressionMethod;
-    /**
-     * @var string
-     */
+
+    /** @var string */
     private $platform;
-    /**
-     * @var int
-     */
+
+    /** @var int */
     private $version;
-    /**
-     * @var string
-     */
+
+    /** @var string */
     private $attributes;
-    /**
-     * @var int|null
-     */
+
+    /** @var int|null */
     private $encryptionMethod;
-    /**
-     * @var int|null
-     */
+
+    /** @var int|null */
     private $compressionLevel;
 
     /**
      * ZipInfo constructor.
      *
      * @param ZipEntry $entry
-     * @throws \PhpZip\Exception\ZipException
+     *
+     * @throws ZipException
      */
     public function __construct(ZipEntry $entry)
     {
@@ -195,7 +222,8 @@ class ZipInfo
         $ctime = null;
 
         $field = $entry->getExtraFieldsCollection()->get(NtfsExtraField::getHeaderId());
-        if (null !== $field && $field instanceof NtfsExtraField) {
+
+        if ($field instanceof NtfsExtraField) {
             /**
              * @var NtfsExtraField $field
              */
@@ -206,10 +234,10 @@ class ZipInfo
 
         $this->name = $entry->getName();
         $this->folder = $entry->isDirectory();
-        $this->size = PHP_INT_SIZE === 4 ?
+        $this->size = \PHP_INT_SIZE === 4 ?
             sprintf('%u', $entry->getSize()) :
             $entry->getSize();
-        $this->compressedSize = PHP_INT_SIZE === 4 ?
+        $this->compressedSize = \PHP_INT_SIZE === 4 ?
             sprintf('%u', $entry->getCompressedSize()) :
             $entry->getCompressedSize();
         $this->mtime = $mtime;
@@ -225,65 +253,74 @@ class ZipInfo
         $this->version = $entry->getVersionNeededToExtract();
         $this->compressionLevel = $entry->getCompressionLevel();
 
-        $attributes = str_repeat(" ", 12);
+        $attributes = str_repeat(' ', 12);
         $externalAttributes = $entry->getExternalAttributes();
-        $externalAttributes = PHP_INT_SIZE === 4 ?
+        $externalAttributes = \PHP_INT_SIZE === 4 ?
             sprintf('%u', $externalAttributes) :
             $externalAttributes;
         $xattr = (($externalAttributes >> 16) & 0xFFFF);
         switch ($entry->getPlatform()) {
             case self::MADE_BY_MS_DOS:
             case self::MADE_BY_WINDOWS_NTFS:
-                if ($entry->getPlatform() != self::MADE_BY_MS_DOS ||
-                    ($xattr & 0700) !=
+                if ($entry->getPlatform() !== self::MADE_BY_MS_DOS ||
+                    ($xattr & 0700) !==
                     (0400 |
                         (!($externalAttributes & 1) << 7) |
                         (($externalAttributes & 0x10) << 2))
                 ) {
                     $xattr = $externalAttributes & 0xFF;
-                    $attributes = ".r.-...     ";
+                    $attributes = '.r.-...     ';
                     $attributes[2] = ($xattr & 0x01) ? '-' : 'w';
                     $attributes[5] = ($xattr & 0x02) ? 'h' : '-';
                     $attributes[6] = ($xattr & 0x04) ? 's' : '-';
                     $attributes[4] = ($xattr & 0x20) ? 'a' : '-';
+
                     if ($xattr & 0x10) {
                         $attributes[0] = 'd';
                         $attributes[3] = 'x';
                     } else {
                         $attributes[0] = '-';
                     }
+
                     if ($xattr & 0x08) {
                         $attributes[0] = 'V';
                     } else {
-                        $ext = strtolower(pathinfo($entry->getName(), PATHINFO_EXTENSION));
-                        if (in_array($ext, ["com", "exe", "btm", "cmd", "bat"])) {
+                        $ext = strtolower(pathinfo($entry->getName(), \PATHINFO_EXTENSION));
+
+                        if (\in_array($ext, ['com', 'exe', 'btm', 'cmd', 'bat'])) {
                             $attributes[3] = 'x';
                         }
                     }
                     break;
-                } /* else: fall through! */
+                } // else: fall through!
 
             // no break
-            default: /* assume Unix-like */
+            default: // assume Unix-like
                 switch ($xattr & self::UNX_IFMT) {
                     case self::UNX_IFDIR:
                         $attributes[0] = 'd';
                         break;
+
                     case self::UNX_IFREG:
                         $attributes[0] = '-';
                         break;
+
                     case self::UNX_IFLNK:
                         $attributes[0] = 'l';
                         break;
+
                     case self::UNX_IFBLK:
                         $attributes[0] = 'b';
                         break;
+
                     case self::UNX_IFCHR:
                         $attributes[0] = 'c';
                         break;
+
                     case self::UNX_IFIFO:
                         $attributes[0] = 'p';
                         break;
+
                     case self::UNX_IFSOCK:
                         $attributes[0] = 's';
                         break;
@@ -302,68 +339,75 @@ class ZipInfo
                     $attributes[3] = ($xattr & self::UNX_ISUID) ? 's' : 'x';
                 } else {
                     $attributes[3] = ($xattr & self::UNX_ISUID) ? 'S' : '-';
-                }  /* S==undefined */
+                }  // S==undefined
                 if ($xattr & self::UNX_IXGRP) {
                     $attributes[6] = ($xattr & self::UNX_ISGID) ? 's' : 'x';
-                }  /* == UNX_ENFMT */
+                }  // == UNX_ENFMT
                 else {
                     $attributes[6] = ($xattr & self::UNX_ISGID) ? 'S' : '-';
-                }  /* SunOS 4.1.x */
+                }  // SunOS 4.1.x
                 if ($xattr & self::UNX_IXOTH) {
                     $attributes[9] = ($xattr & self::UNX_ISVTX) ? 't' : 'x';
-                }  /* "sticky bit" */
+                }  // "sticky bit"
                 else {
                     $attributes[9] = ($xattr & self::UNX_ISVTX) ? 'T' : '-';
-                }  /* T==undefined */
+                }  // T==undefined
         }
         $this->attributes = trim($attributes);
     }
 
     /**
      * @param ZipEntry $entry
+     *
+     * @throws ZipException
+     *
      * @return int
-     * @throws \PhpZip\Exception\ZipException
      */
     private static function getMethodId(ZipEntry $entry)
     {
         $method = $entry->getMethod();
-        if ($entry->isEncrypted()) {
-            if ($entry->getMethod() === ZipEntry::METHOD_WINZIP_AES) {
-                $field = $entry->getExtraFieldsCollection()->get(WinZipAesEntryExtraField::getHeaderId());
-                if (null !== $field) {
-                    /**
-                     * @var WinZipAesEntryExtraField $field
-                     */
-                    $method = $field->getMethod();
-                }
+
+        if ($entry->isEncrypted() && $entry->getMethod() === ZipEntry::METHOD_WINZIP_AES) {
+            $field = $entry->getExtraFieldsCollection()->get(WinZipAesEntryExtraField::getHeaderId());
+
+            if ($field !== null) {
+                /**
+                 * @var WinZipAesEntryExtraField $field
+                 */
+                $method = $field->getMethod();
             }
         }
+
         return $method;
     }
 
     /**
      * @param ZipEntry $entry
+     *
+     * @throws ZipException
+     *
      * @return string
-     * @throws \PhpZip\Exception\ZipException
      */
     private static function getEntryMethodName(ZipEntry $entry)
     {
         $return = '';
+
         if ($entry->isEncrypted()) {
             if ($entry->getMethod() === ZipEntry::METHOD_WINZIP_AES) {
                 $return = ucfirst(self::$valuesCompressionMethod[$entry->getMethod()]);
+                /** @var WinZipAesEntryExtraField|null $field */
                 $field = $entry->getExtraFieldsCollection()->get(WinZipAesEntryExtraField::getHeaderId());
-                if (null !== $field) {
-                    /**
-                     * @var WinZipAesEntryExtraField $field
-                     */
+
+                if ($field !== null) {
                     $return .= '-' . $field->getKeyStrength();
+
                     if (isset(self::$valuesCompressionMethod[$field->getMethod()])) {
                         $return .= ' ' . ucfirst(self::$valuesCompressionMethod[$field->getMethod()]);
                     }
                 }
             } else {
                 $return .= 'ZipCrypto';
+
                 if (isset(self::$valuesCompressionMethod[$entry->getMethod()])) {
                     $return .= ' ' . ucfirst(self::$valuesCompressionMethod[$entry->getMethod()]);
                 }
@@ -373,20 +417,22 @@ class ZipInfo
         } else {
             $return = 'unknown';
         }
+
         return $return;
     }
 
     /**
      * @param ZipEntry $entry
+     *
      * @return string
      */
     public static function getPlatformName(ZipEntry $entry)
     {
         if (isset(self::$valuesMadeBy[$entry->getPlatform()])) {
             return self::$valuesMadeBy[$entry->getPlatform()];
-        } else {
-            return 'unknown';
         }
+
+        return 'unknown';
     }
 
     /**
@@ -399,6 +445,7 @@ class ZipInfo
 
     /**
      * @return string
+     *
      * @deprecated use \PhpZip\Model\ZipInfo::getName()
      */
     public function getPath()
@@ -407,7 +454,7 @@ class ZipInfo
     }
 
     /**
-     * @return boolean
+     * @return bool
      */
     public function isFolder()
     {
@@ -463,7 +510,7 @@ class ZipInfo
     }
 
     /**
-     * @return boolean
+     * @return bool
      */
     public function isEncrypted()
     {
@@ -471,7 +518,7 @@ class ZipInfo
     }
 
     /**
-     * @return null|string
+     * @return string|null
      */
     public function getComment()
     {
@@ -488,6 +535,7 @@ class ZipInfo
 
     /**
      * @return string
+     *
      * @deprecated use \PhpZip\Model\ZipInfo::getMethodName()
      */
     public function getMethod()
@@ -566,7 +614,7 @@ class ZipInfo
             'method_name' => $this->getMethodName(),
             'compression_method' => $this->getCompressionMethod(),
             'platform' => $this->getPlatform(),
-            'version' => $this->getVersion()
+            'version' => $this->getVersion(),
         ];
     }
 
@@ -580,9 +628,9 @@ class ZipInfo
             . ($this->isFolder() ? 'Folder, ' : '')
             . 'Size="' . FilesUtil::humanSize($this->getSize()) . '"'
             . ', Compressed size="' . FilesUtil::humanSize($this->getCompressedSize()) . '"'
-            . ', Modified time="' . date(DATE_W3C, $this->getMtime()) . '", '
-            . ($this->getCtime() !== null ? 'Created time="' . date(DATE_W3C, $this->getCtime()) . '", ' : '')
-            . ($this->getAtime() !== null ? 'Accessed time="' . date(DATE_W3C, $this->getAtime()) . '", ' : '')
+            . ', Modified time="' . date(\DATE_W3C, $this->getMtime()) . '", '
+            . ($this->getCtime() !== null ? 'Created time="' . date(\DATE_W3C, $this->getCtime()) . '", ' : '')
+            . ($this->getAtime() !== null ? 'Accessed time="' . date(\DATE_W3C, $this->getAtime()) . '", ' : '')
             . ($this->isEncrypted() ? 'Encrypted, ' : '')
             . (!empty($this->comment) ? 'Comment="' . $this->getComment() . '", ' : '')
             . (!empty($this->crc) ? 'Crc=0x' . dechex($this->getCrc()) . ', ' : '')

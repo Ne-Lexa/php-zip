@@ -12,6 +12,7 @@ class PositionMapper
 {
     /**
      * @param int $position
+     *
      * @return int
      */
     public function map($position)
@@ -21,6 +22,7 @@ class PositionMapper
 
     /**
      * @param int $position
+     *
      * @return int
      */
     public function unmap($position)
