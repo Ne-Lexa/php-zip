@@ -133,10 +133,10 @@ class PhpZipExtResourceTest extends ZipTestCase
         static::assertTrue(mkdir($this->outputDirname, 0755, true));
 
         $zipFile = new ZipFile();
+        $zipFile->openFile($filename);
+        $zipFile->setReadPassword('bar');
 
         try {
-            $zipFile->openFile($filename);
-            $zipFile->setReadPassword('bar');
             $zipFile->extractTo($this->outputDirname);
             static::markTestIncomplete('failed test');
         } catch (ZipException $exception) {

@@ -81,7 +81,7 @@ class EndOfCentralDirectory
     private $entryCount;
 
     /** @var bool */
-    private $zip64 = false;
+    private $zip64;
 
     /**
      * EndOfCentralDirectory constructor.

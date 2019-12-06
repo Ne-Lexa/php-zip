@@ -1,5 +1,7 @@
 <?php
 
+/** @noinspection PhpUsageOfSilenceOperatorInspection */
+
 namespace PhpZip;
 
 use PhpZip\Exception\InvalidArgumentException;

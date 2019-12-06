@@ -899,7 +899,7 @@ $rules = [
      * Risky when PHPUnit classes are overridden or not accessible, or
      * when project has PHPUnit incompatibilities.
      */
-    'php_unit_expectation' => true,
+    'php_unit_expectation' => false,
 
     // PHPUnit annotations should be a FQCNs including a root namespace.
     'php_unit_fqcn_annotation' => true,

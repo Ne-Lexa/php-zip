@@ -507,6 +507,7 @@ class ZipInputStream implements ZipInputStreamInterface
                 break;
 
             case ZipFileInterface::METHOD_DEFLATED:
+                /** @noinspection PhpUsageOfSilenceOperatorInspection */
                 $content = @gzinflate($content);
                 break;
 
