@@ -9,6 +9,8 @@ use PhpZip\Model\ZipEntry;
  *
  * @author Ne-Lexa alexey@nelexa.ru
  * @license MIT
+ *
+ * @internal
  */
 class OutputOffsetEntry
 {

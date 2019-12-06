@@ -10,7 +10,7 @@ use PhpZip\Extra\Fields\WinZipAesEntryExtraField;
 use PhpZip\Model\ZipEntry;
 use PhpZip\Util\DateTimeConverter;
 use PhpZip\Util\StringUtil;
-use PhpZip\ZipFileInterface;
+use PhpZip\ZipFile;
 
 /**
  * Abstract ZIP entry.
@@ -26,16 +26,22 @@ abstract class ZipAbstractEntry implements ZipEntry
     private $name;
 
     /** @var int Made by platform */
-    private $platform = self::UNKNOWN;
+    private $createdOS = self::UNKNOWN;
+
+    /** @var int Extracted by platform */
+    private $extractedOS = self::UNKNOWN;
 
     /** @var int */
-    private $versionNeededToExtract = 20;
+    private $softwareVersion = self::UNKNOWN;
+
+    /** @var int */
+    private $versionNeededToExtract = self::UNKNOWN;
 
     /** @var int Compression method */
     private $method = self::UNKNOWN;
 
     /** @var int */
-    private $general = 0;
+    private $generalPurposeBitFlags = 0;
 
     /** @var int Dos time */
     private $dosTime = self::UNKNOWN;
@@ -49,11 +55,14 @@ abstract class ZipAbstractEntry implements ZipEntry
     /** @var int Uncompressed size */
     private $size = self::UNKNOWN;
 
+    /** @var int Internal attributes */
+    private $internalAttributes = 0;
+
     /** @var int External attributes */
     private $externalAttributes = 0;
 
     /** @var int relative Offset Of Local File Header */
-    private $offset = self::UNKNOWN;
+    private $offset = 0;
 
     /**
      * Collections of Extra Fields.
@@ -73,17 +82,17 @@ abstract class ZipAbstractEntry implements ZipEntry
     /**
      * Encryption method.
      *
-     * @see ZipFileInterface::ENCRYPTION_METHOD_TRADITIONAL
-     * @see ZipFileInterface::ENCRYPTION_METHOD_WINZIP_AES_128
-     * @see ZipFileInterface::ENCRYPTION_METHOD_WINZIP_AES_192
-     * @see ZipFileInterface::ENCRYPTION_METHOD_WINZIP_AES_256
+     * @see ZipFile::ENCRYPTION_METHOD_TRADITIONAL
+     * @see ZipFile::ENCRYPTION_METHOD_WINZIP_AES_128
+     * @see ZipFile::ENCRYPTION_METHOD_WINZIP_AES_192
+     * @see ZipFile::ENCRYPTION_METHOD_WINZIP_AES_256
      *
      * @var int
      */
-    private $encryptionMethod = ZipFileInterface::ENCRYPTION_METHOD_TRADITIONAL;
+    private $encryptionMethod = ZipFile::ENCRYPTION_METHOD_TRADITIONAL;
 
     /** @var int */
-    private $compressionLevel = ZipFileInterface::LEVEL_DEFAULT_COMPRESSION;
+    private $compressionLevel = ZipFile::LEVEL_DEFAULT_COMPRESSION;
 
     /**
      * ZipAbstractEntry constructor.
@@ -101,7 +110,9 @@ abstract class ZipAbstractEntry implements ZipEntry
     public function setEntry(ZipEntry $entry)
     {
         $this->setName($entry->getName());
-        $this->setPlatform($entry->getPlatform());
+        $this->setSoftwareVersion($entry->getSoftwareVersion());
+        $this->setCreatedOS($entry->getCreatedOS());
+        $this->setExtractedOS($entry->getExtractedOS());
         $this->setVersionNeededToExtract($entry->getVersionNeededToExtract());
         $this->setMethod($entry->getMethod());
         $this->setGeneralPurposeBitFlags($entry->getGeneralPurposeBitFlags());
@@ -109,6 +120,7 @@ abstract class ZipAbstractEntry implements ZipEntry
         $this->setCrc($entry->getCrc());
         $this->setCompressedSize($entry->getCompressedSize());
         $this->setSize($entry->getSize());
+        $this->setInternalAttributes($entry->getInternalAttributes());
         $this->setExternalAttributes($entry->getExternalAttributes());
         $this->setOffset($entry->getOffset());
         $this->setExtra($entry->getExtra());
@@ -163,20 +175,48 @@ abstract class ZipAbstractEntry implements ZipEntry
     public function setGeneralPurposeBitFlag($mask, $bit)
     {
         if ($bit) {
-            $this->general |= $mask;
+            $this->generalPurposeBitFlags |= $mask;
         } else {
-            $this->general &= ~$mask;
+            $this->generalPurposeBitFlags &= ~$mask;
         }
 
         return $this;
     }
 
     /**
-     * @return int platform
+     * @return int Get platform
+     *
+     * @deprecated Use {@see ZipEntry::getCreatedOS()}
      */
     public function getPlatform()
     {
-        return $this->platform;
+        @trigger_error('ZipEntry::getPlatform() is deprecated. Use ZipEntry::getCreatedOS()', \E_USER_DEPRECATED);
+
+        return $this->getCreatedOS();
+    }
+
+    /**
+     * @param int $platform
+     *
+     * @throws ZipException
+     *
+     * @return ZipEntry
+     *
+     * @deprecated Use {@see ZipEntry::setCreatedOS()}
+     */
+    public function setPlatform($platform)
+    {
+        @trigger_error('ZipEntry::setPlatform() is deprecated. Use ZipEntry::setCreatedOS()', \E_USER_DEPRECATED);
+
+        return $this->setCreatedOS($platform);
+    }
+
+    /**
+     * @return int platform
+     */
+    public function getCreatedOS()
+    {
+        return $this->createdOS;
     }
 
     /**
@@ -188,16 +228,63 @@ abstract class ZipAbstractEntry implements ZipEntry
      *
      * @return ZipEntry
      */
-    public function setPlatform($platform)
+    public function setCreatedOS($platform)
     {
-        if ($platform !== self::UNKNOWN) {
-            if ($platform < 0x00 || $platform > 0xff) {
-                throw new ZipException('Platform out of range');
-            }
-            $this->platform = $platform;
-        } else {
-            $this->platform = 0; // ms-dos
+        $platform = (int) $platform;
+
+        if ($platform < 0x00 || $platform > 0xff) {
+            throw new ZipException('Platform out of range');
         }
+        $this->createdOS = $platform;
+
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getExtractedOS()
+    {
+        return $this->extractedOS;
+    }
+
+    /**
+     * Set extracted OS.
+     *
+     * @param int $platform
+     *
+     * @throws ZipException
+     *
+     * @return ZipEntry
+     */
+    public function setExtractedOS($platform)
+    {
+        $platform = (int) $platform;
+
+        if ($platform < 0x00 || $platform > 0xff) {
+            throw new ZipException('Platform out of range');
+        }
+        $this->extractedOS = $platform;
+
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getSoftwareVersion()
+    {
+        return $this->softwareVersion;
+    }
+
+    /**
+     * @param int $softwareVersion
+     *
+     * @return ZipEntry
+     */
+    public function setSoftwareVersion($softwareVersion)
+    {
+        $this->softwareVersion = (int) $softwareVersion;
 
         return $this;
     }
@@ -209,6 +296,24 @@ abstract class ZipAbstractEntry implements ZipEntry
      */
     public function getVersionNeededToExtract()
     {
+        if ($this->versionNeededToExtract === self::UNKNOWN) {
+            $method = $this->getMethod();
+
+            if ($method === self::METHOD_WINZIP_AES) {
+                return 51;
+            }
+
+            if ($method === ZipFile::METHOD_BZIP2) {
+                return 46;
+            }
+
+            if ($this->isZip64ExtensionsRequired()) {
+                return 45;
+            }
+
+            return $method === ZipFile::METHOD_DEFLATED || $this->isDirectory() ? 20 : 10;
+        }
+
         return $this->versionNeededToExtract;
     }
 
@@ -300,7 +405,7 @@ abstract class ZipAbstractEntry implements ZipEntry
      */
     public function setOffset($offset)
     {
-        $this->offset = $offset;
+        $this->offset = (int) $offset;
 
         return $this;
     }
@@ -312,7 +417,7 @@ abstract class ZipAbstractEntry implements ZipEntry
      */
     public function getGeneralPurposeBitFlags()
     {
-        return $this->general & 0xffff;
+        return $this->generalPurposeBitFlags & 0xffff;
     }
 
     /**
@@ -331,20 +436,20 @@ abstract class ZipAbstractEntry implements ZipEntry
         if ($general < 0x0000 || $general > 0xffff) {
             throw new ZipException('general out of range');
         }
-        $this->general = $general;
+        $this->generalPurposeBitFlags = $general;
 
-        if ($this->method === ZipFileInterface::METHOD_DEFLATED) {
+        if ($this->method === ZipFile::METHOD_DEFLATED) {
             $bit1 = $this->getGeneralPurposeBitFlag(self::GPBF_COMPRESSION_FLAG1);
             $bit2 = $this->getGeneralPurposeBitFlag(self::GPBF_COMPRESSION_FLAG2);
 
             if ($bit1 && !$bit2) {
-                $this->compressionLevel = ZipFileInterface::LEVEL_BEST_COMPRESSION;
+                $this->compressionLevel = ZipFile::LEVEL_BEST_COMPRESSION;
             } elseif (!$bit1 && $bit2) {
-                $this->compressionLevel = ZipFileInterface::LEVEL_FAST;
+                $this->compressionLevel = ZipFile::LEVEL_FAST;
             } elseif ($bit1 && $bit2) {
-                $this->compressionLevel = ZipFileInterface::LEVEL_SUPER_FAST;
+                $this->compressionLevel = ZipFile::LEVEL_SUPER_FAST;
             } else {
-                $this->compressionLevel = ZipFileInterface::LEVEL_DEFAULT_COMPRESSION;
+                $this->compressionLevel = ZipFile::LEVEL_DEFAULT_COMPRESSION;
             }
         }
 
@@ -370,7 +475,7 @@ abstract class ZipAbstractEntry implements ZipEntry
      */
     public function getGeneralPurposeBitFlag($mask)
     {
-        return ($this->general & $mask) !== 0;
+        return ($this->generalPurposeBitFlags & $mask) !== 0;
     }
 
     /**
@@ -447,9 +552,9 @@ abstract class ZipAbstractEntry implements ZipEntry
         }
         switch ($method) {
             case self::METHOD_WINZIP_AES:
-            case ZipFileInterface::METHOD_STORED:
-            case ZipFileInterface::METHOD_DEFLATED:
-            case ZipFileInterface::METHOD_BZIP2:
+            case ZipFile::METHOD_STORED:
+            case ZipFile::METHOD_DEFLATED:
+            case ZipFile::METHOD_BZIP2:
                 $this->method = $method;
                 break;
 
@@ -490,6 +595,8 @@ abstract class ZipAbstractEntry implements ZipEntry
      * @param int $dosTime
      *
      * @throws ZipException
+     *
+     * @return ZipEntry
      */
     public function setDosTime($dosTime)
     {
@@ -499,6 +606,8 @@ abstract class ZipAbstractEntry implements ZipEntry
             throw new ZipException('DosTime out of range');
         }
         $this->dosTime = $dosTime;
+
+        return $this;
     }
 
     /**
@@ -548,6 +657,30 @@ abstract class ZipAbstractEntry implements ZipEntry
     }
 
     /**
+     * Sets the internal file attributes.
+     *
+     * @param int $attributes the internal file attributes
+     *
+     * @return ZipEntry
+     */
+    public function setInternalAttributes($attributes)
+    {
+        $this->internalAttributes = (int) $attributes;
+
+        return $this;
+    }
+
+    /**
+     * Returns the internal file attributes.
+     *
+     * @return int the internal file attributes
+     */
+    public function getInternalAttributes()
+    {
+        return $this->internalAttributes;
+    }
+
+    /**
      * Returns true if and only if this ZIP entry represents a directory entry
      * (i.e. end with '/').
      *
@@ -589,10 +722,14 @@ abstract class ZipAbstractEntry implements ZipEntry
      * @param string $data the byte array holding the serialized Extra Fields
      *
      * @throws ZipException if the serialized Extra Fields exceed 64 KB
+     *
+     * @return ZipEntry
      */
     public function setExtra($data)
     {
         $this->extraFieldsCollection = ExtraFieldsFactory::createExtraFieldCollections($data, $this);
+
+        return $this;
     }
 
     /**
@@ -713,19 +850,19 @@ abstract class ZipAbstractEntry implements ZipEntry
      *
      * @return ZipEntry
      *
-     * @see ZipFileInterface::ENCRYPTION_METHOD_WINZIP_AES_256
-     * @see ZipFileInterface::ENCRYPTION_METHOD_TRADITIONAL
-     * @see ZipFileInterface::ENCRYPTION_METHOD_WINZIP_AES_128
-     * @see ZipFileInterface::ENCRYPTION_METHOD_WINZIP_AES_192
+     * @see ZipFile::ENCRYPTION_METHOD_WINZIP_AES_256
+     * @see ZipFile::ENCRYPTION_METHOD_TRADITIONAL
+     * @see ZipFile::ENCRYPTION_METHOD_WINZIP_AES_128
+     * @see ZipFile::ENCRYPTION_METHOD_WINZIP_AES_192
      */
     public function setEncryptionMethod($encryptionMethod)
     {
         if ($encryptionMethod !== null) {
             if (
-                $encryptionMethod !== ZipFileInterface::ENCRYPTION_METHOD_TRADITIONAL
-                && $encryptionMethod !== ZipFileInterface::ENCRYPTION_METHOD_WINZIP_AES_128
-                && $encryptionMethod !== ZipFileInterface::ENCRYPTION_METHOD_WINZIP_AES_192
-                && $encryptionMethod !== ZipFileInterface::ENCRYPTION_METHOD_WINZIP_AES_256
+                $encryptionMethod !== ZipFile::ENCRYPTION_METHOD_TRADITIONAL
+                && $encryptionMethod !== ZipFile::ENCRYPTION_METHOD_WINZIP_AES_128
+                && $encryptionMethod !== ZipFile::ENCRYPTION_METHOD_WINZIP_AES_192
+                && $encryptionMethod !== ZipFile::ENCRYPTION_METHOD_WINZIP_AES_256
             ) {
                 throw new ZipException('Invalid encryption method');
             }
@@ -748,14 +885,14 @@ abstract class ZipAbstractEntry implements ZipEntry
      *
      * @return ZipEntry
      */
-    public function setCompressionLevel($compressionLevel = ZipFileInterface::LEVEL_DEFAULT_COMPRESSION)
+    public function setCompressionLevel($compressionLevel = ZipFile::LEVEL_DEFAULT_COMPRESSION)
     {
-        if ($compressionLevel < ZipFileInterface::LEVEL_DEFAULT_COMPRESSION ||
-            $compressionLevel > ZipFileInterface::LEVEL_BEST_COMPRESSION
+        if ($compressionLevel < ZipFile::LEVEL_DEFAULT_COMPRESSION ||
+            $compressionLevel > ZipFile::LEVEL_BEST_COMPRESSION
         ) {
             throw new InvalidArgumentException(
                 'Invalid compression level. Minimum level ' .
-                ZipFileInterface::LEVEL_DEFAULT_COMPRESSION . '. Maximum level ' . ZipFileInterface::LEVEL_BEST_COMPRESSION
+                ZipFile::LEVEL_DEFAULT_COMPRESSION . '. Maximum level ' . ZipFile::LEVEL_BEST_COMPRESSION
             );
         }
         $this->compressionLevel = $compressionLevel;

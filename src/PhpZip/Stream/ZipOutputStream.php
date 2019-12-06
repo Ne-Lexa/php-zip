@@ -19,7 +19,7 @@ use PhpZip\Model\ZipEntry;
 use PhpZip\Model\ZipModel;
 use PhpZip\Util\PackUtil;
 use PhpZip\Util\StringUtil;
-use PhpZip\ZipFileInterface;
+use PhpZip\ZipFile;
 
 /**
  * Write zip file.
@@ -97,7 +97,7 @@ class ZipOutputStream implements ZipOutputStreamInterface
         if (
             $this->zipModel->isZipAlign() &&
             !$entry->isEncrypted() &&
-            $entry->getMethod() === ZipFileInterface::METHOD_STORED
+            $entry->getMethod() === ZipFile::METHOD_STORED
         ) {
             $dataAlignmentMultiple = $this->zipModel->getZipAlign();
 
@@ -144,7 +144,7 @@ class ZipOutputStream implements ZipOutputStreamInterface
                 // local file header signature     4 bytes  (0x04034b50)
                 ZipEntry::LOCAL_FILE_HEADER_SIG,
                 // version needed to extract       2 bytes
-                $entry->getVersionNeededToExtract(),
+                ($entry->getExtractedOS() << 8) | $entry->getVersionNeededToExtract(),
                 // general purpose bit flag        2 bytes
                 $entry->getGeneralPurposeBitFlags(),
                 // compression method              2 bytes
@@ -221,8 +221,12 @@ class ZipOutputStream implements ZipOutputStreamInterface
      */
     protected function entryCommitChangesAndReturnContent(ZipEntry $entry)
     {
-        if ($entry->getPlatform() === ZipEntry::UNKNOWN) {
-            $entry->setPlatform(ZipEntry::PLATFORM_UNIX);
+        if ($entry->getCreatedOS() === ZipEntry::UNKNOWN) {
+            $entry->setCreatedOS(ZipEntry::PLATFORM_UNIX);
+        }
+
+        if ($entry->getExtractedOS() === ZipEntry::UNKNOWN) {
+            $entry->setExtractedOS(ZipEntry::PLATFORM_UNIX);
         }
 
         if ($entry->getTime() === ZipEntry::UNKNOWN) {
@@ -265,16 +269,15 @@ class ZipOutputStream implements ZipOutputStreamInterface
                 }
 
                 switch ($method) {
-                    case ZipFileInterface::METHOD_STORED:
+                    case ZipFile::METHOD_STORED:
                         break;
 
-                    case ZipFileInterface::METHOD_DEFLATED:
+                    case ZipFile::METHOD_DEFLATED:
                         $entryContent = gzdeflate($entryContent, $entry->getCompressionLevel());
                         break;
 
-                    case ZipFileInterface::METHOD_BZIP2:
-                        $compressionLevel = $entry->getCompressionLevel(
-                        ) === ZipFileInterface::LEVEL_DEFAULT_COMPRESSION ?
+                    case ZipFile::METHOD_BZIP2:
+                        $compressionLevel = $entry->getCompressionLevel() === ZipFile::LEVEL_DEFAULT_COMPRESSION ?
                             ZipEntry::LEVEL_DEFAULT_BZIP2_COMPRESSION :
                             $entry->getCompressionLevel();
                         /** @noinspection PhpComposerExtensionStubsInspection */
@@ -294,19 +297,19 @@ class ZipOutputStream implements ZipOutputStreamInterface
                         throw new ZipException($entry->getName() . ' (unsupported compression method ' . $method . ')');
                 }
 
-                if ($method === ZipFileInterface::METHOD_DEFLATED) {
+                if ($method === ZipFile::METHOD_DEFLATED) {
                     $bit1 = false;
                     $bit2 = false;
                     switch ($entry->getCompressionLevel()) {
-                        case ZipFileInterface::LEVEL_BEST_COMPRESSION:
+                        case ZipFile::LEVEL_BEST_COMPRESSION:
                             $bit1 = true;
                             break;
 
-                        case ZipFileInterface::LEVEL_FAST:
+                        case ZipFile::LEVEL_FAST:
                             $bit2 = true;
                             break;
 
-                        case ZipFileInterface::LEVEL_SUPER_FAST:
+                        case ZipFile::LEVEL_SUPER_FAST:
                             $bit1 = true;
                             $bit2 = true;
                             break;
@@ -320,9 +323,9 @@ class ZipOutputStream implements ZipOutputStreamInterface
                     if (\in_array(
                         $entry->getEncryptionMethod(),
                         [
-                            ZipFileInterface::ENCRYPTION_METHOD_WINZIP_AES_128,
-                            ZipFileInterface::ENCRYPTION_METHOD_WINZIP_AES_192,
-                            ZipFileInterface::ENCRYPTION_METHOD_WINZIP_AES_256,
+                            ZipFile::ENCRYPTION_METHOD_WINZIP_AES_128,
+                            ZipFile::ENCRYPTION_METHOD_WINZIP_AES_192,
+                            ZipFile::ENCRYPTION_METHOD_WINZIP_AES_256,
                         ],
                         true
                     )) {
@@ -334,7 +337,7 @@ class ZipOutputStream implements ZipOutputStreamInterface
                         $field->setMethod($method);
                         $size = $entry->getSize();
 
-                        if ($size >= 20 && $method !== ZipFileInterface::METHOD_BZIP2) {
+                        if ($size >= 20 && $method !== ZipFile::METHOD_BZIP2) {
                             $field->setVendorVersion(WinZipAesEntryExtraField::VV_AE_1);
                         } else {
                             $field->setVendorVersion(WinZipAesEntryExtraField::VV_AE_2);
@@ -345,7 +348,7 @@ class ZipOutputStream implements ZipOutputStreamInterface
 
                         $winZipAesEngine = new WinZipAesEngine($entry);
                         $entryContent = $winZipAesEngine->encrypt($entryContent);
-                    } elseif ($entry->getEncryptionMethod() === ZipFileInterface::ENCRYPTION_METHOD_TRADITIONAL) {
+                    } elseif ($entry->getEncryptionMethod() === ZipFile::ENCRYPTION_METHOD_TRADITIONAL) {
                         $zipCryptoEngine = new TraditionalPkwareEncryptionEngine($entry);
                         $entryContent = $zipCryptoEngine->encrypt($entryContent);
                     }
@@ -382,11 +385,11 @@ class ZipOutputStream implements ZipOutputStreamInterface
             $entryContent = gzdeflate($content, $entry->getCompressionLevel());
 
             if (\strlen($entryContent) < \strlen($content)) {
-                $entry->setMethod(ZipFileInterface::METHOD_DEFLATED);
+                $entry->setMethod(ZipFile::METHOD_DEFLATED);
 
                 return $entryContent;
             }
-            $entry->setMethod(ZipFileInterface::METHOD_STORED);
+            $entry->setMethod(ZipFile::METHOD_STORED);
         }
 
         return $content;
@@ -418,9 +421,9 @@ class ZipOutputStream implements ZipOutputStreamInterface
                 // central file header signature   4 bytes  (0x02014b50)
                 self::CENTRAL_FILE_HEADER_SIG,
                 // version made by                 2 bytes
-                ($entry->getPlatform() << 8) | 63,
+                ($entry->getCreatedOS() << 8) | $entry->getSoftwareVersion(),
                 // version needed to extract       2 bytes
-                $entry->getVersionNeededToExtract(),
+                ($entry->getExtractedOS() << 8) | $entry->getVersionNeededToExtract(),
                 // general purpose bit flag        2 bytes
                 $entry->getGeneralPurposeBitFlags(),
                 // compression method              2 bytes
@@ -442,7 +445,7 @@ class ZipOutputStream implements ZipOutputStreamInterface
                 // disk number start               2 bytes
                 0,
                 // internal file attributes        2 bytes
-                0,
+                $entry->getInternalAttributes(),
                 // external file attributes        4 bytes
                 $entry->getExternalAttributes(),
                 // relative offset of local header 4 bytes
@@ -468,75 +471,99 @@ class ZipOutputStream implements ZipOutputStreamInterface
      */
     protected function writeEndOfCentralDirectoryRecord($centralDirectoryOffset)
     {
-        $centralDirectoryOffset = (int) $centralDirectoryOffset;
-        $centralDirectoryEntriesCount = \count($this->zipModel);
+        $cdEntriesCount = \count($this->zipModel);
+
         $position = ftell($this->out);
         $centralDirectorySize = $position - $centralDirectoryOffset;
-        $centralDirectoryEntriesZip64 = $centralDirectoryEntriesCount > 0xffff;
-        $centralDirectorySizeZip64 = $centralDirectorySize > 0xffffffff;
-        $centralDirectoryOffsetZip64 = $centralDirectoryOffset > 0xffffffff;
-        $centralDirectoryEntries16 = $centralDirectoryEntriesZip64 ? 0xffff : $centralDirectoryEntriesCount;
-        $centralDirectorySize32 = $centralDirectorySizeZip64 ? 0xffffffff : $centralDirectorySize;
-        $centralDirectoryOffset32 = $centralDirectoryOffsetZip64 ? 0xffffffff : $centralDirectoryOffset;
-        $zip64 // ZIP64 extensions?
-            = $centralDirectoryEntriesZip64
-            || $centralDirectorySizeZip64
-            || $centralDirectoryOffsetZip64;
 
-        if ($zip64) {
-            // [zip64 end of central directory record]
-            // relative offset of the zip64 end of central directory record
-            $zip64EndOfCentralDirectoryOffset = $position;
-            // zip64 end of central dir
+        $cdEntriesZip64 = $cdEntriesCount > 0xFFFF;
+        $cdSizeZip64 = $centralDirectorySize > 0xFFFFFFFF;
+        $cdOffsetZip64 = $centralDirectoryOffset > 0xFFFFFFFF;
+
+        $zip64Required = $cdEntriesZip64 || $cdSizeZip64 || $cdOffsetZip64;
+
+        if ($zip64Required) {
+            $zip64EndOfCentralDirectoryOffset = ftell($this->out);
+
+            // find max software version, version needed to extract and most common platform
+            list($softwareVersion, $versionNeededToExtract) = array_reduce(
+                $this->zipModel->getEntries(),
+                static function (array $carry, ZipEntry $entry) {
+                    $carry[0] = max($carry[0], $entry->getSoftwareVersion() & 0xFF);
+                    $carry[1] = max($carry[1], $entry->getVersionNeededToExtract() & 0xFF);
+
+                    return $carry;
+                },
+                [10 /* simple file min ver */, 45 /* zip64 ext min ver */]
+            );
+
+            $createdOS = $extractedOS = ZipEntry::PLATFORM_FAT;
+            $versionMadeBy = ($createdOS << 8) | max($softwareVersion, 45 /* zip64 ext min ver */);
+            $versionExtractedBy = ($extractedOS << 8) | max($versionNeededToExtract, 45 /* zip64 ext min ver */);
+
             // signature                       4 bytes  (0x06064b50)
-            fwrite($this->out, pack('V', EndOfCentralDirectory::ZIP64_END_OF_CENTRAL_DIRECTORY_RECORD_SIG));
+            fwrite($this->out, pack('V', EndOfCentralDirectory::ZIP64_END_OF_CD_RECORD_SIG));
             // size of zip64 end of central
             // directory record                8 bytes
+            fwrite($this->out, PackUtil::packLongLE(44));
             fwrite(
                 $this->out,
-                PackUtil::packLongLE(EndOfCentralDirectory::ZIP64_END_OF_CENTRAL_DIRECTORY_RECORD_MIN_LEN - 12)
+                pack(
+                    'vvVV',
+                    // version made by                 2 bytes
+                    $versionMadeBy & 0xFFFF,
+                    // version needed to extract       2 bytes
+                    $versionExtractedBy & 0xFFFF,
+                    // number of this disk             4 bytes
+                    0,
+                    // number of the disk with the
+                    // start of the central directory  4 bytes
+                    0
+                )
             );
-            // version made by                 2 bytes
-            // version needed to extract       2 bytes
-            //                                 due to potential use of BZIP2 compression
-            // number of this disk             4 bytes
-            // number of the disk with the
-            // start of the central directory  4 bytes
-            fwrite($this->out, pack('vvVV', 63, 46, 0, 0));
             // total number of entries in the
             // central directory on this disk  8 bytes
-            fwrite($this->out, PackUtil::packLongLE($centralDirectoryEntriesCount));
+            fwrite($this->out, PackUtil::packLongLE($cdEntriesCount));
             // total number of entries in the
             // central directory               8 bytes
-            fwrite($this->out, PackUtil::packLongLE($centralDirectoryEntriesCount));
+            fwrite($this->out, PackUtil::packLongLE($cdEntriesCount));
             // size of the central directory   8 bytes
             fwrite($this->out, PackUtil::packLongLE($centralDirectorySize));
             // offset of start of central
             // directory with respect to
             // the starting disk number        8 bytes
             fwrite($this->out, PackUtil::packLongLE($centralDirectoryOffset));
-            // zip64 extensible data sector    (variable size)
 
-            // [zip64 end of central directory locator]
-            // signature                       4 bytes  (0x07064b50)
-            // number of the disk with the
-            // start of the zip64 end of
-            // central directory               4 bytes
-            fwrite($this->out, pack('VV', EndOfCentralDirectory::ZIP64_END_OF_CENTRAL_DIRECTORY_LOCATOR_SIG, 0));
+            // write zip64 end of central directory locator
+            fwrite(
+                $this->out,
+                pack(
+                    'VV',
+                    // zip64 end of central dir locator
+                    // signature                       4 bytes  (0x07064b50)
+                    EndOfCentralDirectory::ZIP64_END_OF_CD_LOCATOR_SIG,
+                    // number of the disk with the
+                    // start of the zip64 end of
+                    // central directory               4 bytes
+                    0
+                )
+            );
             // relative offset of the zip64
             // end of central directory record 8 bytes
             fwrite($this->out, PackUtil::packLongLE($zip64EndOfCentralDirectoryOffset));
             // total number of disks           4 bytes
             fwrite($this->out, pack('V', 1));
         }
+
         $comment = $this->zipModel->getArchiveComment();
-        $commentLength = \strlen($comment);
+        $commentLength = $comment !== null ? \strlen($comment) : 0;
+
         fwrite(
             $this->out,
             pack(
                 'VvvvvVVv',
                 // end of central dir signature    4 bytes  (0x06054b50)
-                EndOfCentralDirectory::END_OF_CENTRAL_DIRECTORY_RECORD_SIG,
+                EndOfCentralDirectory::END_OF_CD_SIG,
                 // number of this disk             2 bytes
                 0,
                 // number of the disk with the
@@ -544,16 +571,16 @@ class ZipOutputStream implements ZipOutputStreamInterface
                 0,
                 // total number of entries in the
                 // central directory on this disk  2 bytes
-                $centralDirectoryEntries16,
+                $cdEntriesZip64 ? 0xFFFF : $cdEntriesCount,
                 // total number of entries in
                 // the central directory           2 bytes
-                $centralDirectoryEntries16,
+                $cdEntriesZip64 ? 0xFFFF : $cdEntriesCount,
                 // size of the central directory   4 bytes
-                $centralDirectorySize32,
+                $cdSizeZip64 ? 0xFFFFFFFF : $centralDirectorySize,
                 // offset of start of central
                 // directory with respect to
                 // the starting disk number        4 bytes
-                $centralDirectoryOffset32,
+                $cdOffsetZip64 ? 0xFFFFFFFF : $centralDirectoryOffset,
                 // .ZIP file comment length        2 bytes
                 $commentLength
             )

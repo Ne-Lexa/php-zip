@@ -234,8 +234,8 @@ class ZipFile implements ZipFileInterface
      * @param string      $entryName
      * @param string|null $comment
      *
-     * @throws ZipEntryNotFoundException
      * @throws ZipException
+     * @throws ZipEntryNotFoundException
      *
      * @return ZipFileInterface
      */
@@ -277,8 +277,8 @@ class ZipFile implements ZipFileInterface
      *
      * @param string|ZipEntry $entryName
      *
-     * @throws ZipException
      * @throws ZipEntryNotFoundException
+     * @throws ZipException
      *
      * @return ZipInfo
      */
@@ -398,9 +398,9 @@ class ZipFile implements ZipFileInterface
      *
      * @return ZipFileInterface
      *
-     * @see ZipFileInterface::METHOD_STORED
-     * @see ZipFileInterface::METHOD_DEFLATED
-     * @see ZipFileInterface::METHOD_BZIP2
+     * @see ZipFile::METHOD_STORED
+     * @see ZipFile::METHOD_DEFLATED
+     * @see ZipFile::METHOD_BZIP2
      */
     public function addFromString($localName, $contents, $compressionMethod = null)
     {
@@ -454,9 +454,9 @@ class ZipFile implements ZipFileInterface
      *
      * @return ZipFileInterface
      *
-     * @see ZipFileInterface::METHOD_STORED
-     * @see ZipFileInterface::METHOD_DEFLATED
-     * @see ZipFileInterface::METHOD_BZIP2
+     * @see ZipFile::METHOD_STORED
+     * @see ZipFile::METHOD_DEFLATED
+     * @see ZipFile::METHOD_BZIP2
      */
     public function addFile($filename, $localName = null, $compressionMethod = null)
     {
@@ -520,9 +520,9 @@ class ZipFile implements ZipFileInterface
      *
      * @return ZipFileInterface
      *
-     * @see ZipFileInterface::METHOD_STORED
-     * @see ZipFileInterface::METHOD_DEFLATED
-     * @see ZipFileInterface::METHOD_BZIP2
+     * @see ZipFile::METHOD_STORED
+     * @see ZipFile::METHOD_DEFLATED
+     * @see ZipFile::METHOD_BZIP2
      */
     public function addFromStream($stream, $localName, $compressionMethod = null)
     {
@@ -655,9 +655,9 @@ class ZipFile implements ZipFileInterface
      *
      * @return ZipFileInterface
      *
-     * @see ZipFileInterface::METHOD_STORED
-     * @see ZipFileInterface::METHOD_DEFLATED
-     * @see ZipFileInterface::METHOD_BZIP2
+     * @see ZipFile::METHOD_STORED
+     * @see ZipFile::METHOD_DEFLATED
+     * @see ZipFile::METHOD_BZIP2
      */
     public function addDirRecursive($inputDir, $localPath = '/', $compressionMethod = null)
     {
@@ -693,9 +693,9 @@ class ZipFile implements ZipFileInterface
      *
      * @return ZipFileInterface
      *
-     * @see ZipFileInterface::METHOD_STORED
-     * @see ZipFileInterface::METHOD_DEFLATED
-     * @see ZipFileInterface::METHOD_BZIP2
+     * @see ZipFile::METHOD_STORED
+     * @see ZipFile::METHOD_DEFLATED
+     * @see ZipFile::METHOD_BZIP2
      */
     public function addFilesFromIterator(
         \Iterator $iterator,
@@ -1091,10 +1091,10 @@ class ZipFile implements ZipFileInterface
      *
      * @return ZipFileInterface
      *
-     * @see ZipFileInterface::LEVEL_DEFAULT_COMPRESSION
-     * @see ZipFileInterface::LEVEL_SUPER_FAST
-     * @see ZipFileInterface::LEVEL_FAST
-     * @see ZipFileInterface::LEVEL_BEST_COMPRESSION
+     * @see ZipFile::LEVEL_DEFAULT_COMPRESSION
+     * @see ZipFile::LEVEL_SUPER_FAST
+     * @see ZipFile::LEVEL_FAST
+     * @see ZipFile::LEVEL_BEST_COMPRESSION
      */
     public function setCompressionLevel($compressionLevel = self::LEVEL_DEFAULT_COMPRESSION)
     {
@@ -1123,16 +1123,16 @@ class ZipFile implements ZipFileInterface
      *
      * @return ZipFileInterface
      *
-     * @see ZipFileInterface::LEVEL_DEFAULT_COMPRESSION
-     * @see ZipFileInterface::LEVEL_SUPER_FAST
-     * @see ZipFileInterface::LEVEL_FAST
-     * @see ZipFileInterface::LEVEL_BEST_COMPRESSION
+     * @see ZipFile::LEVEL_DEFAULT_COMPRESSION
+     * @see ZipFile::LEVEL_SUPER_FAST
+     * @see ZipFile::LEVEL_FAST
+     * @see ZipFile::LEVEL_BEST_COMPRESSION
      */
     public function setCompressionLevelEntry($entryName, $compressionLevel)
     {
         if ($compressionLevel !== null) {
-            if ($compressionLevel < ZipFileInterface::LEVEL_DEFAULT_COMPRESSION ||
-                $compressionLevel > ZipFileInterface::LEVEL_BEST_COMPRESSION
+            if ($compressionLevel < self::LEVEL_DEFAULT_COMPRESSION ||
+                $compressionLevel > self::LEVEL_BEST_COMPRESSION
             ) {
                 throw new InvalidArgumentException(
                     'Invalid compression level. Minimum level ' .
@@ -1158,9 +1158,9 @@ class ZipFile implements ZipFileInterface
      *
      * @return ZipFileInterface
      *
-     * @see ZipFileInterface::METHOD_STORED
-     * @see ZipFileInterface::METHOD_DEFLATED
-     * @see ZipFileInterface::METHOD_BZIP2
+     * @see ZipFile::METHOD_STORED
+     * @see ZipFile::METHOD_DEFLATED
+     * @see ZipFile::METHOD_BZIP2
      */
     public function setCompressionMethodEntry($entryName, $compressionMethod)
     {
@@ -1204,7 +1204,7 @@ class ZipFile implements ZipFileInterface
      *
      * @return ZipFileInterface
      *
-     * @deprecated using ZipFileInterface::setReadPassword()
+     * @deprecated using ZipFile::setReadPassword()
      */
     public function withReadPassword($password)
     {
@@ -1254,7 +1254,7 @@ class ZipFile implements ZipFileInterface
      *
      * @return ZipFileInterface
      *
-     * @deprecated using ZipFileInterface::setPassword()
+     * @deprecated using ZipFile::setPassword()
      */
     public function withNewPassword($password, $encryptionMethod = self::ENCRYPTION_METHOD_WINZIP_AES_256)
     {
@@ -1311,7 +1311,7 @@ class ZipFile implements ZipFileInterface
      *
      * @return ZipFileInterface
      *
-     * @deprecated using ZipFileInterface::disableEncryption()
+     * @deprecated using ZipFile::disableEncryption()
      */
     public function withoutPassword()
     {

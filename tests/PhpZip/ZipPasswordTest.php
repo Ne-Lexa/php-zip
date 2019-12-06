@@ -22,11 +22,15 @@ class ZipPasswordTest extends ZipFileAddDirTest
      * Test archive password.
      *
      * @throws ZipException
+     * @noinspection PhpRedundantCatchClauseInspection
      */
     public function testSetPassword()
     {
         if (\PHP_INT_SIZE === 4) { // php 32 bit
-            $this->setExpectedException(RuntimeException::class, 'Traditional PKWARE Encryption is not supported in 32-bit PHP.');
+            $this->setExpectedException(
+                RuntimeException::class,
+                'Traditional PKWARE Encryption is not supported in 32-bit PHP.'
+            );
         }
 
         $password = base64_encode(CryptoUtil::randomBytes(100));
@@ -35,7 +39,7 @@ class ZipPasswordTest extends ZipFileAddDirTest
         // create encryption password with ZipCrypto
         $zipFile = new ZipFile();
         $zipFile->addDir(__DIR__);
-        $zipFile->setPassword($password, ZipFileInterface::ENCRYPTION_METHOD_TRADITIONAL);
+        $zipFile->setPassword($password, ZipFile::ENCRYPTION_METHOD_TRADITIONAL);
         $zipFile->saveAsFile($this->outputFilename);
         $zipFile->close();
 
@@ -66,7 +70,7 @@ class ZipPasswordTest extends ZipFileAddDirTest
         }
 
         // change encryption method to WinZip Aes and update file
-        $zipFile->setPassword($password, ZipFileInterface::ENCRYPTION_METHOD_WINZIP_AES);
+        $zipFile->setPassword($password, ZipFile::ENCRYPTION_METHOD_WINZIP_AES);
         $zipFile->saveAsFile($this->outputFilename);
         $zipFile->close();
 
@@ -121,14 +125,17 @@ class ZipPasswordTest extends ZipFileAddDirTest
     public function testTraditionalEncryption()
     {
         if (\PHP_INT_SIZE === 4) { // php 32 bit
-            $this->setExpectedException(RuntimeException::class, 'Traditional PKWARE Encryption is not supported in 32-bit PHP.');
+            $this->setExpectedException(
+                RuntimeException::class,
+                'Traditional PKWARE Encryption is not supported in 32-bit PHP.'
+            );
         }
 
         $password = base64_encode(CryptoUtil::randomBytes(50));
 
         $zip = new ZipFile();
         $zip->addDirRecursive($this->outputDirname);
-        $zip->setPassword($password, ZipFileInterface::ENCRYPTION_METHOD_TRADITIONAL);
+        $zip->setPassword($password, ZipFile::ENCRYPTION_METHOD_TRADITIONAL);
         $zip->saveAsFile($this->outputFilename);
         $zip->close();
 
@@ -187,10 +194,10 @@ class ZipPasswordTest extends ZipFileAddDirTest
     public function winZipKeyStrengthProvider()
     {
         return [
-            [ZipFileInterface::ENCRYPTION_METHOD_WINZIP_AES_128, 128],
-            [ZipFileInterface::ENCRYPTION_METHOD_WINZIP_AES_192, 192],
-            [ZipFileInterface::ENCRYPTION_METHOD_WINZIP_AES, 256],
-            [ZipFileInterface::ENCRYPTION_METHOD_WINZIP_AES_256, 256],
+            [ZipFile::ENCRYPTION_METHOD_WINZIP_AES_128, 128],
+            [ZipFile::ENCRYPTION_METHOD_WINZIP_AES_192, 192],
+            [ZipFile::ENCRYPTION_METHOD_WINZIP_AES, 256],
+            [ZipFile::ENCRYPTION_METHOD_WINZIP_AES_256, 256],
         ];
     }
 
@@ -201,7 +208,10 @@ class ZipPasswordTest extends ZipFileAddDirTest
     public function testEncryptionEntries()
     {
         if (\PHP_INT_SIZE === 4) { // php 32 bit
-            $this->setExpectedException(RuntimeException::class, 'Traditional PKWARE Encryption is not supported in 32-bit PHP.');
+            $this->setExpectedException(
+                RuntimeException::class,
+                'Traditional PKWARE Encryption is not supported in 32-bit PHP.'
+            );
         }
 
         $password1 = '353442434235424234';
@@ -209,8 +219,8 @@ class ZipPasswordTest extends ZipFileAddDirTest
 
         $zip = new ZipFile();
         $zip->addDir($this->outputDirname);
-        $zip->setPasswordEntry('.hidden', $password1, ZipFileInterface::ENCRYPTION_METHOD_TRADITIONAL);
-        $zip->setPasswordEntry('text file.txt', $password2, ZipFileInterface::ENCRYPTION_METHOD_WINZIP_AES);
+        $zip->setPasswordEntry('.hidden', $password1, ZipFile::ENCRYPTION_METHOD_TRADITIONAL);
+        $zip->setPasswordEntry('text file.txt', $password2, ZipFile::ENCRYPTION_METHOD_WINZIP_AES);
         $zip->saveAsFile($this->outputFilename);
         $zip->close();
 
@@ -248,7 +258,10 @@ class ZipPasswordTest extends ZipFileAddDirTest
     public function testEncryptionEntriesWithDefaultPassword()
     {
         if (\PHP_INT_SIZE === 4) { // php 32 bit
-            $this->setExpectedException(RuntimeException::class, 'Traditional PKWARE Encryption is not supported in 32-bit PHP.');
+            $this->setExpectedException(
+                RuntimeException::class,
+                'Traditional PKWARE Encryption is not supported in 32-bit PHP.'
+            );
         }
 
         $password1 = '353442434235424234';
@@ -258,8 +271,8 @@ class ZipPasswordTest extends ZipFileAddDirTest
         $zip = new ZipFile();
         $zip->addDir($this->outputDirname);
         $zip->setPassword($defaultPassword);
-        $zip->setPasswordEntry('.hidden', $password1, ZipFileInterface::ENCRYPTION_METHOD_TRADITIONAL);
-        $zip->setPasswordEntry('text file.txt', $password2, ZipFileInterface::ENCRYPTION_METHOD_WINZIP_AES);
+        $zip->setPasswordEntry('.hidden', $password1, ZipFile::ENCRYPTION_METHOD_TRADITIONAL);
+        $zip->setPasswordEntry('text file.txt', $password2, ZipFile::ENCRYPTION_METHOD_WINZIP_AES);
         $zip->saveAsFile($this->outputFilename);
         $zip->close();
 
@@ -350,7 +363,7 @@ class ZipPasswordTest extends ZipFileAddDirTest
         $this->setExpectedException(ZipException::class, 'Invalid encryption method');
 
         $zipFile = new ZipFile();
-        $zipFile->addFromString('file', 'content', ZipFileInterface::METHOD_STORED);
+        $zipFile->addFromString('file', 'content', ZipFile::METHOD_STORED);
         $zipFile->setPasswordEntry('file', 'pass', 99);
     }
 

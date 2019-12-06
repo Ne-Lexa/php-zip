@@ -233,9 +233,9 @@ interface ZipFileInterface extends \Countable, \ArrayAccess, \Iterator
      *
      * @return ZipFileInterface
      *
-     * @see ZipFileInterface::METHOD_STORED
-     * @see ZipFileInterface::METHOD_DEFLATED
-     * @see ZipFileInterface::METHOD_BZIP2
+     * @see ZipFile::METHOD_STORED
+     * @see ZipFile::METHOD_DEFLATED
+     * @see ZipFile::METHOD_BZIP2
      */
     public function addFromString($localName, $contents, $compressionMethod = null);
 
@@ -250,9 +250,9 @@ interface ZipFileInterface extends \Countable, \ArrayAccess, \Iterator
      *
      * @return ZipFileInterface
      *
-     * @see ZipFileInterface::METHOD_STORED
-     * @see ZipFileInterface::METHOD_DEFLATED
-     * @see ZipFileInterface::METHOD_BZIP2
+     * @see ZipFile::METHOD_STORED
+     * @see ZipFile::METHOD_DEFLATED
+     * @see ZipFile::METHOD_BZIP2
      */
     public function addFile($filename, $localName = null, $compressionMethod = null);
 
@@ -267,9 +267,9 @@ interface ZipFileInterface extends \Countable, \ArrayAccess, \Iterator
      *
      * @return ZipFileInterface
      *
-     * @see ZipFileInterface::METHOD_STORED
-     * @see ZipFileInterface::METHOD_DEFLATED
-     * @see ZipFileInterface::METHOD_BZIP2
+     * @see ZipFile::METHOD_STORED
+     * @see ZipFile::METHOD_DEFLATED
+     * @see ZipFile::METHOD_BZIP2
      */
     public function addFromStream($stream, $localName, $compressionMethod = null);
 
@@ -306,9 +306,9 @@ interface ZipFileInterface extends \Countable, \ArrayAccess, \Iterator
      *
      * @return ZipFileInterface
      *
-     * @see ZipFileInterface::METHOD_STORED
-     * @see ZipFileInterface::METHOD_DEFLATED
-     * @see ZipFileInterface::METHOD_BZIP2
+     * @see ZipFile::METHOD_STORED
+     * @see ZipFile::METHOD_DEFLATED
+     * @see ZipFile::METHOD_BZIP2
      */
     public function addDirRecursive($inputDir, $localPath = '/', $compressionMethod = null);
 
@@ -323,9 +323,9 @@ interface ZipFileInterface extends \Countable, \ArrayAccess, \Iterator
      *
      * @return ZipFileInterface
      *
-     * @see ZipFileInterface::METHOD_STORED
-     * @see ZipFileInterface::METHOD_DEFLATED
-     * @see ZipFileInterface::METHOD_BZIP2
+     * @see ZipFile::METHOD_STORED
+     * @see ZipFile::METHOD_DEFLATED
+     * @see ZipFile::METHOD_BZIP2
      */
     public function addFilesFromIterator(\Iterator $iterator, $localPath = '/', $compressionMethod = null);
 
@@ -456,10 +456,10 @@ interface ZipFileInterface extends \Countable, \ArrayAccess, \Iterator
      *
      * @return ZipFileInterface
      *
-     * @see ZipFileInterface::LEVEL_SUPER_FAST
-     * @see ZipFileInterface::LEVEL_FAST
-     * @see ZipFileInterface::LEVEL_BEST_COMPRESSION
-     * @see ZipFileInterface::LEVEL_DEFAULT_COMPRESSION
+     * @see ZipFile::LEVEL_SUPER_FAST
+     * @see ZipFile::LEVEL_FAST
+     * @see ZipFile::LEVEL_BEST_COMPRESSION
+     * @see ZipFile::LEVEL_DEFAULT_COMPRESSION
      */
     public function setCompressionLevel($compressionLevel = self::LEVEL_DEFAULT_COMPRESSION);
 
@@ -471,10 +471,10 @@ interface ZipFileInterface extends \Countable, \ArrayAccess, \Iterator
      *
      * @return ZipFileInterface
      *
-     * @see ZipFileInterface::LEVEL_DEFAULT_COMPRESSION
-     * @see ZipFileInterface::LEVEL_SUPER_FAST
-     * @see ZipFileInterface::LEVEL_FAST
-     * @see ZipFileInterface::LEVEL_BEST_COMPRESSION
+     * @see ZipFile::LEVEL_DEFAULT_COMPRESSION
+     * @see ZipFile::LEVEL_SUPER_FAST
+     * @see ZipFile::LEVEL_FAST
+     * @see ZipFile::LEVEL_BEST_COMPRESSION
      */
     public function setCompressionLevelEntry($entryName, $compressionLevel);
 
@@ -486,9 +486,9 @@ interface ZipFileInterface extends \Countable, \ArrayAccess, \Iterator
      *
      * @return ZipFileInterface
      *
-     * @see ZipFileInterface::METHOD_STORED
-     * @see ZipFileInterface::METHOD_DEFLATED
-     * @see ZipFileInterface::METHOD_BZIP2
+     * @see ZipFile::METHOD_STORED
+     * @see ZipFile::METHOD_DEFLATED
+     * @see ZipFile::METHOD_BZIP2
      */
     public function setCompressionMethodEntry($entryName, $compressionMethod);
 
@@ -510,7 +510,7 @@ interface ZipFileInterface extends \Countable, \ArrayAccess, \Iterator
      *
      * @return ZipFileInterface
      *
-     * @deprecated using ZipFileInterface::setReadPassword()
+     * @deprecated using ZipFile::setReadPassword()
      */
     public function withReadPassword($password);
 
@@ -541,7 +541,7 @@ interface ZipFileInterface extends \Countable, \ArrayAccess, \Iterator
      *
      * @return ZipFileInterface
      *
-     * @deprecated using ZipFileInterface::setPassword()
+     * @deprecated using ZipFile::setPassword()
      */
     public function withNewPassword($password, $encryptionMethod = self::ENCRYPTION_METHOD_WINZIP_AES_256);
 
@@ -571,7 +571,7 @@ interface ZipFileInterface extends \Countable, \ArrayAccess, \Iterator
      *
      * @return ZipFileInterface
      *
-     * @deprecated using ZipFileInterface::disableEncryption()
+     * @deprecated using ZipFile::disableEncryption()
      */
     public function withoutPassword();
 

@@ -7,7 +7,7 @@ use PhpZip\Exception\ZipEntryNotFoundException;
 use PhpZip\Exception\ZipException;
 use PhpZip\Model\Entry\ZipChangesEntry;
 use PhpZip\Model\Entry\ZipSourceEntry;
-use PhpZip\ZipFileInterface;
+use PhpZip\ZipFile;
 
 /**
  * Zip Model.
@@ -203,8 +203,8 @@ class ZipModel implements \Countable
     /**
      * @param string|ZipEntry $entry
      *
-     * @throws ZipException
      * @throws ZipEntryNotFoundException
+     * @throws ZipException
      *
      * @return ZipChangesEntry|ZipEntry
      */
@@ -352,7 +352,7 @@ class ZipModel implements \Countable
     /**
      * @param int $encryptionMethod
      */
-    public function setEncryptionMethod($encryptionMethod = ZipFileInterface::ENCRYPTION_METHOD_WINZIP_AES_256)
+    public function setEncryptionMethod($encryptionMethod = ZipFile::ENCRYPTION_METHOD_WINZIP_AES_256)
     {
         $this->matcher()->all()->setEncryptionMethod($encryptionMethod);
     }

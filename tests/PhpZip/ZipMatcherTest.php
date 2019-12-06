@@ -38,8 +38,16 @@ class ZipMatcherTest extends TestCase
         $matcher->match('~^[2][1-5]|[3][6-9]|40$~s');
         static::assertCount(10, $matcher);
         $actualMatches = [
-            '21', '22', '23', '24', '25',
-            '36', '37', '38', '39', '40',
+            '21',
+            '22',
+            '23',
+            '24',
+            '25',
+            '36',
+            '37',
+            '38',
+            '39',
+            '40',
         ];
         static::assertSame($matcher->getMatches(), $actualMatches);
         $matcher->setPassword('qwerty');

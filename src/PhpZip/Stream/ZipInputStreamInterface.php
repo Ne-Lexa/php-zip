@@ -20,9 +20,15 @@ interface ZipInputStreamInterface
     public function readZip();
 
     /**
+     * Read central directory entry.
+     *
+     * @param resource $stream
+     *
+     * @throws ZipException
+     *
      * @return ZipEntry
      */
-    public function readEntry();
+    public function readCentralDirectoryEntry($stream);
 
     /**
      * @param ZipEntry $entry

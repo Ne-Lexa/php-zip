@@ -127,7 +127,10 @@ class PhpZipExtResourceTest extends ZipTestCase
     public function testBug70752()
     {
         if (\PHP_INT_SIZE === 4) { // php 32 bit
-            $this->setExpectedException(RuntimeException::class, 'Traditional PKWARE Encryption is not supported in 32-bit PHP.');
+            $this->setExpectedException(
+                RuntimeException::class,
+                'Traditional PKWARE Encryption is not supported in 32-bit PHP.'
+            );
         } else { // php 64 bit
             $this->setExpectedException(
                 ZipAuthenticationException::class,
@@ -163,19 +166,11 @@ class PhpZipExtResourceTest extends ZipTestCase
      */
     public function testPecl12414()
     {
-        $filename = __DIR__ . '/php-zip-ext-test-resources/pecl12414.zip';
+        $this->setExpectedException(ZipException::class, 'Corrupt zip file. Cannot read central dir entry.');
 
-        $entryName = 'MYLOGOV2.GFX';
+        $filename = __DIR__ . '/php-zip-ext-test-resources/pecl12414.zip';
 
         $zipFile = new ZipFile();
         $zipFile->openFile($filename);
-
-        $info = $zipFile->getEntryInfo($entryName);
-        static::assertTrue($info->getSize() > 0);
-
-        $contents = $zipFile[$entryName];
-        static::assertSame(\strlen($contents), $info->getSize());
-
-        $zipFile->close();
     }
 }

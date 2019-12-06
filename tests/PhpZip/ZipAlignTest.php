@@ -54,7 +54,7 @@ class ZipAlignTest extends ZipTestCase
             $zipFile->addFromString(
                 'entry' . $i . '.txt',
                 CryptoUtil::randomBytes(mt_rand(100, 4096)),
-                ZipFileInterface::METHOD_STORED
+                ZipFile::METHOD_STORED
             );
         }
         $zipFile->saveAsFile($this->outputFilename);
@@ -95,7 +95,7 @@ class ZipAlignTest extends ZipTestCase
             $zipFile->addFromString(
                 'entry' . $i . '.txt',
                 CryptoUtil::randomBytes(mt_rand(100, 4096)),
-                ZipFileInterface::METHOD_STORED
+                ZipFile::METHOD_STORED
             );
         }
         $zipFile->setZipAlign(4);
@@ -123,7 +123,7 @@ class ZipAlignTest extends ZipTestCase
             $zipFile->addFromString(
                 'entry' . $i . '.txt',
                 CryptoUtil::randomBytes(mt_rand(100, 4096)),
-                ZipFileInterface::METHOD_STORED
+                ZipFile::METHOD_STORED
             );
         }
         $zipFile->saveAsFile($this->outputFilename);
@@ -149,8 +149,8 @@ class ZipAlignTest extends ZipTestCase
                 'entry_new_' . ($isStored ? 'stored' : 'deflated') . '_' . $i . '.txt',
                 CryptoUtil::randomBytes(mt_rand(100, 4096)),
                 $isStored ?
-                    ZipFileInterface::METHOD_STORED :
-                    ZipFileInterface::METHOD_DEFLATED
+                    ZipFile::METHOD_STORED :
+                    ZipFile::METHOD_DEFLATED
             );
         }
         $zipFile->setZipAlign(4);

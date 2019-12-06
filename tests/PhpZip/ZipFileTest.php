@@ -909,12 +909,12 @@ class ZipFileTest extends ZipTestCase
         $entries = [
             '1' => [
                 'data' => CryptoUtil::randomBytes(255),
-                'method' => ZipFileInterface::METHOD_STORED,
+                'method' => ZipFile::METHOD_STORED,
                 'expected' => 'No compression',
             ],
             '2' => [
                 'data' => CryptoUtil::randomBytes(255),
-                'method' => ZipFileInterface::METHOD_DEFLATED,
+                'method' => ZipFile::METHOD_DEFLATED,
                 'expected' => 'Deflate',
             ],
         ];
@@ -922,7 +922,7 @@ class ZipFileTest extends ZipTestCase
         if (\extension_loaded('bz2')) {
             $entries['3'] = [
                 'data' => CryptoUtil::randomBytes(255),
-                'method' => ZipFileInterface::METHOD_BZIP2,
+                'method' => ZipFile::METHOD_BZIP2,
                 'expected' => 'Bzip2',
             ];
         }
@@ -938,7 +938,7 @@ class ZipFileTest extends ZipTestCase
         static::assertCorrectZipArchive($this->outputFilename);
 
         $zipFile->openFile($this->outputFilename);
-        $zipFile->setCompressionLevel(ZipFileInterface::LEVEL_BEST_COMPRESSION);
+        $zipFile->setCompressionLevel(ZipFile::LEVEL_BEST_COMPRESSION);
         $zipAllInfo = $zipFile->getAllInfo();
 
         foreach ($zipAllInfo as $entryName => $info) {
@@ -1693,14 +1693,14 @@ class ZipFileTest extends ZipTestCase
             $files['file' . $i . '.txt'] = CryptoUtil::randomBytes(255);
         }
 
-        $methods = [ZipFileInterface::METHOD_STORED, ZipFileInterface::METHOD_DEFLATED];
+        $methods = [ZipFile::METHOD_STORED, ZipFile::METHOD_DEFLATED];
 
         if (\extension_loaded('bz2')) {
-            $methods[] = ZipFileInterface::METHOD_BZIP2;
+            $methods[] = ZipFile::METHOD_BZIP2;
         }
 
         $zipFile = new ZipFile();
-        $zipFile->setCompressionLevel(ZipFileInterface::LEVEL_BEST_SPEED);
+        $zipFile->setCompressionLevel(ZipFile::LEVEL_BEST_SPEED);
 
         foreach ($files as $entryName => $content) {
             $zipFile->addFromString($entryName, $content, $methods[array_rand($methods)]);
@@ -1985,14 +1985,14 @@ class ZipFileTest extends ZipTestCase
     {
         $zipFile = new ZipFile();
         $zipFile
-            ->addFromString('file', 'content', ZipFileInterface::METHOD_DEFLATED)
-            ->setCompressionLevelEntry('file', ZipFileInterface::LEVEL_BEST_COMPRESSION)
-            ->addFromString('file2', 'content', ZipFileInterface::METHOD_DEFLATED)
-            ->setCompressionLevelEntry('file2', ZipFileInterface::LEVEL_FAST)
-            ->addFromString('file3', 'content', ZipFileInterface::METHOD_DEFLATED)
-            ->setCompressionLevelEntry('file3', ZipFileInterface::LEVEL_SUPER_FAST)
-            ->addFromString('file4', 'content', ZipFileInterface::METHOD_DEFLATED)
-            ->setCompressionLevelEntry('file4', ZipFileInterface::LEVEL_DEFAULT_COMPRESSION)
+            ->addFromString('file', 'content', ZipFile::METHOD_DEFLATED)
+            ->setCompressionLevelEntry('file', ZipFile::LEVEL_BEST_COMPRESSION)
+            ->addFromString('file2', 'content', ZipFile::METHOD_DEFLATED)
+            ->setCompressionLevelEntry('file2', ZipFile::LEVEL_FAST)
+            ->addFromString('file3', 'content', ZipFile::METHOD_DEFLATED)
+            ->setCompressionLevelEntry('file3', ZipFile::LEVEL_SUPER_FAST)
+            ->addFromString('file4', 'content', ZipFile::METHOD_DEFLATED)
+            ->setCompressionLevelEntry('file4', ZipFile::LEVEL_DEFAULT_COMPRESSION)
             ->saveAsFile($this->outputFilename)
             ->close()
         ;
@@ -2003,22 +2003,22 @@ class ZipFileTest extends ZipTestCase
         static::assertSame(
             $zipFile->getEntryInfo('file')
                 ->getCompressionLevel(),
-            ZipFileInterface::LEVEL_BEST_COMPRESSION
+            ZipFile::LEVEL_BEST_COMPRESSION
         );
         static::assertSame(
             $zipFile->getEntryInfo('file2')
                 ->getCompressionLevel(),
-            ZipFileInterface::LEVEL_FAST
+            ZipFile::LEVEL_FAST
         );
         static::assertSame(
             $zipFile->getEntryInfo('file3')
                 ->getCompressionLevel(),
-            ZipFileInterface::LEVEL_SUPER_FAST
+            ZipFile::LEVEL_SUPER_FAST
         );
         static::assertSame(
             $zipFile->getEntryInfo('file4')
                 ->getCompressionLevel(),
-            ZipFileInterface::LEVEL_DEFAULT_COMPRESSION
+            ZipFile::LEVEL_DEFAULT_COMPRESSION
         );
         $zipFile->close();
     }
@@ -2054,10 +2054,10 @@ class ZipFileTest extends ZipTestCase
     {
         $zipFile = new ZipFile();
         for ($i = 0; $i < 10; $i++) {
-            $zipFile->addFromString('file' . $i, 'content', ZipFileInterface::METHOD_DEFLATED);
+            $zipFile->addFromString('file' . $i, 'content', ZipFile::METHOD_DEFLATED);
         }
         $zipFile
-            ->setCompressionLevel(ZipFileInterface::LEVEL_BEST_SPEED)
+            ->setCompressionLevel(ZipFile::LEVEL_BEST_SPEED)
             ->saveAsFile($this->outputFilename)
             ->close()
         ;
@@ -2069,7 +2069,7 @@ class ZipFileTest extends ZipTestCase
         array_walk(
             $infoList,
             function (ZipInfo $zipInfo) {
-                $this->assertSame($zipInfo->getCompressionLevel(), ZipFileInterface::LEVEL_BEST_SPEED);
+                $this->assertSame($zipInfo->getCompressionLevel(), ZipFile::LEVEL_BEST_SPEED);
             }
         );
         $zipFile->close();
@@ -2082,13 +2082,13 @@ class ZipFileTest extends ZipTestCase
     public function testCompressionMethodEntry()
     {
         $zipFile = new ZipFile();
-        $zipFile->addFromString('file', 'content', ZipFileInterface::METHOD_STORED);
+        $zipFile->addFromString('file', 'content', ZipFile::METHOD_STORED);
         $zipFile->saveAsFile($this->outputFilename);
         $zipFile->close();
 
         $zipFile->openFile($this->outputFilename);
         static::assertSame($zipFile->getEntryInfo('file')->getMethodName(), 'No compression');
-        $zipFile->setCompressionMethodEntry('file', ZipFileInterface::METHOD_DEFLATED);
+        $zipFile->setCompressionMethodEntry('file', ZipFile::METHOD_DEFLATED);
         static::assertSame($zipFile->getEntryInfo('file')->getMethodName(), 'Deflate');
 
         $zipFile->rewrite();
@@ -2103,7 +2103,7 @@ class ZipFileTest extends ZipTestCase
         $this->setExpectedException(ZipUnsupportMethodException::class, 'Unsupported method');
 
         $zipFile = new ZipFile();
-        $zipFile->addFromString('file', 'content', ZipFileInterface::METHOD_STORED);
+        $zipFile->addFromString('file', 'content', ZipFile::METHOD_STORED);
         $zipFile->setCompressionMethodEntry('file', 99);
     }
 

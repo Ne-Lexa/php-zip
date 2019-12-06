@@ -3,7 +3,6 @@
 namespace PhpZip\Model\Entry;
 
 use PhpZip\Exception\InvalidArgumentException;
-use PhpZip\ZipFileInterface;
 
 /**
  * @author Ne-Lexa alexey@nelexa.ru
@@ -48,25 +47,6 @@ class ZipNewEntry extends ZipAbstractEntry
         }
 
         return $this->content;
-    }
-
-    /**
-     * Version needed to extract.
-     *
-     * @return int
-     */
-    public function getVersionNeededToExtract()
-    {
-        $method = $this->getMethod();
-
-        return $method === self::METHOD_WINZIP_AES ? 51 :
-            (
-                $method === ZipFileInterface::METHOD_BZIP2 ? 46 :
-                (
-                    $this->isZip64ExtensionsRequired() ? 45 :
-                    ($method === ZipFileInterface::METHOD_DEFLATED || $this->isDirectory() ? 20 : 10)
-                )
-            );
     }
 
     /**

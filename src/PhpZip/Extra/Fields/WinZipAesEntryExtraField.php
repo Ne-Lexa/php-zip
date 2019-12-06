@@ -4,7 +4,7 @@ namespace PhpZip\Extra\Fields;
 
 use PhpZip\Exception\ZipException;
 use PhpZip\Extra\ExtraField;
-use PhpZip\ZipFileInterface;
+use PhpZip\ZipFile;
 
 /**
  * WinZip AES Extra Field.
@@ -49,9 +49,9 @@ class WinZipAesEntryExtraField implements ExtraField
     ];
 
     protected static $encryptionMethods = [
-        self::KEY_STRENGTH_128BIT => ZipFileInterface::ENCRYPTION_METHOD_WINZIP_AES_128,
-        self::KEY_STRENGTH_192BIT => ZipFileInterface::ENCRYPTION_METHOD_WINZIP_AES_192,
-        self::KEY_STRENGTH_256BIT => ZipFileInterface::ENCRYPTION_METHOD_WINZIP_AES_256,
+        self::KEY_STRENGTH_128BIT => ZipFile::ENCRYPTION_METHOD_WINZIP_AES_128,
+        self::KEY_STRENGTH_192BIT => ZipFile::ENCRYPTION_METHOD_WINZIP_AES_192,
+        self::KEY_STRENGTH_256BIT => ZipFile::ENCRYPTION_METHOD_WINZIP_AES_256,
     ];
 
     /**

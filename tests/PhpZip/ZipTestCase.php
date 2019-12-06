@@ -129,7 +129,7 @@ abstract class ZipTestCase extends TestCase
 
             static::assertContains('Empty zipfile', $output);
         }
-        $actualEmptyZipData = pack('VVVVVv', EndOfCentralDirectory::END_OF_CENTRAL_DIRECTORY_RECORD_SIG, 0, 0, 0, 0, 0);
+        $actualEmptyZipData = pack('VVVVVv', EndOfCentralDirectory::END_OF_CD_SIG, 0, 0, 0, 0, 0);
         static::assertStringEqualsFile($filename, $actualEmptyZipData);
     }
 

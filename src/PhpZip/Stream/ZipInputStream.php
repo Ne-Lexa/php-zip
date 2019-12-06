@@ -14,15 +14,13 @@ use PhpZip\Extra\ExtraFieldsCollection;
 use PhpZip\Extra\ExtraFieldsFactory;
 use PhpZip\Extra\Fields\ApkAlignmentExtraField;
 use PhpZip\Extra\Fields\WinZipAesEntryExtraField;
-use PhpZip\Mapper\OffsetPositionMapper;
-use PhpZip\Mapper\PositionMapper;
 use PhpZip\Model\EndOfCentralDirectory;
 use PhpZip\Model\Entry\ZipSourceEntry;
 use PhpZip\Model\ZipEntry;
 use PhpZip\Model\ZipModel;
 use PhpZip\Util\PackUtil;
 use PhpZip\Util\StringUtil;
-use PhpZip\ZipFileInterface;
+use PhpZip\ZipFile;
 
 /**
  * Read zip file.
@@ -34,15 +32,6 @@ class ZipInputStream implements ZipInputStreamInterface
 {
     /** @var resource */
     protected $in;
-
-    /** @var PositionMapper */
-    protected $mapper;
-
-    /** @var int the number of bytes in the preamble of this ZIP file */
-    protected $preamble = 0;
-
-    /** @var int the number of bytes in the postamble of this ZIP file */
-    protected $postamble = 0;
 
     /** @var ZipModel */
     protected $zipModel;
@@ -58,7 +47,6 @@ class ZipInputStream implements ZipInputStreamInterface
             throw new RuntimeException('$in must be resource');
         }
         $this->in = $in;
-        $this->mapper = new PositionMapper();
     }
 
     /**
@@ -95,8 +83,8 @@ class ZipInputStream implements ZipInputStreamInterface
 
         if (
             $signature !== ZipEntry::LOCAL_FILE_HEADER_SIG
-            && $signature !== EndOfCentralDirectory::ZIP64_END_OF_CENTRAL_DIRECTORY_RECORD_SIG
-            && $signature !== EndOfCentralDirectory::END_OF_CENTRAL_DIRECTORY_RECORD_SIG
+            && $signature !== EndOfCentralDirectory::ZIP64_END_OF_CD_RECORD_SIG
+            && $signature !== EndOfCentralDirectory::END_OF_CD_SIG
         ) {
             throw new ZipException(
                 'Expected Local File Header or (ZIP64) End Of Central Directory Record! Signature: ' . $signature
@@ -111,145 +99,179 @@ class ZipInputStream implements ZipInputStreamInterface
      */
     protected function readEndOfCentralDirectory()
     {
+        if (!$this->findEndOfCentralDirectory()) {
+            throw new ZipException('Invalid zip file. The end of the central directory could not be found.');
+        }
+
+        $positionECD = ftell($this->in) - 4;
+        $buffer = fread($this->in, fstat($this->in)['size'] - $positionECD);
+
+        $unpack = unpack(
+            'vdiskNo/vcdDiskNo/vcdEntriesDisk/' .
+            'vcdEntries/VcdSize/VcdPos/vcommentLength',
+            substr($buffer, 0, 18)
+        );
+
+        if (
+            $unpack['diskNo'] !== 0 ||
+            $unpack['cdDiskNo'] !== 0 ||
+            $unpack['cdEntriesDisk'] !== $unpack['cdEntries']
+        ) {
+            throw new ZipException(
+                'ZIP file spanning/splitting is not supported!'
+            );
+        }
+        // .ZIP file comment       (variable sizeECD)
         $comment = null;
-        // Search for End of central directory record.
-        $stats = fstat($this->in);
-        $size = $stats['size'];
-        $max = $size - EndOfCentralDirectory::END_OF_CENTRAL_DIRECTORY_RECORD_MIN_LEN;
+
+        if ($unpack['commentLength'] > 0) {
+            $comment = substr($buffer, 18, $unpack['commentLength']);
+        }
+
+        // Check for ZIP64 End Of Central Directory Locator exists.
+        $zip64ECDLocatorPosition = $positionECD - EndOfCentralDirectory::ZIP64_END_OF_CD_LOCATOR_LEN;
+        fseek($this->in, $zip64ECDLocatorPosition);
+        // zip64 end of central dir locator
+        // signature                       4 bytes  (0x07064b50)
+        if ($zip64ECDLocatorPosition > 0 && unpack(
+            'V',
+            fread($this->in, 4)
+        )[1] === EndOfCentralDirectory::ZIP64_END_OF_CD_LOCATOR_SIG) {
+            $positionECD = $this->findZip64ECDPosition();
+            $endCentralDirectory = $this->readZip64EndOfCentralDirectory($positionECD);
+            $endCentralDirectory->setComment($comment);
+        } else {
+            $endCentralDirectory = new EndOfCentralDirectory(
+                $unpack['cdEntries'],
+                $unpack['cdPos'],
+                $unpack['cdSize'],
+                false,
+                $comment
+            );
+        }
+
+        return $endCentralDirectory;
+    }
+
+    /**
+     * @throws ZipException
+     *
+     * @return bool
+     */
+    protected function findEndOfCentralDirectory()
+    {
+        $max = fstat($this->in)['size'] - EndOfCentralDirectory::END_OF_CENTRAL_DIRECTORY_RECORD_MIN_LEN;
+
+        if ($max < 0) {
+            throw new ZipException('Too short to be a zip file');
+        }
         $min = $max >= 0xffff ? $max - 0xffff : 0;
-        for ($endOfCentralDirRecordPos = $max; $endOfCentralDirRecordPos >= $min; $endOfCentralDirRecordPos--) {
-            fseek($this->in, $endOfCentralDirRecordPos, \SEEK_SET);
+        // Search for End of central directory record.
+        for ($position = $max; $position >= $min; $position--) {
+            fseek($this->in, $position);
             // end of central dir signature    4 bytes  (0x06054b50)
-            if (unpack('V', fread($this->in, 4))[1] !== EndOfCentralDirectory::END_OF_CENTRAL_DIRECTORY_RECORD_SIG) {
+            if (unpack('V', fread($this->in, 4))[1] !== EndOfCentralDirectory::END_OF_CD_SIG) {
                 continue;
             }
 
-            // number of this disk                        - 2 bytes
-            // number of the disk with the start of the
-            //        central directory                   - 2 bytes
-            // total number of entries in the central
-            //        directory on this disk              - 2 bytes
-            // total number of entries in the central
-            //        directory                           - 2 bytes
-            // size of the central directory              - 4 bytes
-            // offset of start of central directory with
-            //        respect to the starting disk number - 4 bytes
-            // ZIP file comment length                    - 2 bytes
-            $data = unpack(
-                'vdiskNo/vcdDiskNo/vcdEntriesDisk/vcdEntries/VcdSize/VcdPos/vcommentLength',
-                fread($this->in, 18)
-            );
-
-            if ($data['diskNo'] !== 0 || $data['cdDiskNo'] !== 0 || $data['cdEntriesDisk'] !== $data['cdEntries']) {
-                throw new ZipException(
-                    'ZIP file spanning/splitting is not supported!'
-                );
-            }
-            // .ZIP file comment       (variable size)
-            if ($data['commentLength'] > 0) {
-                $comment = '';
-                $offset = 0;
-
-                while ($offset < $data['commentLength']) {
-                    $read = min(8192 /* chunk size */, $data['commentLength'] - $offset);
-                    $comment .= fread($this->in, $read);
-                    $offset += $read;
-                }
-            }
-            $this->preamble = $endOfCentralDirRecordPos;
-            $this->postamble = $size - ftell($this->in);
-
-            // Check for ZIP64 End Of Central Directory Locator.
-            $endOfCentralDirLocatorPos = $endOfCentralDirRecordPos - EndOfCentralDirectory::ZIP64_END_OF_CENTRAL_DIRECTORY_LOCATOR_LEN;
-
-            fseek($this->in, $endOfCentralDirLocatorPos, \SEEK_SET);
-            // zip64 end of central dir locator
-            // signature                       4 bytes  (0x07064b50)
-            if (
-                $endOfCentralDirLocatorPos < 0 ||
-                ftell($this->in) === $size ||
-                unpack(
-                    'V',
-                    fread($this->in, 4)
-                )[1] !== EndOfCentralDirectory::ZIP64_END_OF_CENTRAL_DIRECTORY_LOCATOR_SIG
-            ) {
-                // Seek and check first CFH, probably requiring an offset mapper.
-                $offset = $endOfCentralDirRecordPos - $data['cdSize'];
-                fseek($this->in, $offset, \SEEK_SET);
-                $offset -= $data['cdPos'];
-
-                if ($offset !== 0) {
-                    $this->mapper = new OffsetPositionMapper($offset);
-                }
-                $entryCount = $data['cdEntries'];
-
-                return new EndOfCentralDirectory($entryCount, $comment);
-            }
-
-            // number of the disk with the
-            // start of the zip64 end of
-            // central directory               4 bytes
-            $zip64EndOfCentralDirectoryRecordDisk = unpack('V', fread($this->in, 4))[1];
-            // relative offset of the zip64
-            // end of central directory record 8 bytes
-            $zip64EndOfCentralDirectoryRecordPos = PackUtil::unpackLongLE(fread($this->in, 8));
-            // total number of disks           4 bytes
-            $totalDisks = unpack('V', fread($this->in, 4))[1];
-
-            if ($zip64EndOfCentralDirectoryRecordDisk !== 0 || $totalDisks !== 1) {
-                throw new ZipException('ZIP file spanning/splitting is not supported!');
-            }
-            fseek($this->in, $zip64EndOfCentralDirectoryRecordPos, \SEEK_SET);
-            // zip64 end of central dir
-            // signature                       4 bytes  (0x06064b50)
-            $zip64EndOfCentralDirSig = unpack('V', fread($this->in, 4))[1];
-
-            if ($zip64EndOfCentralDirSig !== EndOfCentralDirectory::ZIP64_END_OF_CENTRAL_DIRECTORY_RECORD_SIG) {
-                throw new ZipException('Expected ZIP64 End Of Central Directory Record!');
-            }
-            // size of zip64 end of central
-            // directory record                8 bytes
-            // version made by                 2 bytes
-            // version needed to extract       2 bytes
-            fseek($this->in, 12, \SEEK_CUR);
-            // number of this disk             4 bytes
-            $diskNo = unpack('V', fread($this->in, 4))[1];
-            // number of the disk with the
-            // start of the central directory  4 bytes
-            $cdDiskNo = unpack('V', fread($this->in, 4))[1];
-            // total number of entries in the
-            // central directory on this disk  8 bytes
-            $cdEntriesDisk = PackUtil::unpackLongLE(fread($this->in, 8));
-            // total number of entries in the
-            // central directory               8 bytes
-            $cdEntries = PackUtil::unpackLongLE(fread($this->in, 8));
-
-            if ($diskNo !== 0 || $cdDiskNo !== 0 || $cdEntriesDisk !== $cdEntries) {
-                throw new ZipException('ZIP file spanning/splitting is not supported!');
-            }
-
-            if ($cdEntries < 0 || $cdEntries > 0x7fffffff) {
-                throw new ZipException('Total Number Of Entries In The Central Directory out of range!');
-            }
-            // size of the central directory   8 bytes
-            fseek($this->in, 8, \SEEK_CUR);
-            // offset of start of central
-            // directory with respect to
-            // the starting disk number        8 bytes
-            $cdPos = PackUtil::unpackLongLE(fread($this->in, 8));
-            // zip64 extensible data sector    (variable size)
-            fseek($this->in, $cdPos, \SEEK_SET);
-            $this->preamble = $zip64EndOfCentralDirectoryRecordPos;
-            $entryCount = $cdEntries;
-            $zip64 = true;
-
-            return new EndOfCentralDirectory($entryCount, $comment, $zip64);
+            return true;
         }
-        // Start recovering file entries from min.
-        $this->preamble = $min;
-        $this->postamble = $size - $min;
 
-        return new EndOfCentralDirectory(0, $comment);
+        return false;
+    }
+
+    /**
+     * Read Zip64 end of central directory locator and returns
+     * Zip64 end of central directory position.
+     *
+     * number of the disk with the
+     * start of the zip64 end of
+     * central directory               4 bytes
+     * relative offset of the zip64
+     * end of central directory record 8 bytes
+     * total number of disks           4 bytes
+     *
+     * @throws ZipException
+     *
+     * @return int Zip64 End Of Central Directory position
+     */
+    protected function findZip64ECDPosition()
+    {
+        $diskNo = unpack('V', fread($this->in, 4))[1];
+        $zip64ECDPos = PackUtil::unpackLongLE(fread($this->in, 8));
+        $totalDisks = unpack('V', fread($this->in, 4))[1];
+
+        if ($diskNo !== 0 || $totalDisks > 1) {
+            throw new ZipException('ZIP file spanning/splitting is not supported!');
+        }
+
+        return $zip64ECDPos;
+    }
+
+    /**
+     * Read zip64 end of central directory locator and zip64 end
+     * of central directory record.
+     *
+     * zip64 end of central dir
+     * signature                       4 bytes  (0x06064b50)
+     * size of zip64 end of central
+     * directory record                8 bytes
+     * version made by                 2 bytes
+     * version needed to extract       2 bytes
+     * number of this disk             4 bytes
+     * number of the disk with the
+     * start of the central directory  4 bytes
+     * total number of entries in the
+     * central directory on this disk  8 bytes
+     * total number of entries in the
+     * central directory               8 bytes
+     * size of the central directory   8 bytes
+     * offset of start of central
+     * directory with respect to
+     * the starting disk number        8 bytes
+     * zip64 extensible data sector    (variable size)
+     *
+     * @param int $zip64ECDPosition
+     *
+     * @throws ZipException
+     *
+     * @return EndOfCentralDirectory
+     */
+    protected function readZip64EndOfCentralDirectory($zip64ECDPosition)
+    {
+        fseek($this->in, $zip64ECDPosition);
+
+        $buffer = fread($this->in, 56 /* zip64 end of cd rec length */);
+
+        if (unpack('V', $buffer)[1] !== EndOfCentralDirectory::ZIP64_END_OF_CD_RECORD_SIG) {
+            throw new ZipException('Expected ZIP64 End Of Central Directory Record!');
+        }
+
+        $data = unpack(
+            'VdiskNo/VcdDiskNo',
+            substr($buffer, 16)
+        );
+        $cdEntriesDisk = PackUtil::unpackLongLE(substr($buffer, 24, 8));
+        $entryCount = PackUtil::unpackLongLE(substr($buffer, 32, 8));
+        $cdSize = PackUtil::unpackLongLE(substr($buffer, 40, 8));
+        $cdPos = PackUtil::unpackLongLE(substr($buffer, 48, 8));
+
+        if ($data['diskNo'] !== 0 || $data['cdDiskNo'] !== 0 || $entryCount !== $cdEntriesDisk) {
+            throw new ZipException('ZIP file spanning/splitting is not supported!');
+        }
+
+        if ($entryCount < 0 || $entryCount > 0x7fffffff) {
+            throw new ZipException('Total Number Of Entries In The Central Directory out of range!');
+        }
+
+        // skip zip64 extensible data sector (variable sizeEndCD)
+
+        return new EndOfCentralDirectory(
+            $entryCount,
+            $cdPos,
+            $cdSize,
+            true
+        );
     }
 
     /**
@@ -268,122 +290,108 @@ class ZipInputStream implements ZipInputStreamInterface
      */
     protected function mountCentralDirectory(EndOfCentralDirectory $endOfCentralDirectory)
     {
-        $numEntries = $endOfCentralDirectory->getEntryCount();
         $entries = [];
 
-        for (; $numEntries > 0; $numEntries--) {
-            $entry = $this->readEntry();
-            // Re-load virtual offset after ZIP64 Extended Information
-            // Extra Field may have been parsed, map it to the real
-            // offset and conditionally update the preamble size from it.
-            $lfhOff = $this->mapper->map($entry->getOffset());
+        fseek($this->in, $endOfCentralDirectory->getCdOffset());
 
-            if ($lfhOff < $this->preamble) {
-                $this->preamble = $lfhOff;
-            }
+        if (!($cdStream = fopen('php://temp', 'w+b'))) {
+            throw new ZipException('Temp resource can not open from write');
+        }
+        stream_copy_to_stream($this->in, $cdStream, $endOfCentralDirectory->getCdSize());
+        rewind($cdStream);
+        for ($numEntries = $endOfCentralDirectory->getEntryCount(); $numEntries > 0; $numEntries--) {
+            $entry = $this->readCentralDirectoryEntry($cdStream);
             $entries[$entry->getName()] = $entry;
         }
-
-        if (($numEntries % 0x10000) !== 0) {
-            throw new ZipException(
-                'Expected ' . abs($numEntries) .
-                ($numEntries > 0 ? ' more' : ' less') .
-                ' entries in the Central Directory!'
-            );
-        }
-
-        if ($this->preamble + $this->postamble >= fstat($this->in)['size']) {
-            $this->checkZipFileSignature();
-        }
+        fclose($cdStream);
 
         return $entries;
     }
 
     /**
+     * Read central directory entry.
+     *
+     * central file header signature   4 bytes  (0x02014b50)
+     * version made by                 2 bytes
+     * version needed to extract       2 bytes
+     * general purpose bit flag        2 bytes
+     * compression method              2 bytes
+     * last mod file time              2 bytes
+     * last mod file date              2 bytes
+     * crc-32                          4 bytes
+     * compressed size                 4 bytes
+     * uncompressed size               4 bytes
+     * file name length                2 bytes
+     * extra field length              2 bytes
+     * file comment length             2 bytes
+     * disk number start               2 bytes
+     * internal file attributes        2 bytes
+     * external file attributes        4 bytes
+     * relative offset of local header 4 bytes
+     *
+     * file name (variable size)
+     * extra field (variable size)
+     * file comment (variable size)
+     *
+     * @param resource $stream
+     *
      * @throws ZipException
      *
      * @return ZipEntry
      */
-    public function readEntry()
+    public function readCentralDirectoryEntry($stream)
     {
-        // central file header signature   4 bytes  (0x02014b50)
-        $fileHeaderSig = unpack('V', fread($this->in, 4))[1];
-
-        if ($fileHeaderSig !== ZipOutputStreamInterface::CENTRAL_FILE_HEADER_SIG) {
-            throw new InvalidArgumentException('Corrupt zip file. Can not read zip entry.');
+        if (unpack('V', fread($stream, 4))[1] !== ZipOutputStreamInterface::CENTRAL_FILE_HEADER_SIG) {
+            throw new ZipException('Corrupt zip file. Cannot read central dir entry.');
         }
 
-        // version made by                 2 bytes
-        // version needed to extract       2 bytes
-        // general purpose bit flag        2 bytes
-        // compression method              2 bytes
-        // last mod file time              2 bytes
-        // last mod file date              2 bytes
-        // crc-32                          4 bytes
-        // compressed size                 4 bytes
-        // uncompressed size               4 bytes
-        // file name length                2 bytes
-        // extra field length              2 bytes
-        // file comment length             2 bytes
-        // disk number start               2 bytes
-        // internal file attributes        2 bytes
-        // external file attributes        4 bytes
-        // relative offset of local header 4 bytes
         $data = unpack(
-            'vversionMadeBy/vversionNeededToExtract/vgpbf/' .
-            'vrawMethod/VrawTime/VrawCrc/VrawCompressedSize/' .
-            'VrawSize/vfileLength/vextraLength/vcommentLength/' .
-            'VrawInternalAttributes/VrawExternalAttributes/VlfhOff',
-            fread($this->in, 42)
+            'vversionMadeBy/vversionNeededToExtract/' .
+            'vgeneralPurposeBitFlag/vcompressionMethod/' .
+            'VlastModFile/Vcrc/VcompressedSize/' .
+            'VuncompressedSize/vfileNameLength/vextraFieldLength/' .
+            'vfileCommentLength/vdiskNumberStart/vinternalFileAttributes/' .
+            'VexternalFileAttributes/VoffsetLocalHeader',
+            fread($stream, 42)
         );
 
-//        $utf8 = ($data['gpbf'] & ZipEntry::GPBF_UTF8) !== 0;
+        $createdOS = ($data['versionMadeBy'] & 0xFF00) >> 8;
+        $softwareVersion = $data['versionMadeBy'] & 0x00FF;
 
-        // See appendix D of PKWARE's ZIP File Format Specification.
-        $name = '';
-        $offset = 0;
+        $extractOS = ($data['versionNeededToExtract'] & 0xFF00) >> 8;
+        $extractVersion = $data['versionNeededToExtract'] & 0x00FF;
 
-        while ($offset < $data['fileLength']) {
-            $read = min(8192 /* chunk size */, $data['fileLength'] - $offset);
-            $name .= fread($this->in, $read);
-            $offset += $read;
+        $name = fread($stream, $data['fileNameLength']);
+
+        $extra = '';
+
+        if ($data['extraFieldLength'] > 0) {
+            $extra = fread($stream, $data['extraFieldLength']);
+        }
+
+        $comment = null;
+
+        if ($data['fileCommentLength'] > 0) {
+            $comment = fread($stream, $data['fileCommentLength']);
         }
 
         $entry = new ZipSourceEntry($this);
         $entry->setName($name);
-        $entry->setVersionNeededToExtract($data['versionNeededToExtract']);
-        $entry->setPlatform($data['versionMadeBy'] >> 8);
-        $entry->setMethod($data['rawMethod']);
-        $entry->setGeneralPurposeBitFlags($data['gpbf']);
-        $entry->setDosTime($data['rawTime']);
-        $entry->setCrc($data['rawCrc']);
-        $entry->setCompressedSize($data['rawCompressedSize']);
-        $entry->setSize($data['rawSize']);
-        $entry->setExternalAttributes($data['rawExternalAttributes']);
-        $entry->setOffset($data['lfhOff']); // must be unmapped!
-        if ($data['extraLength'] > 0) {
-            $extra = '';
-            $offset = 0;
-
-            while ($offset < $data['extraLength']) {
-                $read = min(8192 /* chunk size */, $data['extraLength'] - $offset);
-                $extra .= fread($this->in, $read);
-                $offset += $read;
-            }
-            $entry->setExtra($extra);
-        }
-
-        if ($data['commentLength'] > 0) {
-            $comment = '';
-            $offset = 0;
-
-            while ($offset < $data['commentLength']) {
-                $read = min(8192 /* chunk size */, $data['commentLength'] - $offset);
-                $comment .= fread($this->in, $read);
-                $offset += $read;
-            }
-            $entry->setComment($comment);
-        }
+        $entry->setCreatedOS($createdOS);
+        $entry->setSoftwareVersion($softwareVersion);
+        $entry->setVersionNeededToExtract($extractVersion);
+        $entry->setExtractedOS($extractOS);
+        $entry->setMethod($data['compressionMethod']);
+        $entry->setGeneralPurposeBitFlags($data['generalPurposeBitFlag']);
+        $entry->setDosTime($data['lastModFile']);
+        $entry->setCrc($data['crc']);
+        $entry->setCompressedSize($data['compressedSize']);
+        $entry->setSize($data['uncompressedSize']);
+        $entry->setInternalAttributes($data['internalFileAttributes']);
+        $entry->setExternalAttributes($data['externalFileAttributes']);
+        $entry->setOffset($data['offsetLocalHeader']);
+        $entry->setComment($comment);
+        $entry->setExtra($extra);
 
         return $entry;
     }
@@ -410,9 +418,8 @@ class ZipInputStream implements ZipInputStreamInterface
             throw new ZipException('Can not password from entry ' . $entry->getName());
         }
 
-        $pos = $entry->getOffset();
+        $startPos = $pos = $entry->getOffset();
 
-        $startPos = $pos = $this->mapper->map($pos);
         fseek($this->in, $startPos);
 
         // local file header signature     4 bytes  (0x04034b50)
@@ -465,7 +472,7 @@ class ZipInputStream implements ZipInputStreamInterface
                 // Traditional PKWARE Decryption
                 $zipCryptoEngine = new TraditionalPkwareEncryptionEngine($entry);
                 $content = $zipCryptoEngine->decrypt($content);
-                $entry->setEncryptionMethod(ZipFileInterface::ENCRYPTION_METHOD_TRADITIONAL);
+                $entry->setEncryptionMethod(ZipFile::ENCRYPTION_METHOD_TRADITIONAL);
             }
 
             if (!$skipCheckCrc) {
@@ -500,15 +507,15 @@ class ZipInputStream implements ZipInputStreamInterface
         }
 
         switch ($method) {
-            case ZipFileInterface::METHOD_STORED:
+            case ZipFile::METHOD_STORED:
                 break;
 
-            case ZipFileInterface::METHOD_DEFLATED:
+            case ZipFile::METHOD_DEFLATED:
                 /** @noinspection PhpUsageOfSilenceOperatorInspection */
                 $content = @gzinflate($content);
                 break;
 
-            case ZipFileInterface::METHOD_BZIP2:
+            case ZipFile::METHOD_BZIP2:
                 if (!\extension_loaded('bz2')) {
                     throw new ZipException('Extension bzip2 not install');
                 }
@@ -589,8 +596,6 @@ class ZipInputStream implements ZipInputStreamInterface
             throw new ZipException(sprintf('Missing local header offset for entry %s', $entry->getName()));
         }
 
-        $pos = $this->mapper->map($pos);
-
         $nameLength = \strlen($entry->getName());
 
         fseek($this->in, $pos + ZipEntry::LOCAL_FILE_HEADER_MIN_LEN - 2, \SEEK_SET);
@@ -625,7 +630,7 @@ class ZipInputStream implements ZipInputStreamInterface
         if (
             $this->zipModel->isZipAlign() &&
             !$entry->isEncrypted() &&
-            $entry->getMethod() === ZipFileInterface::METHOD_STORED
+            $entry->getMethod() === ZipFile::METHOD_STORED
         ) {
             if (StringUtil::endsWith($entry->getName(), '.so')) {
                 $dataAlignmentMultiple = ApkAlignmentExtraField::ANDROID_COMMON_PAGE_ALIGNMENT_BYTES;
@@ -688,7 +693,6 @@ class ZipInputStream implements ZipInputStreamInterface
     public function copyEntryData(ZipEntry $entry, ZipOutputStreamInterface $out)
     {
         $offset = $entry->getOffset();
-        $offset = $this->mapper->map($offset);
         $nameLength = \strlen($entry->getName());
 
         fseek($this->in, $offset + ZipEntry::LOCAL_FILE_HEADER_MIN_LEN - 2, \SEEK_SET);

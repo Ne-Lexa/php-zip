@@ -10,6 +10,8 @@ use PhpZip\Exception\ZipException;
  *
  * @author Ne-Lexa alexey@nelexa.ru
  * @license MIT
+ *
+ * @internal
  */
 class ZipChangesEntry extends ZipAbstractEntry
 {

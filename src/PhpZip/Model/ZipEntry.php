@@ -4,7 +4,7 @@ namespace PhpZip\Model;
 
 use PhpZip\Exception\ZipException;
 use PhpZip\Extra\ExtraFieldsCollection;
-use PhpZip\ZipFileInterface;
+use PhpZip\ZipFile;
 
 /**
  * ZIP file entry.
@@ -16,9 +16,6 @@ use PhpZip\ZipFileInterface;
  */
 interface ZipEntry
 {
-    // Bit masks for initialized fields.
-    const BIT_EXTERNAL_ATTR = 128;
-
     /** The unknown value for numeric properties. */
     const UNKNOWN = -1;
 
@@ -118,11 +115,31 @@ interface ZipEntry
 
     /**
      * @return int Get platform
+     *
+     * @deprecated Use {@see ZipEntry::getCreatedOS()}
      */
     public function getPlatform();
 
     /**
-     * Set platform.
+     * @param int $platform
+     *
+     * @throws ZipException
+     *
+     * @return ZipEntry
+     *
+     * @deprecated Use {@see ZipEntry::setCreatedOS()}
+     */
+    public function setPlatform($platform);
+
+    /**
+     * Returns created OS.
+     *
+     * @return int Get platform
+     */
+    public function getCreatedOS();
+
+    /**
+     * Set created OS.
      *
      * @param int $platform
      *
@@ -130,7 +147,35 @@ interface ZipEntry
      *
      * @return ZipEntry
      */
-    public function setPlatform($platform);
+    public function setCreatedOS($platform);
+
+    /**
+     * @return int
+     */
+    public function getExtractedOS();
+
+    /**
+     * Set extracted OS.
+     *
+     * @param int $platform
+     *
+     * @throws ZipException
+     *
+     * @return ZipEntry
+     */
+    public function setExtractedOS($platform);
+
+    /**
+     * @return int
+     */
+    public function getSoftwareVersion();
+
+    /**
+     * @param int $softwareVersion
+     *
+     * @return ZipEntry
+     */
+    public function setSoftwareVersion($softwareVersion);
 
     /**
      * Version needed to extract.
@@ -323,6 +368,8 @@ interface ZipEntry
      * @param int $dosTime
      *
      * @throws ZipException
+     *
+     * @return ZipEntry
      */
     public function setDosTime($dosTime);
 
@@ -332,6 +379,24 @@ interface ZipEntry
      * @return int the external file attributes
      */
     public function getExternalAttributes();
+
+    /**
+     * Sets the internal file attributes.
+     *
+     * @param int $attributes the internal file attributes
+     *
+     * @throws ZipException
+     *
+     * @return ZipEntry
+     */
+    public function setInternalAttributes($attributes);
+
+    /**
+     * Returns the internal file attributes.
+     *
+     * @return int the internal file attributes
+     */
+    public function getInternalAttributes();
 
     /**
      * Sets the external file attributes.
@@ -368,6 +433,8 @@ interface ZipEntry
      * @param string $data the byte array holding the serialized Extra Fields
      *
      * @throws ZipException if the serialized Extra Fields exceed 64 KB
+     *
+     * @return ZipEntry
      */
     public function setExtra($data);
 
@@ -439,10 +506,10 @@ interface ZipEntry
      *
      * @return ZipEntry
      *
-     * @see ZipFileInterface::ENCRYPTION_METHOD_WINZIP_AES_256
-     * @see ZipFileInterface::ENCRYPTION_METHOD_TRADITIONAL
-     * @see ZipFileInterface::ENCRYPTION_METHOD_WINZIP_AES_128
-     * @see ZipFileInterface::ENCRYPTION_METHOD_WINZIP_AES_192
+     * @see ZipFile::ENCRYPTION_METHOD_WINZIP_AES_256
+     * @see ZipFile::ENCRYPTION_METHOD_TRADITIONAL
+     * @see ZipFile::ENCRYPTION_METHOD_WINZIP_AES_128
+     * @see ZipFile::ENCRYPTION_METHOD_WINZIP_AES_192
      */
     public function setEncryptionMethod($encryptionMethod);
 
@@ -460,7 +527,7 @@ interface ZipEntry
      *
      * @return ZipEntry
      */
-    public function setCompressionLevel($compressionLevel = ZipFileInterface::LEVEL_DEFAULT_COMPRESSION);
+    public function setCompressionLevel($compressionLevel = ZipFile::LEVEL_DEFAULT_COMPRESSION);
 
     /**
      * @return int

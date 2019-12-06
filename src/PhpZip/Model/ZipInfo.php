@@ -6,7 +6,7 @@ use PhpZip\Exception\ZipException;
 use PhpZip\Extra\Fields\NtfsExtraField;
 use PhpZip\Extra\Fields\WinZipAesEntryExtraField;
 use PhpZip\Util\FilesUtil;
-use PhpZip\ZipFileInterface;
+use PhpZip\ZipFile;
 
 /**
  * Zip info.
@@ -132,7 +132,7 @@ class ZipInfo
 
     private static $valuesCompressionMethod = [
         ZipEntry::UNKNOWN => 'unknown',
-        ZipFileInterface::METHOD_STORED => 'no compression',
+        ZipFile::METHOD_STORED => 'no compression',
         1 => 'shrink',
         2 => 'reduce level 1',
         3 => 'reduce level 2',
@@ -140,7 +140,7 @@ class ZipInfo
         5 => 'reduce level 4',
         6 => 'implode',
         7 => 'reserved for Tokenizing compression algorithm',
-        ZipFileInterface::METHOD_DEFLATED => 'deflate',
+        ZipFile::METHOD_DEFLATED => 'deflate',
         9 => 'deflate64',
         10 => 'PKWARE Data Compression Library Imploding (old IBM TERSE)',
         11 => 'reserved by PKWARE',
@@ -252,10 +252,10 @@ class ZipInfo
         $attributes = str_repeat(' ', 12);
         $externalAttributes = $entry->getExternalAttributes();
         $xattr = (($externalAttributes >> 16) & 0xFFFF);
-        switch ($entry->getPlatform()) {
+        switch ($entry->getCreatedOS()) {
             case self::MADE_BY_MS_DOS:
             case self::MADE_BY_WINDOWS_NTFS:
-                if ($entry->getPlatform() !== self::MADE_BY_MS_DOS ||
+                if ($entry->getCreatedOS() !== self::MADE_BY_MS_DOS ||
                     ($xattr & self::UNX_IRWXU) !==
                     (self::UNX_IRUSR |
                         (!($externalAttributes & 1) << 7) |
@@ -420,8 +420,8 @@ class ZipInfo
      */
     public static function getPlatformName(ZipEntry $entry)
     {
-        if (isset(self::$valuesMadeBy[$entry->getPlatform()])) {
-            return self::$valuesMadeBy[$entry->getPlatform()];
+        if (isset(self::$valuesMadeBy[$entry->getCreatedOS()])) {
+            return self::$valuesMadeBy[$entry->getCreatedOS()];
         }
 
         return 'unknown';

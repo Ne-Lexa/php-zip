@@ -49,9 +49,9 @@ class WinZipAesEngine implements ZipEncryptionEngine
      *
      * @param string $content Input stream buffer
      *
-     * @throws ZipCryptoException
      * @throws ZipException
      * @throws ZipAuthenticationException
+     * @throws ZipCryptoException
      *
      * @return string
      */
