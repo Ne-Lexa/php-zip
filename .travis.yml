@@ -10,12 +10,6 @@ php:
   - '7.3'
   - '7.4'
 
-# cache vendor dirs
-cache:
-  directories:
-    - vendor
-    - $HOME/.composer/cache
-
 install:
   - travis_retry composer self-update && composer --version
   - travis_retry composer install --no-interaction

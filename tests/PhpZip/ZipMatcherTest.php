@@ -5,7 +5,6 @@ namespace PhpZip;
 use PHPUnit\Framework\TestCase;
 use PhpZip\Model\ZipEntryMatcher;
 use PhpZip\Model\ZipInfo;
-use PhpZip\Util\CryptoUtil;
 
 /**
  * @internal
@@ -73,11 +72,14 @@ class ZipMatcherTest extends TestCase
         $zipFile->close();
     }
 
+    /**
+     * @throws \Exception
+     */
     public function testDocsExample()
     {
         $zipFile = new ZipFile();
         for ($i = 0; $i < 100; $i++) {
-            $zipFile['file_' . $i . '.jpg'] = CryptoUtil::randomBytes(100);
+            $zipFile['file_' . $i . '.jpg'] = random_bytes(100);
         }
 
         $renameEntriesArray = [

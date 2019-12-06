@@ -8,7 +8,6 @@ use PhpZip\Exception\ZipCryptoException;
 use PhpZip\Exception\ZipException;
 use PhpZip\Extra\Fields\WinZipAesEntryExtraField;
 use PhpZip\Model\ZipEntry;
-use PhpZip\Util\CryptoUtil;
 
 /**
  * WinZip Aes Encryption Engine.
@@ -262,7 +261,11 @@ class WinZipAesEngine implements ZipEncryptionEngine
         );
         $keyStrengthBytes = $keyStrengthBits / 8;
 
-        $salt = CryptoUtil::randomBytes($keyStrengthBytes / 2);
+        try {
+            $salt = random_bytes($keyStrengthBytes / 2);
+        } catch (\Exception $e) {
+            throw new \RuntimeException('Oops, our server is bust and cannot generate any random data.', 1, $e);
+        }
 
         $keyParam = hash_pbkdf2(
             'sha1',

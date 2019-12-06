@@ -63,6 +63,7 @@ abstract class ZipTestCase extends TestCase
                 $command .= ' -P ' . escapeshellarg($password);
             }
             $command .= ' -t ' . escapeshellarg($filename);
+            $command .= ' 2>&1';
             exec($command, $output, $returnCode);
 
             $output = implode(\PHP_EOL, $output);

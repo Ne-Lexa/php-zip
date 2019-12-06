@@ -8,7 +8,6 @@ use PhpZip\Exception\ZipException;
 use PhpZip\Exception\ZipUnsupportMethodException;
 use PhpZip\Model\ZipEntry;
 use PhpZip\Model\ZipInfo;
-use PhpZip\Util\CryptoUtil;
 use PhpZip\Util\FilesUtil;
 use Psr\Http\Message\ResponseInterface;
 use Zend\Diactoros\Response;
@@ -68,6 +67,7 @@ class ZipFileTest extends ZipTestCase
 
     /**
      * @throws ZipException
+     * @throws \Exception
      */
     public function testOpenFileInvalidZip()
     {
@@ -76,7 +76,7 @@ class ZipFileTest extends ZipTestCase
             'Expected Local File Header or (ZIP64) End Of Central Directory Record'
         );
 
-        static::assertNotFalse(file_put_contents($this->outputFilename, CryptoUtil::randomBytes(255)));
+        static::assertNotFalse(file_put_contents($this->outputFilename, random_bytes(255)));
         $zipFile = new ZipFile();
         $zipFile->openFile($this->outputFilename);
     }
@@ -105,6 +105,7 @@ class ZipFileTest extends ZipTestCase
 
     /**
      * @throws ZipException
+     * @throws \Exception
      */
     public function testOpenFromStringInvalidZip()
     {
@@ -114,7 +115,7 @@ class ZipFileTest extends ZipTestCase
         );
 
         $zipFile = new ZipFile();
-        $zipFile->openFromString(CryptoUtil::randomBytes(255));
+        $zipFile->openFromString(random_bytes(255));
     }
 
     /**
@@ -224,6 +225,7 @@ class ZipFileTest extends ZipTestCase
 
     /**
      * @throws ZipException
+     * @throws \Exception
      */
     public function testOpenFromStreamInvalidZip()
     {
@@ -233,7 +235,7 @@ class ZipFileTest extends ZipTestCase
         );
 
         $fp = fopen($this->outputFilename, 'w+b');
-        fwrite($fp, CryptoUtil::randomBytes(255));
+        fwrite($fp, random_bytes(255));
         $zipFile = new ZipFile();
         $zipFile->openFromStream($fp);
     }
@@ -800,32 +802,33 @@ class ZipFileTest extends ZipTestCase
      * Test zip entry comment.
      *
      * @throws ZipException
+     * @throws \Exception
      */
     public function testEntryComment()
     {
         $entries = [
             '文件1.txt' => [
-                'data' => CryptoUtil::randomBytes(255),
+                'data' => random_bytes(255),
                 'comment' => '這是註釋的條目。',
             ],
             'file2.txt' => [
-                'data' => CryptoUtil::randomBytes(255),
+                'data' => random_bytes(255),
                 'comment' => null,
             ],
             'file3.txt' => [
-                'data' => CryptoUtil::randomBytes(255),
-                'comment' => CryptoUtil::randomBytes(255),
+                'data' => random_bytes(255),
+                'comment' => random_bytes(255),
             ],
             'file4.txt' => [
-                'data' => CryptoUtil::randomBytes(255),
+                'data' => random_bytes(255),
                 'comment' => 'Комментарий файла',
             ],
             'file5.txt' => [
-                'data' => CryptoUtil::randomBytes(255),
+                'data' => random_bytes(255),
                 'comment' => 'ไฟล์แสดงความคิดเห็น',
             ],
             'file6 emoji 🙍🏼.txt' => [
-                'data' => CryptoUtil::randomBytes(255),
+                'data' => random_bytes(255),
                 'comment' => 'Emoji comment file - 😀 ⛈ ❤️ 🤴🏽',
             ],
         ];
@@ -903,17 +906,18 @@ class ZipFileTest extends ZipTestCase
      * Test all available support compression methods.
      *
      * @throws ZipException
+     * @throws \Exception
      */
     public function testCompressionMethod()
     {
         $entries = [
             '1' => [
-                'data' => CryptoUtil::randomBytes(255),
+                'data' => random_bytes(255),
                 'method' => ZipFile::METHOD_STORED,
                 'expected' => 'No compression',
             ],
             '2' => [
-                'data' => CryptoUtil::randomBytes(255),
+                'data' => random_bytes(255),
                 'method' => ZipFile::METHOD_DEFLATED,
                 'expected' => 'Deflate',
             ],
@@ -921,7 +925,7 @@ class ZipFileTest extends ZipTestCase
 
         if (\extension_loaded('bz2')) {
             $entries['3'] = [
-                'data' => CryptoUtil::randomBytes(255),
+                'data' => random_bytes(255),
                 'method' => ZipFile::METHOD_BZIP2,
                 'expected' => 'Bzip2',
             ];
@@ -976,13 +980,14 @@ class ZipFileTest extends ZipTestCase
      * Test extract all files.
      *
      * @throws ZipException
+     * @throws \Exception
      */
     public function testExtract()
     {
         $entries = [
-            'test1.txt' => CryptoUtil::randomBytes(255),
-            'test2.txt' => CryptoUtil::randomBytes(255),
-            'test/test 2/test3.txt' => CryptoUtil::randomBytes(255),
+            'test1.txt' => random_bytes(255),
+            'test2.txt' => random_bytes(255),
+            'test/test 2/test3.txt' => random_bytes(255),
             'test empty/dir' => null,
         ];
 
@@ -1022,17 +1027,18 @@ class ZipFileTest extends ZipTestCase
      * Test extract some files.
      *
      * @throws ZipException
+     * @throws \Exception
      */
     public function testExtractSomeFiles()
     {
         $entries = [
-            'test1.txt' => CryptoUtil::randomBytes(255),
-            'test2.txt' => CryptoUtil::randomBytes(255),
-            'test3.txt' => CryptoUtil::randomBytes(255),
-            'test4.txt' => CryptoUtil::randomBytes(255),
-            'test5.txt' => CryptoUtil::randomBytes(255),
-            'test/test/test.txt' => CryptoUtil::randomBytes(255),
-            'test/test/test 2.txt' => CryptoUtil::randomBytes(255),
+            'test1.txt' => random_bytes(255),
+            'test2.txt' => random_bytes(255),
+            'test3.txt' => random_bytes(255),
+            'test4.txt' => random_bytes(255),
+            'test5.txt' => random_bytes(255),
+            'test/test/test.txt' => random_bytes(255),
+            'test/test/test 2.txt' => random_bytes(255),
             'test empty/dir/' => null,
             'test empty/dir2/' => null,
         ];
@@ -1684,13 +1690,14 @@ class ZipFileTest extends ZipTestCase
      * Test `ZipFile` implemented \ArrayAccess, \Countable and |iterator.
      *
      * @throws ZipException
+     * @throws \Exception
      */
     public function testZipFileArrayAccessAndCountableAndIterator()
     {
         $files = [];
         $numFiles = mt_rand(20, 100);
         for ($i = 0; $i < $numFiles; $i++) {
-            $files['file' . $i . '.txt'] = CryptoUtil::randomBytes(255);
+            $files['file' . $i . '.txt'] = random_bytes(255);
         }
 
         $methods = [ZipFile::METHOD_STORED, ZipFile::METHOD_DEFLATED];
@@ -1799,13 +1806,14 @@ class ZipFileTest extends ZipTestCase
     /**
      * @throws Exception\ZipEntryNotFoundException
      * @throws ZipException
+     * @throws \Exception
      */
     public function testUnknownCompressionMethod()
     {
         $zipFile = new ZipFile();
 
         $zipFile->addFromString('file', 'content', ZipEntry::UNKNOWN);
-        $zipFile->addFromString('file2', base64_encode(CryptoUtil::randomBytes(512)), ZipEntry::UNKNOWN);
+        $zipFile->addFromString('file2', base64_encode(random_bytes(512)), ZipEntry::UNKNOWN);
 
         static::assertSame($zipFile->getEntryInfo('file')->getMethodName(), 'Unknown');
         static::assertSame($zipFile->getEntryInfo('file2')->getMethodName(), 'Unknown');

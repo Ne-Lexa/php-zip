@@ -7,7 +7,6 @@ use PhpZip\Exception\ZipAuthenticationException;
 use PhpZip\Exception\ZipEntryNotFoundException;
 use PhpZip\Exception\ZipException;
 use PhpZip\Model\ZipInfo;
-use PhpZip\Util\CryptoUtil;
 
 /**
  * Tests with zip password.
@@ -22,6 +21,7 @@ class ZipPasswordTest extends ZipFileAddDirTest
      * Test archive password.
      *
      * @throws ZipException
+     * @throws \Exception
      * @noinspection PhpRedundantCatchClauseInspection
      */
     public function testSetPassword()
@@ -33,7 +33,7 @@ class ZipPasswordTest extends ZipFileAddDirTest
             );
         }
 
-        $password = base64_encode(CryptoUtil::randomBytes(100));
+        $password = base64_encode(random_bytes(100));
         $badPassword = 'bad password';
 
         // create encryption password with ZipCrypto
@@ -121,6 +121,7 @@ class ZipPasswordTest extends ZipFileAddDirTest
 
     /**
      * @throws ZipException
+     * @throws \Exception
      */
     public function testTraditionalEncryption()
     {
@@ -131,7 +132,7 @@ class ZipPasswordTest extends ZipFileAddDirTest
             );
         }
 
-        $password = base64_encode(CryptoUtil::randomBytes(50));
+        $password = base64_encode(random_bytes(50));
 
         $zip = new ZipFile();
         $zip->addDirRecursive($this->outputDirname);
@@ -161,10 +162,11 @@ class ZipPasswordTest extends ZipFileAddDirTest
      * @param int $bitSize
      *
      * @throws ZipException
+     * @throws \Exception
      */
     public function testWinZipAesEncryption($encryptionMethod, $bitSize)
     {
-        $password = base64_encode(CryptoUtil::randomBytes(50));
+        $password = base64_encode(random_bytes(50));
 
         $zip = new ZipFile();
         $zip->addDirRecursive($this->outputDirname);
@@ -415,11 +417,12 @@ class ZipPasswordTest extends ZipFileAddDirTest
      * @see https://github.com/Ne-Lexa/php-zip/issues/9
      *
      * @throws ZipException
+     * @throws \Exception
      */
     public function testIssues9()
     {
         $contents = str_pad('', 1000, 'test;test2;test3' . \PHP_EOL, \STR_PAD_RIGHT);
-        $password = base64_encode(CryptoUtil::randomBytes(20));
+        $password = base64_encode(random_bytes(20));
 
         $encryptMethod = ZipFile::ENCRYPTION_METHOD_WINZIP_AES_256;
         $zipFile = new ZipFile();

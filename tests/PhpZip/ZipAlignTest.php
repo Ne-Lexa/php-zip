@@ -3,7 +3,6 @@
 namespace PhpZip;
 
 use PhpZip\Exception\ZipException;
-use PhpZip\Util\CryptoUtil;
 
 /**
  * Test ZipAlign.
@@ -53,7 +52,7 @@ class ZipAlignTest extends ZipTestCase
         for ($i = 0; $i < 100; $i++) {
             $zipFile->addFromString(
                 'entry' . $i . '.txt',
-                CryptoUtil::randomBytes(mt_rand(100, 4096)),
+                random_bytes(mt_rand(100, 4096)),
                 ZipFile::METHOD_STORED
             );
         }
@@ -87,6 +86,7 @@ class ZipAlignTest extends ZipTestCase
 
     /**
      * @throws ZipException
+     * @throws \Exception
      */
     public function testZipAlignNewFiles()
     {
@@ -94,7 +94,7 @@ class ZipAlignTest extends ZipTestCase
         for ($i = 0; $i < 100; $i++) {
             $zipFile->addFromString(
                 'entry' . $i . '.txt',
-                CryptoUtil::randomBytes(mt_rand(100, 4096)),
+                random_bytes(mt_rand(100, 4096)),
                 ZipFile::METHOD_STORED
             );
         }
@@ -115,6 +115,7 @@ class ZipAlignTest extends ZipTestCase
 
     /**
      * @throws ZipException
+     * @throws \Exception
      */
     public function testZipAlignFromModifiedZipArchive()
     {
@@ -122,7 +123,7 @@ class ZipAlignTest extends ZipTestCase
         for ($i = 0; $i < 100; $i++) {
             $zipFile->addFromString(
                 'entry' . $i . '.txt',
-                CryptoUtil::randomBytes(mt_rand(100, 4096)),
+                random_bytes(mt_rand(100, 4096)),
                 ZipFile::METHOD_STORED
             );
         }
@@ -147,7 +148,7 @@ class ZipAlignTest extends ZipTestCase
 
             $zipFile->addFromString(
                 'entry_new_' . ($isStored ? 'stored' : 'deflated') . '_' . $i . '.txt',
-                CryptoUtil::randomBytes(mt_rand(100, 4096)),
+                random_bytes(mt_rand(100, 4096)),
                 $isStored ?
                     ZipFile::METHOD_STORED :
                     ZipFile::METHOD_DEFLATED

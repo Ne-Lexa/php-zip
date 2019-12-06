@@ -3,7 +3,6 @@
 namespace PhpZip;
 
 use PhpZip\Exception\ZipException;
-use PhpZip\Util\CryptoUtil;
 
 /**
  * @internal
@@ -22,10 +21,11 @@ class Issue24Test extends ZipTestCase
 
     /**
      * @throws ZipException
+     * @throws \Exception
      */
     public function testDummyFS()
     {
-        $fileContents = str_repeat(base64_encode(CryptoUtil::randomBytes(12000)), 100);
+        $fileContents = str_repeat(base64_encode(random_bytes(12000)), 100);
 
         // create zip file
         $zip = new ZipFile();
