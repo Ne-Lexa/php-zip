@@ -2,6 +2,7 @@
 
 namespace PhpZip\Crypto;
 
+use PhpZip\Exception\RuntimeException;
 use PhpZip\Exception\ZipAuthenticationException;
 use PhpZip\Exception\ZipCryptoException;
 use PhpZip\Model\ZipEntry;
@@ -324,7 +325,7 @@ class TraditionalPkwareEncryptionEngine implements ZipEncryptionEngine
     /**
      * Update keys.
      *
-     * @param string $charAt
+     * @param int $charAt
      */
     private function updateKeys($charAt)
     {
@@ -356,6 +357,10 @@ class TraditionalPkwareEncryptionEngine implements ZipEncryptionEngine
      */
     public function decrypt($content)
     {
+        if (\PHP_INT_SIZE === 4) {
+            throw new RuntimeException('Traditional PKWARE Encryption is not supported in 32-bit PHP.');
+        }
+
         $password = $this->entry->getPassword();
         $this->initKeys($password);
 
@@ -418,6 +423,10 @@ class TraditionalPkwareEncryptionEngine implements ZipEncryptionEngine
      */
     public function encrypt($data)
     {
+        if (\PHP_INT_SIZE === 4) {
+            throw new RuntimeException('Traditional PKWARE Encryption is not supported in 32-bit PHP.');
+        }
+
         $crc = $this->entry->isDataDescriptorRequired() ?
             ($this->entry->getDosTime() & 0x0000ffff) << 16 :
             $this->entry->getCrc();

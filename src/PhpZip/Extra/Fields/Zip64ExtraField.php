@@ -102,27 +102,21 @@ class Zip64ExtraField implements ExtraField
             throw new RuntimeException('entry is null');
         }
         $off = 0;
-        // Read in Uncompressed Size.
-        $size = $this->entry->getSize();
 
-        if ($size >= 0xffffffff) {
-            \assert($size === 0xffffffff);
+        // Read in Uncompressed Size.
+        if ($this->entry->getSize() === 0xffffffff) {
             $this->entry->setSize(PackUtil::unpackLongLE(substr($data, $off, 8)));
             $off += 8;
         }
-        // Read in Compressed Size.
-        $compressedSize = $this->entry->getCompressedSize();
 
-        if ($compressedSize >= 0xffffffff) {
-            \assert($compressedSize === 0xffffffff);
+        // Read in Compressed Size.
+        if ($this->entry->getCompressedSize() === 0xffffffff) {
             $this->entry->setCompressedSize(PackUtil::unpackLongLE(substr($data, $off, 8)));
             $off += 8;
         }
-        // Read in Relative Header Offset.
-        $offset = $this->entry->getOffset();
 
-        if ($offset >= 0xffffffff) {
-            \assert(0xffffffff, $offset);
+        // Read in Relative Header Offset.
+        if ($this->entry->getOffset() === 0xffffffff) {
             $this->entry->setOffset(PackUtil::unpackLongLE(substr($data, $off, 8)));
         }
     }

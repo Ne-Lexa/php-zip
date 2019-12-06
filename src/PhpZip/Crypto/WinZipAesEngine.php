@@ -49,9 +49,9 @@ class WinZipAesEngine implements ZipEncryptionEngine
      *
      * @param string $content Input stream buffer
      *
-     * @throws ZipAuthenticationException
      * @throws ZipCryptoException
      * @throws ZipException
+     * @throws ZipAuthenticationException
      *
      * @return string
      */
@@ -100,8 +100,10 @@ class WinZipAesEngine implements ZipEncryptionEngine
         }
 
         $password = $this->entry->getPassword();
-        \assert($password !== null);
-        \assert($keyStrengthBits >= self::AES_BLOCK_SIZE_BITS);
+
+        if ($password === null) {
+            throw new ZipException(sprintf('Password not set for entry %s', $this->entry->getName()));
+        }
 
         /**
          * WinZip 99-character limit.

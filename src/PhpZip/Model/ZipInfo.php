@@ -234,12 +234,8 @@ class ZipInfo
 
         $this->name = $entry->getName();
         $this->folder = $entry->isDirectory();
-        $this->size = \PHP_INT_SIZE === 4 ?
-            sprintf('%u', $entry->getSize()) :
-            $entry->getSize();
-        $this->compressedSize = \PHP_INT_SIZE === 4 ?
-            sprintf('%u', $entry->getCompressedSize()) :
-            $entry->getCompressedSize();
+        $this->size = $entry->getSize();
+        $this->compressedSize = $entry->getCompressedSize();
         $this->mtime = $mtime;
         $this->ctime = $ctime;
         $this->atime = $atime;
@@ -255,16 +251,13 @@ class ZipInfo
 
         $attributes = str_repeat(' ', 12);
         $externalAttributes = $entry->getExternalAttributes();
-        $externalAttributes = \PHP_INT_SIZE === 4 ?
-            sprintf('%u', $externalAttributes) :
-            $externalAttributes;
         $xattr = (($externalAttributes >> 16) & 0xFFFF);
         switch ($entry->getPlatform()) {
             case self::MADE_BY_MS_DOS:
             case self::MADE_BY_WINDOWS_NTFS:
                 if ($entry->getPlatform() !== self::MADE_BY_MS_DOS ||
-                    ($xattr & 0700) !==
-                    (0400 |
+                    ($xattr & self::UNX_IRWXU) !==
+                    (self::UNX_IRUSR |
                         (!($externalAttributes & 1) << 7) |
                         (($externalAttributes & 0x10) << 2))
                 ) {
@@ -392,30 +385,29 @@ class ZipInfo
     {
         $return = '';
 
+        $compressionMethod = $entry->getMethod();
+
         if ($entry->isEncrypted()) {
             if ($entry->getMethod() === ZipEntry::METHOD_WINZIP_AES) {
-                $return = ucfirst(self::$valuesCompressionMethod[$entry->getMethod()]);
+                $return .= ucfirst(self::$valuesCompressionMethod[$entry->getMethod()]);
                 /** @var WinZipAesEntryExtraField|null $field */
                 $field = $entry->getExtraFieldsCollection()->get(WinZipAesEntryExtraField::getHeaderId());
 
                 if ($field !== null) {
                     $return .= '-' . $field->getKeyStrength();
-
-                    if (isset(self::$valuesCompressionMethod[$field->getMethod()])) {
-                        $return .= ' ' . ucfirst(self::$valuesCompressionMethod[$field->getMethod()]);
-                    }
+                    $compressionMethod = $field->getMethod();
                 }
             } else {
                 $return .= 'ZipCrypto';
-
-                if (isset(self::$valuesCompressionMethod[$entry->getMethod()])) {
-                    $return .= ' ' . ucfirst(self::$valuesCompressionMethod[$entry->getMethod()]);
-                }
             }
-        } elseif (isset(self::$valuesCompressionMethod[$entry->getMethod()])) {
-            $return = ucfirst(self::$valuesCompressionMethod[$entry->getMethod()]);
+
+            $return .= ' ';
+        }
+
+        if (isset(self::$valuesCompressionMethod[$compressionMethod])) {
+            $return .= ucfirst(self::$valuesCompressionMethod[$compressionMethod]);
         } else {
-            $return = 'unknown';
+            $return .= 'unknown';
         }
 
         return $return;

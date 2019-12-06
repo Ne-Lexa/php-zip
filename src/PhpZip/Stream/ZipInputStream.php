@@ -277,7 +277,6 @@ class ZipInputStream implements ZipInputStreamInterface
             // Extra Field may have been parsed, map it to the real
             // offset and conditionally update the preamble size from it.
             $lfhOff = $this->mapper->map($entry->getOffset());
-            $lfhOff = \PHP_INT_SIZE === 4 ? sprintf('%u', $lfhOff) : $lfhOff;
 
             if ($lfhOff < $this->preamble) {
                 $this->preamble = $lfhOff;
@@ -412,9 +411,6 @@ class ZipInputStream implements ZipInputStreamInterface
         }
 
         $pos = $entry->getOffset();
-        $pos = \PHP_INT_SIZE === 4
-            ? sprintf('%u', $pos) // PHP 32-Bit
-            : $pos;                      // PHP 64-Bit
 
         $startPos = $pos = $this->mapper->map($pos);
         fseek($this->in, $startPos);
@@ -429,7 +425,9 @@ class ZipInputStream implements ZipInputStreamInterface
         $data = unpack('vfileLength/vextraLength', fread($this->in, 4));
         $pos += ZipEntry::LOCAL_FILE_HEADER_MIN_LEN + $data['fileLength'] + $data['extraLength'];
 
-        \assert($entry->getCrc() !== ZipEntry::UNKNOWN);
+        if ($entry->getCrc() === ZipEntry::UNKNOWN) {
+            throw new ZipException(sprintf('Missing crc for entry %s', $entry->getName()));
+        }
 
         $method = $entry->getMethod();
 
@@ -437,7 +435,6 @@ class ZipInputStream implements ZipInputStreamInterface
 
         // Get raw entry content
         $compressedSize = $entry->getCompressedSize();
-        $compressedSize = \PHP_INT_SIZE === 4 ? sprintf('%u', $compressedSize) : $compressedSize;
         $content = '';
 
         if ($compressedSize > 0) {
@@ -587,8 +584,11 @@ class ZipInputStream implements ZipInputStreamInterface
     public function copyEntry(ZipEntry $entry, ZipOutputStreamInterface $out)
     {
         $pos = $entry->getOffset();
-        \assert($pos !== ZipEntry::UNKNOWN);
-        $pos = \PHP_INT_SIZE === 4 ? sprintf('%u', $pos) : $pos;
+
+        if ($pos === ZipEntry::UNKNOWN) {
+            throw new ZipException(sprintf('Missing local header offset for entry %s', $entry->getName()));
+        }
+
         $pos = $this->mapper->map($pos);
 
         $nameLength = \strlen($entry->getName());
@@ -688,7 +688,6 @@ class ZipInputStream implements ZipInputStreamInterface
     public function copyEntryData(ZipEntry $entry, ZipOutputStreamInterface $out)
     {
         $offset = $entry->getOffset();
-        $offset = \PHP_INT_SIZE === 4 ? sprintf('%u', $offset) : $offset;
         $offset = $this->mapper->map($offset);
         $nameLength = \strlen($entry->getName());
 

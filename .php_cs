@@ -1028,7 +1028,7 @@ $rules = [
      * Adds a default `@coversNothing` annotation to PHPUnit test
      * classes that have no `@covers*` annotation.
      */
-    'php_unit_test_class_requires_covers' => true,
+    'php_unit_test_class_requires_covers' => false,
 
     // PHPDoc should contain `@param` for all params.
     'phpdoc_add_missing_param_annotation' => [

@@ -10,7 +10,6 @@ use PhpZip\Exception\ZipException;
  * @internal
  *
  * @small
- * @covers
  */
 class ZipRemoteFileTest extends ZipTestCase
 {

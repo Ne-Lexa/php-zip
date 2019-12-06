@@ -17,14 +17,6 @@ use PhpZip\ZipFileInterface;
 interface ZipEntry
 {
     // Bit masks for initialized fields.
-    const BIT_PLATFORM = 1;
-
-    const BIT_METHOD = 2;
-
-    const BIT_CRC = 4;
-
-    const BIT_DATE_TIME = 64;
-
     const BIT_EXTERNAL_ATTR = 128;
 
     /** The unknown value for numeric properties. */
@@ -48,13 +40,12 @@ interface ZipEntry
     /** General Purpose Bit Flag mask for encrypted data. */
     const GPBF_ENCRYPTED = 1;
 
-    // 1 << 0
-//    (For Methods 8 and 9 - Deflating)
-//    Bit 2  Bit 1
-//    0      0    Normal compression
-//    0      1    Maximum compression
-//    1      0    Fast compression
-//    1      1    Super Fast compression
+    //    (For Methods 8 and 9 - Deflating)
+    //    Bit 2  Bit 1
+    //    0      0    Normal compression
+    //    0      1    Maximum compression
+    //    1      0    Fast compression
+    //    1      1    Super Fast compression
     const GPBF_COMPRESSION_FLAG1 = 2; // 1 << 1
 
     const GPBF_COMPRESSION_FLAG2 = 4; // 1 << 2

@@ -19,7 +19,6 @@ use Zend\Diactoros\Response;
  * @internal
  *
  * @small
- * @covers
  */
 class ZipFileTest extends ZipTestCase
 {
@@ -44,6 +43,8 @@ class ZipFileTest extends ZipTestCase
         /** @noinspection PhpComposerExtensionStubsInspection */
         if (posix_getuid() === 0) {
             static::markTestSkipped('Skip the test for a user with root privileges');
+
+            return;
         }
 
         static::assertNotFalse(file_put_contents($this->outputFilename, 'content'));
@@ -170,6 +171,8 @@ class ZipFileTest extends ZipTestCase
 
         if (!\extension_loaded('gd')) {
             static::markTestSkipped('not extension gd');
+
+            return;
         }
         /** @noinspection PhpComposerExtensionStubsInspection */
         $zipFile->openFromStream(imagecreate(1, 1));
@@ -425,6 +428,8 @@ class ZipFileTest extends ZipTestCase
     {
         if (!\function_exists('mime_content_type')) {
             static::markTestSkipped('Function mime_content_type not exists');
+
+            return;
         }
         $outputFilename = $this->outputFilename;
         $this->outputFilename .= '.gif';
@@ -1117,6 +1122,8 @@ class ZipFileTest extends ZipTestCase
         /** @noinspection PhpComposerExtensionStubsInspection */
         if (posix_getuid() === 0) {
             static::markTestSkipped('Skip the test for a user with root privileges');
+
+            return;
         }
 
         $zipFile = new ZipFile();
@@ -1341,6 +1348,8 @@ class ZipFileTest extends ZipTestCase
         /** @noinspection PhpComposerExtensionStubsInspection */
         if (posix_getuid() === 0) {
             static::markTestSkipped('Skip the test for a user with root privileges');
+
+            return;
         }
 
         static::assertNotFalse(file_put_contents($this->outputFilename, ''));
@@ -1658,6 +1667,8 @@ class ZipFileTest extends ZipTestCase
         /** @noinspection PhpComposerExtensionStubsInspection */
         if (posix_getuid() === 0) {
             static::markTestSkipped('Skip the test for a user with root privileges');
+
+            return;
         }
 
         static::assertTrue(mkdir($this->outputDirname, 0444, true));

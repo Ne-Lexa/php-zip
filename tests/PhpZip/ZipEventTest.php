@@ -8,7 +8,6 @@ use PhpZip\Exception\ZipException;
  * @internal
  *
  * @small
- * @covers
  */
 class ZipEventTest extends ZipTestCase
 {

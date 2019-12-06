@@ -12,7 +12,6 @@ use PhpZip\Util\Iterator\IgnoreFilesRecursiveFilterIterator;
  * @internal
  *
  * @small
- * @covers
  */
 class ZipFileAddDirTest extends ZipTestCase
 {

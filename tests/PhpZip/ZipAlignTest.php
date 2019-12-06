@@ -11,7 +11,6 @@ use PhpZip\Util\CryptoUtil;
  * @internal
  *
  * @small
- * @covers
  */
 class ZipAlignTest extends ZipTestCase
 {

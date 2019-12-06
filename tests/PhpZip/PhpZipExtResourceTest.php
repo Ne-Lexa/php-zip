@@ -3,6 +3,7 @@
 namespace PhpZip;
 
 use PhpZip\Exception\Crc32Exception;
+use PhpZip\Exception\RuntimeException;
 use PhpZip\Exception\ZipAuthenticationException;
 use PhpZip\Exception\ZipException;
 
@@ -12,7 +13,6 @@ use PhpZip\Exception\ZipException;
  * @internal
  *
  * @small
- * @covers
  */
 class PhpZipExtResourceTest extends ZipTestCase
 {
@@ -126,7 +126,14 @@ class PhpZipExtResourceTest extends ZipTestCase
      */
     public function testBug70752()
     {
-        $this->setExpectedException(ZipAuthenticationException::class, 'nvalid password for zip entry "bug70752.txt"');
+        if (\PHP_INT_SIZE === 4) { // php 32 bit
+            $this->setExpectedException(RuntimeException::class, 'Traditional PKWARE Encryption is not supported in 32-bit PHP.');
+        } else { // php 64 bit
+            $this->setExpectedException(
+                ZipAuthenticationException::class,
+                'nvalid password for zip entry "bug70752.txt"'
+            );
+        }
 
         $filename = __DIR__ . '/php-zip-ext-test-resources/bug70752.zip';
 

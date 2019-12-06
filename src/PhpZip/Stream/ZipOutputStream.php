@@ -179,8 +179,17 @@ class ZipOutputStream implements ZipOutputStreamInterface
             fwrite($this->out, $entryContent);
         }
 
-        \assert($entry->getCrc() !== ZipEntry::UNKNOWN);
-        \assert($entry->getSize() !== ZipEntry::UNKNOWN);
+        if ($entry->getCrc() === ZipEntry::UNKNOWN) {
+            throw new ZipException(sprintf('No crc for entry %s', $entry->getName()));
+        }
+
+        if ($entry->getSize() === ZipEntry::UNKNOWN) {
+            throw new ZipException(sprintf('No uncompressed size for entry %s', $entry->getName()));
+        }
+
+        if ($entry->getCompressedSize() === ZipEntry::UNKNOWN) {
+            throw new ZipException(sprintf('No compressed size for entry %s', $entry->getName()));
+        }
 
         if ($entry->getGeneralPurposeBitFlag(ZipEntry::GPBF_DATA_DESCRIPTOR)) {
             // data descriptor signature       4 bytes  (0x08074b50)
@@ -226,7 +235,7 @@ class ZipOutputStream implements ZipOutputStreamInterface
         $utf8 = true;
 
         if ($encrypted && $entry->getPassword() === null) {
-            throw new ZipException('Can not password from entry ' . $entry->getName());
+            throw new ZipException(sprintf('Password not set for entry %s', $entry->getName()));
         }
 
         // Compose General Purpose Bit Flag.

@@ -2,6 +2,7 @@
 
 namespace PhpZip;
 
+use PhpZip\Exception\RuntimeException;
 use PhpZip\Exception\ZipAuthenticationException;
 use PhpZip\Exception\ZipEntryNotFoundException;
 use PhpZip\Exception\ZipException;
@@ -14,7 +15,6 @@ use PhpZip\Util\CryptoUtil;
  * @internal
  *
  * @small
- * @covers
  */
 class ZipPasswordTest extends ZipFileAddDirTest
 {
@@ -25,8 +25,8 @@ class ZipPasswordTest extends ZipFileAddDirTest
      */
     public function testSetPassword()
     {
-        if (\PHP_INT_SIZE === 4) {
-            static::markTestSkipped('Skip test for 32-bit system. Not support Traditional PKWARE Encryption.');
+        if (\PHP_INT_SIZE === 4) { // php 32 bit
+            $this->setExpectedException(RuntimeException::class, 'Traditional PKWARE Encryption is not supported in 32-bit PHP.');
         }
 
         $password = base64_encode(CryptoUtil::randomBytes(100));
@@ -120,8 +120,8 @@ class ZipPasswordTest extends ZipFileAddDirTest
      */
     public function testTraditionalEncryption()
     {
-        if (\PHP_INT_SIZE === 4) {
-            static::markTestSkipped('Skip test for 32-bit system. Not support Traditional PKWARE Encryption.');
+        if (\PHP_INT_SIZE === 4) { // php 32 bit
+            $this->setExpectedException(RuntimeException::class, 'Traditional PKWARE Encryption is not supported in 32-bit PHP.');
         }
 
         $password = base64_encode(CryptoUtil::randomBytes(50));
@@ -200,8 +200,8 @@ class ZipPasswordTest extends ZipFileAddDirTest
      */
     public function testEncryptionEntries()
     {
-        if (\PHP_INT_SIZE === 4) {
-            static::markTestSkipped('Skip test for 32-bit system. Not support Traditional PKWARE Encryption.');
+        if (\PHP_INT_SIZE === 4) { // php 32 bit
+            $this->setExpectedException(RuntimeException::class, 'Traditional PKWARE Encryption is not supported in 32-bit PHP.');
         }
 
         $password1 = '353442434235424234';
@@ -247,8 +247,8 @@ class ZipPasswordTest extends ZipFileAddDirTest
      */
     public function testEncryptionEntriesWithDefaultPassword()
     {
-        if (\PHP_INT_SIZE === 4) {
-            static::markTestSkipped('Skip test for 32-bit system. Not support Traditional PKWARE Encryption.');
+        if (\PHP_INT_SIZE === 4) { // php 32 bit
+            $this->setExpectedException(RuntimeException::class, 'Traditional PKWARE Encryption is not supported in 32-bit PHP.');
         }
 
         $password1 = '353442434235424234';
