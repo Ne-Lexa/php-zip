@@ -367,8 +367,8 @@ class TraditionalPkwareEncryptionEngine implements ZipEncryptionEngine
         $byte = 0;
 
         for ($i = 0; $i < self::STD_DEC_HDR_SIZE; $i++) {
-            $headerBytes[$i] = ($headerBytes[$i] ^ $this->decryptByte()) & 0xff;
-            $this->updateKeys($headerBytes[$i]);
+            $byte = ($headerBytes[$i] ^ $this->decryptByte()) & 0xff;
+            $this->updateKeys($byte);
         }
 
         if ($this->entry->getGeneralPurposeBitFlag(ZipEntry::GPBF_DATA_DESCRIPTOR)) {
