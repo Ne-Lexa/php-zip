@@ -107,7 +107,7 @@ class ZipInfo
 
     const UNX_IXOTH = 00001;      // Unix execute permission: other
 
-    private static $valuesMadeBy = [
+    private static $platformNames = [
         self::MADE_BY_MS_DOS => 'FAT',
         self::MADE_BY_AMIGA => 'Amiga',
         self::MADE_BY_OPEN_VMS => 'OpenVMS',
@@ -130,7 +130,7 @@ class ZipInfo
         self::MADE_BY_OS_X => 'Mac OS X',
     ];
 
-    private static $valuesCompressionMethod = [
+    private static $compressionMethodNames = [
         ZipEntry::UNKNOWN => 'unknown',
         ZipFile::METHOD_STORED => 'no compression',
         1 => 'shrink',
@@ -214,6 +214,7 @@ class ZipInfo
      * @param ZipEntry $entry
      *
      * @throws ZipException
+     * @noinspection PhpMissingBreakStatementInspection
      */
     public function __construct(ZipEntry $entry)
     {
@@ -364,9 +365,7 @@ class ZipInfo
             $field = $entry->getExtraFieldsCollection()->get(WinZipAesEntryExtraField::getHeaderId());
 
             if ($field !== null) {
-                /**
-                 * @var WinZipAesEntryExtraField $field
-                 */
+                /** @var WinZipAesEntryExtraField $field */
                 $method = $field->getMethod();
             }
         }
@@ -389,7 +388,7 @@ class ZipInfo
 
         if ($entry->isEncrypted()) {
             if ($entry->getMethod() === ZipEntry::METHOD_WINZIP_AES) {
-                $return .= ucfirst(self::$valuesCompressionMethod[$entry->getMethod()]);
+                $return .= ucfirst(self::$compressionMethodNames[$entry->getMethod()]);
                 /** @var WinZipAesEntryExtraField|null $field */
                 $field = $entry->getExtraFieldsCollection()->get(WinZipAesEntryExtraField::getHeaderId());
 
@@ -404,8 +403,8 @@ class ZipInfo
             $return .= ' ';
         }
 
-        if (isset(self::$valuesCompressionMethod[$compressionMethod])) {
-            $return .= ucfirst(self::$valuesCompressionMethod[$compressionMethod]);
+        if (isset(self::$compressionMethodNames[$compressionMethod])) {
+            $return .= ucfirst(self::$compressionMethodNames[$compressionMethod]);
         } else {
             $return .= 'unknown';
         }
@@ -420,8 +419,8 @@ class ZipInfo
      */
     public static function getPlatformName(ZipEntry $entry)
     {
-        if (isset(self::$valuesMadeBy[$entry->getCreatedOS()])) {
-            return self::$valuesMadeBy[$entry->getCreatedOS()];
+        if (isset(self::$platformNames[$entry->getCreatedOS()])) {
+            return self::$platformNames[$entry->getCreatedOS()];
         }
 
         return 'unknown';

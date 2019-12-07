@@ -45,6 +45,7 @@ class ZipAlignTest extends ZipTestCase
      * Test zip alignment.
      *
      * @throws ZipException
+     * @throws \Exception
      */
     public function testZipAlignSourceZip()
     {

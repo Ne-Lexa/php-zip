@@ -740,16 +740,7 @@ class ZipFile implements ZipFileInterface
         natcasesort($files);
         $path = array_shift($files);
 
-        foreach ($files as $file) {
-            $relativePath = str_replace($path, $localPath, $file);
-            $relativePath = ltrim($relativePath, '\\/');
-
-            if (is_dir($file) && FilesUtil::isEmptyDir($file)) {
-                $this->addEmptyDir($relativePath);
-            } elseif (is_file($file)) {
-                $this->addFile($file, $relativePath, $compressionMethod);
-            }
-        }
+        $this->doAddFiles($path, $files, $localPath, $compressionMethod);
 
         return $this;
     }
@@ -824,25 +815,7 @@ class ZipFile implements ZipFileInterface
             return $this;
         }
 
-        if (!empty($localPath) && \is_string($localPath)) {
-            $localPath = trim($localPath, '/\\') . '/';
-        } else {
-            $localPath = '/';
-        }
-
-        /**
-         * @var string $file
-         */
-        foreach ($filesFound as $file) {
-            $filename = str_replace($inputDir, $localPath, $file);
-            $filename = ltrim($filename, '\\/');
-
-            if (is_dir($file) && FilesUtil::isEmptyDir($file)) {
-                $this->addEmptyDir($filename);
-            } elseif (is_file($file)) {
-                $this->addFile($file, $filename, $compressionMethod);
-            }
-        }
+        $this->doAddFiles($inputDir, $filesFound, $localPath, $compressionMethod);
 
         return $this;
     }
@@ -932,18 +905,34 @@ class ZipFile implements ZipFileInterface
             return $this;
         }
 
-        if (!empty($localPath) && \is_string($localPath)) {
-            $localPath = trim($localPath, '\\/') . '/';
+        $this->doAddFiles($inputDir, $files, $localPath, $compressionMethod);
+
+        return $this;
+    }
+
+    /**
+     * @param string   $fileSystemDir
+     * @param array    $files
+     * @param string   $zipPath
+     * @param int|null $compressionMethod
+     *
+     * @throws ZipException
+     */
+    private function doAddFiles($fileSystemDir, array $files, $zipPath, $compressionMethod = null)
+    {
+        $fileSystemDir = rtrim($fileSystemDir, '/\\') . \DIRECTORY_SEPARATOR;
+
+        if (!empty($zipPath) && \is_string($zipPath)) {
+            $zipPath = trim($zipPath, '\\/') . '/';
         } else {
-            $localPath = '/';
+            $zipPath = '/';
         }
-        $inputDir = rtrim($inputDir, '/\\') . \DIRECTORY_SEPARATOR;
 
         /**
          * @var string $file
          */
         foreach ($files as $file) {
-            $filename = str_replace($inputDir, $localPath, $file);
+            $filename = str_replace($fileSystemDir, $zipPath, $file);
             $filename = ltrim($filename, '\\/');
 
             if (is_dir($file) && FilesUtil::isEmptyDir($file)) {
@@ -952,8 +941,6 @@ class ZipFile implements ZipFileInterface
                 $this->addFile($file, $filename, $compressionMethod);
             }
         }
-
-        return $this;
     }
 
     /**
@@ -1443,25 +1430,24 @@ class ZipFile implements ZipFileInterface
      * @param bool        $attachment     Http Header 'Content-Disposition' if true then attachment otherwise inline
      *
      * @throws ZipException
+     *
+     * @return string
      */
     public function outputAsAttachment($outputFilename, $mimeType = null, $attachment = true)
     {
         $outputFilename = (string) $outputFilename;
 
-        if (empty($mimeType) || (!\is_string($mimeType) && !empty($outputFilename))) {
-            $ext = strtolower(pathinfo($outputFilename, \PATHINFO_EXTENSION));
-
-            if (!empty($ext) && isset(self::$defaultMimeTypes[$ext])) {
-                $mimeType = self::$defaultMimeTypes[$ext];
-            }
+        if ($mimeType === null) {
+            $mimeType = $this->getMimeTypeByFilename($outputFilename);
         }
 
-        if (empty($mimeType)) {
-            $mimeType = self::$defaultMimeTypes['zip'];
+        if (!($handle = fopen('php://temp', 'w+b'))) {
+            throw new InvalidArgumentException('php://temp cannot open for write.');
         }
-
-        $content = $this->outputAsString();
+        $this->writeZipToStream($handle);
         $this->close();
+
+        $size = fstat($handle)['size'];
 
         $headerContentDisposition = 'Content-Disposition: ' . ($attachment ? 'attachment' : 'inline');
 
@@ -1471,9 +1457,32 @@ class ZipFile implements ZipFileInterface
 
         header($headerContentDisposition);
         header('Content-Type: ' . $mimeType);
-        header('Content-Length: ' . \strlen($content));
+        header('Content-Length: ' . $size);
 
-        exit($content);
+        rewind($handle);
+
+        try {
+            return stream_get_contents($handle, -1, 0);
+        } finally {
+            fclose($handle);
+        }
+    }
+
+    /**
+     * @param string $outputFilename
+     *
+     * @return string
+     */
+    protected function getMimeTypeByFilename($outputFilename)
+    {
+        $outputFilename = (string) $outputFilename;
+        $ext = strtolower(pathinfo($outputFilename, \PATHINFO_EXTENSION));
+
+        if (!empty($ext) && isset(self::$defaultMimeTypes[$ext])) {
+            return self::$defaultMimeTypes[$ext];
+        }
+
+        return self::$defaultMimeTypes['zip'];
     }
 
     /**
@@ -1492,22 +1501,15 @@ class ZipFile implements ZipFileInterface
     {
         $outputFilename = (string) $outputFilename;
 
-        if (empty($mimeType) || (!\is_string($mimeType) && !empty($outputFilename))) {
-            $ext = strtolower(pathinfo($outputFilename, \PATHINFO_EXTENSION));
-
-            if (!empty($ext) && isset(self::$defaultMimeTypes[$ext])) {
-                $mimeType = self::$defaultMimeTypes[$ext];
-            }
+        if ($mimeType === null) {
+            $mimeType = $this->getMimeTypeByFilename($outputFilename);
         }
 
-        if (empty($mimeType)) {
-            $mimeType = self::$defaultMimeTypes['zip'];
-        }
-
-        if (!($handle = fopen('php://memory', 'w+b'))) {
-            throw new InvalidArgumentException('Memory can not open from write.');
+        if (!($handle = fopen('php://temp', 'w+b'))) {
+            throw new InvalidArgumentException('php://temp cannot open for write.');
         }
         $this->writeZipToStream($handle);
+        $this->close();
         rewind($handle);
 
         $contentDispositionValue = ($attachment ? 'attachment' : 'inline');
@@ -1548,15 +1550,17 @@ class ZipFile implements ZipFileInterface
      */
     public function outputAsString()
     {
-        if (!($handle = fopen('php://memory', 'w+b'))) {
-            throw new InvalidArgumentException('Memory can not open from write.');
+        if (!($handle = fopen('php://temp', 'w+b'))) {
+            throw new InvalidArgumentException('php://temp cannot open for write.');
         }
         $this->writeZipToStream($handle);
         rewind($handle);
-        $content = stream_get_contents($handle);
-        fclose($handle);
 
-        return $content;
+        try {
+            return stream_get_contents($handle);
+        } finally {
+            fclose($handle);
+        }
     }
 
     /**

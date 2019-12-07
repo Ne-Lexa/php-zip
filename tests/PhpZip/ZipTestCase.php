@@ -19,6 +19,8 @@ abstract class ZipTestCase extends TestCase
 
     /**
      * Before test.
+     *
+     * @noinspection PhpMissingParentCallCommonInspection
      */
     protected function setUp()
     {

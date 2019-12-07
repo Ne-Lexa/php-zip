@@ -187,6 +187,7 @@ abstract class ZipAbstractEntry implements ZipEntry
      * @return int Get platform
      *
      * @deprecated Use {@see ZipEntry::getCreatedOS()}
+     * @noinspection PhpUsageOfSilenceOperatorInspection
      */
     public function getPlatform()
     {
@@ -198,11 +199,12 @@ abstract class ZipAbstractEntry implements ZipEntry
     /**
      * @param int $platform
      *
-     * @throws ZipException
-     *
      * @return ZipEntry
      *
+     * @throws ZipException
+     *
      * @deprecated Use {@see ZipEntry::setCreatedOS()}
+     * @noinspection PhpUsageOfSilenceOperatorInspection
      */
     public function setPlatform($platform)
     {

@@ -66,6 +66,7 @@ class IgnoreFilesRecursiveFilterIterator extends \RecursiveFilterIterator
 
     /**
      * @return IgnoreFilesRecursiveFilterIterator
+     * @noinspection PhpMissingParentCallCommonInspection
      */
     public function getChildren()
     {

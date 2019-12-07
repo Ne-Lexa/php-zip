@@ -13,6 +13,8 @@ class Issue24Test extends ZipTestCase
 {
     /**
      * This method is called before the first test of this test class is run.
+     *
+     * @noinspection PhpMissingParentCallCommonInspection
      */
     public static function setUpBeforeClass()
     {
