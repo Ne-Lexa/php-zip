@@ -2,6 +2,9 @@
 
 namespace PhpZip\Exception;
 
+/**
+ * Class ZipUnsupportMethodException.
+ */
 class ZipUnsupportMethodException extends RuntimeException
 {
 }

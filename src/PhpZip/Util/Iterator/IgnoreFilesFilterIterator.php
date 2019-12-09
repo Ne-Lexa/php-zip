@@ -13,7 +13,7 @@ use PhpZip\Util\StringUtil;
 class IgnoreFilesFilterIterator extends \FilterIterator
 {
     /**
-     * Ignore list files
+     * Ignore list files.
      *
      * @var array
      */
@@ -21,7 +21,7 @@ class IgnoreFilesFilterIterator extends \FilterIterator
 
     /**
      * @param \Iterator $iterator
-     * @param array $ignoreFiles
+     * @param array     $ignoreFiles
      */
     public function __construct(\Iterator $iterator, array $ignoreFiles)
     {
@@ -30,9 +30,12 @@ class IgnoreFilesFilterIterator extends \FilterIterator
     }
 
     /**
-     * Check whether the current element of the iterator is acceptable
-     * @link http://php.net/manual/en/filteriterator.accept.php
-     * @return bool true if the current element is acceptable, otherwise false.
+     * Check whether the current element of the iterator is acceptable.
+     *
+     * @see http://php.net/manual/en/filteriterator.accept.php
+     *
+     * @return bool true if the current element is acceptable, otherwise false
+     *
      * @since 5.1.0
      */
     public function accept()
@@ -42,6 +45,7 @@ class IgnoreFilesFilterIterator extends \FilterIterator
          */
         $fileInfo = $this->current();
         $pathname = str_replace('\\', '/', $fileInfo->getPathname());
+
         foreach ($this->ignoreFiles as $ignoreFile) {
             // handler dir and sub dir
             if ($fileInfo->isDir()
@@ -56,6 +60,7 @@ class IgnoreFilesFilterIterator extends \FilterIterator
                 return false;
             }
         }
+
         return true;
     }
 }

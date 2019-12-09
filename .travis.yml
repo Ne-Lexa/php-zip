@@ -1,3 +1,5 @@
+dist: trusty
+
 language: php
 php:
   - '5.5'
@@ -6,12 +8,7 @@ php:
   - '7.1'
   - '7.2'
   - '7.3'
-
-# cache vendor dirs
-cache:
-  directories:
-    - vendor
-    - $HOME/.composer/cache
+  - '7.4'
 
 install:
   - travis_retry composer self-update && composer --version

@@ -9,20 +9,19 @@ use PhpZip\Model\ZipEntry;
  *
  * @author Ne-Lexa alexey@nelexa.ru
  * @license MIT
+ *
+ * @internal
  */
 class OutputOffsetEntry
 {
-    /**
-     * @var int
-     */
+    /** @var int */
     private $offset;
-    /**
-     * @var ZipEntry
-     */
+
+    /** @var ZipEntry */
     private $entry;
 
     /**
-     * @param int $pos
+     * @param int      $pos
      * @param ZipEntry $entry
      */
     public function __construct($pos, ZipEntry $entry)

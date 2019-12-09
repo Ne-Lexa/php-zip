@@ -23,12 +23,14 @@ interface ExtraField
 
     /**
      * Serializes a Data Block.
+     *
      * @return string
      */
     public function serialize();
 
     /**
      * Initializes this Extra Field by deserializing a Data Block.
+     *
      * @param string $data
      */
     public function deserialize($data);
