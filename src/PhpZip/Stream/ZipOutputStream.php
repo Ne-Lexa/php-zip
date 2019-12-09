@@ -225,6 +225,10 @@ class ZipOutputStream implements ZipOutputStreamInterface
             $entry->setCreatedOS(ZipEntry::PLATFORM_UNIX);
         }
 
+        if ($entry->getSoftwareVersion() === ZipEntry::UNKNOWN) {
+            $entry->setSoftwareVersion(63);
+        }
+
         if ($entry->getExtractedOS() === ZipEntry::UNKNOWN) {
             $entry->setExtractedOS(ZipEntry::PLATFORM_UNIX);
         }
