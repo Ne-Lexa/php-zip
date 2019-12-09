@@ -13,7 +13,7 @@ use PhpZip\Util\StringUtil;
 class IgnoreFilesRecursiveFilterIterator extends \RecursiveFilterIterator
 {
     /**
-     * Ignore list files
+     * Ignore list files.
      *
      * @var array
      */
@@ -21,7 +21,7 @@ class IgnoreFilesRecursiveFilterIterator extends \RecursiveFilterIterator
 
     /**
      * @param \RecursiveIterator $iterator
-     * @param array $ignoreFiles
+     * @param array              $ignoreFiles
      */
     public function __construct(\RecursiveIterator $iterator, array $ignoreFiles)
     {
@@ -30,9 +30,12 @@ class IgnoreFilesRecursiveFilterIterator extends \RecursiveFilterIterator
     }
 
     /**
-     * Check whether the current element of the iterator is acceptable
-     * @link http://php.net/manual/en/filteriterator.accept.php
-     * @return bool true if the current element is acceptable, otherwise false.
+     * Check whether the current element of the iterator is acceptable.
+     *
+     * @see http://php.net/manual/en/filteriterator.accept.php
+     *
+     * @return bool true if the current element is acceptable, otherwise false
+     *
      * @since 5.1.0
      */
     public function accept()
@@ -42,10 +45,11 @@ class IgnoreFilesRecursiveFilterIterator extends \RecursiveFilterIterator
          */
         $fileInfo = $this->current();
         $pathname = str_replace('\\', '/', $fileInfo->getPathname());
+
         foreach ($this->ignoreFiles as $ignoreFile) {
             // handler dir and sub dir
             if ($fileInfo->isDir()
-                && $ignoreFile[strlen($ignoreFile) - 1] === '/'
+                && $ignoreFile[\strlen($ignoreFile) - 1] === '/'
                 && StringUtil::endsWith($pathname, substr($ignoreFile, 0, -1))
             ) {
                 return false;
@@ -56,15 +60,16 @@ class IgnoreFilesRecursiveFilterIterator extends \RecursiveFilterIterator
                 return false;
             }
         }
+
         return true;
     }
 
     /**
      * @return IgnoreFilesRecursiveFilterIterator
+     * @noinspection PhpMissingParentCallCommonInspection
      */
     public function getChildren()
     {
-        /** @noinspection PhpUndefinedMethodInspection */
         return new self($this->getInnerIterator()->getChildren(), $this->ignoreFiles);
     }
 }

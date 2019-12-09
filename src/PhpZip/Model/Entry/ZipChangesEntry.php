@@ -2,26 +2,29 @@
 
 namespace PhpZip\Model\Entry;
 
+use PhpZip\Exception\InvalidArgumentException;
 use PhpZip\Exception\ZipException;
 
 /**
- * Source Entry Changes
+ * Source Entry Changes.
  *
  * @author Ne-Lexa alexey@nelexa.ru
  * @license MIT
+ *
+ * @internal
  */
 class ZipChangesEntry extends ZipAbstractEntry
 {
-    /**
-     * @var ZipSourceEntry
-     */
+    /** @var ZipSourceEntry */
     protected $entry;
 
     /**
      * ZipChangesEntry constructor.
+     *
      * @param ZipSourceEntry $entry
+     *
      * @throws ZipException
-     * @throws \PhpZip\Exception\InvalidArgumentException
+     * @throws InvalidArgumentException
      */
     public function __construct(ZipSourceEntry $entry)
     {
@@ -47,8 +50,9 @@ class ZipChangesEntry extends ZipAbstractEntry
     /**
      * Returns an string content of the given entry.
      *
-     * @return null|string
      * @throws ZipException
+     *
+     * @return string|null
      */
     public function getEntryContent()
     {

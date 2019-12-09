@@ -10,14 +10,16 @@ use PhpZip\Util\Iterator\IgnoreFilesRecursiveFilterIterator;
  *
  * @author Ne-Lexa alexey@nelexa.ru
  * @license MIT
+ *
+ * @internal
  */
-class FilesUtil
+final class FilesUtil
 {
-
     /**
-     * Is empty directory
+     * Is empty directory.
      *
      * @param string $dir Directory
+     *
      * @return bool
      */
     public static function isEmptyDir($dir)
@@ -25,13 +27,14 @@ class FilesUtil
         if (!is_readable($dir)) {
             return false;
         }
-        return count(scandir($dir)) === 2;
+
+        return \count(scandir($dir)) === 2;
     }
 
     /**
      * Remove recursive directory.
      *
-     * @param string $dir Directory path.
+     * @param string $dir directory path
      */
     public static function removeDir($dir)
     {
@@ -39,6 +42,7 @@ class FilesUtil
             new \RecursiveDirectoryIterator($dir, \RecursiveDirectoryIterator::SKIP_DOTS),
             \RecursiveIteratorIterator::CHILD_FIRST
         );
+
         foreach ($files as $fileInfo) {
             $function = ($fileInfo->isDir() ? 'rmdir' : 'unlink');
             $function($fileInfo->getRealPath());
@@ -46,11 +50,11 @@ class FilesUtil
         rmdir($dir);
     }
 
-
     /**
      * Convert glob pattern to regex pattern.
      *
      * @param string $globPattern
+     *
      * @return string
      */
     public static function convertGlobToRegEx($globPattern)
@@ -61,16 +65,19 @@ class FilesUtil
         $inCurrent = 0;
         $chars = str_split($globPattern);
         $regexPattern = '';
+
         foreach ($chars as $currentChar) {
             switch ($currentChar) {
                 case '*':
-                    $regexPattern .= ($escaping ? "\\*" : '.*');
+                    $regexPattern .= ($escaping ? '\\*' : '.*');
                     $escaping = false;
                     break;
+
                 case '?':
-                    $regexPattern .= ($escaping ? "\\?" : '.');
+                    $regexPattern .= ($escaping ? '\\?' : '.');
                     $escaping = false;
                     break;
+
                 case '.':
                 case '(':
                 case ')':
@@ -83,41 +90,45 @@ class FilesUtil
                     $regexPattern .= '\\' . $currentChar;
                     $escaping = false;
                     break;
+
                 case '\\':
                     if ($escaping) {
-                        $regexPattern .= "\\\\";
+                        $regexPattern .= '\\\\';
                         $escaping = false;
                     } else {
                         $escaping = true;
                     }
                     break;
+
                 case '{':
                     if ($escaping) {
-                        $regexPattern .= "\\{";
+                        $regexPattern .= '\\{';
                     } else {
                         $regexPattern = '(';
                         $inCurrent++;
                     }
                     $escaping = false;
                     break;
+
                 case '}':
                     if ($inCurrent > 0 && !$escaping) {
                         $regexPattern .= ')';
                         $inCurrent--;
                     } elseif ($escaping) {
-                        $regexPattern = "\\}";
+                        $regexPattern = '\\}';
                     } else {
-                        $regexPattern = "}";
+                        $regexPattern = '}';
                     }
                     $escaping = false;
                     break;
+
                 case ',':
                     if ($inCurrent > 0 && !$escaping) {
                         $regexPattern .= '|';
                     } elseif ($escaping) {
-                        $regexPattern .= "\\,";
+                        $regexPattern .= '\\,';
                     } else {
-                        $regexPattern = ",";
+                        $regexPattern = ',';
                     }
                     break;
                 default:
@@ -125,6 +136,7 @@ class FilesUtil
                     $regexPattern .= $currentChar;
             }
         }
+
         return $regexPattern;
     }
 
@@ -132,8 +144,9 @@ class FilesUtil
      * Search files.
      *
      * @param string $inputDir
-     * @param bool $recursive
-     * @param array $ignoreFiles
+     * @param bool   $recursive
+     * @param array  $ignoreFiles
+     *
      * @return array Searched file list
      */
     public static function fileSearchWithIgnore($inputDir, $recursive = true, array $ignoreFiles = [])
@@ -153,11 +166,13 @@ class FilesUtil
             new \IteratorIterator($directoryIterator);
 
         $fileList = [];
+
         foreach ($iterator as $file) {
             if ($file instanceof \SplFileInfo) {
                 $fileList[] = $file->getPathname();
             }
         }
+
         return $fileList;
     }
 
@@ -165,21 +180,27 @@ class FilesUtil
      * Search files from glob pattern.
      *
      * @param string $globPattern
-     * @param int $flags
-     * @param bool $recursive
+     * @param int    $flags
+     * @param bool   $recursive
+     *
      * @return array Searched file list
      */
     public static function globFileSearch($globPattern, $flags = 0, $recursive = true)
     {
-        $flags = (int)$flags;
-        $recursive = (bool)$recursive;
+        $flags = (int) $flags;
+        $recursive = (bool) $recursive;
         $files = glob($globPattern, $flags);
+
         if (!$recursive) {
             return $files;
         }
-        foreach (glob(dirname($globPattern) . '/*', GLOB_ONLYDIR | GLOB_NOSORT) as $dir) {
+
+        foreach (glob(\dirname($globPattern) . '/*', \GLOB_ONLYDIR | \GLOB_NOSORT) as $dir) {
+            // Unpacking the argument via ... is supported starting from php 5.6 only
+            /** @noinspection SlowArrayOperationsInLoopInspection */
             $files = array_merge($files, self::globFileSearch($dir . '/' . basename($globPattern), $flags, $recursive));
         }
+
         return $files;
     }
 
@@ -188,48 +209,58 @@ class FilesUtil
      *
      * @param string $folder
      * @param string $pattern
-     * @param bool $recursive
+     * @param bool   $recursive
+     *
      * @return array Searched file list
      */
     public static function regexFileSearch($folder, $pattern, $recursive = true)
     {
         $directoryIterator = $recursive ? new \RecursiveDirectoryIterator($folder) : new \DirectoryIterator($folder);
-        $iterator = $recursive ? new \RecursiveIteratorIterator($directoryIterator) : new \IteratorIterator($directoryIterator);
+        $iterator = $recursive ? new \RecursiveIteratorIterator($directoryIterator) : new \IteratorIterator(
+            $directoryIterator
+        );
         $regexIterator = new \RegexIterator($iterator, $pattern, \RegexIterator::MATCH);
         $fileList = [];
+
         foreach ($regexIterator as $file) {
             if ($file instanceof \SplFileInfo) {
                 $fileList[] = $file->getPathname();
             }
         }
+
         return $fileList;
     }
 
     /**
      * Convert bytes to human size.
      *
-     * @param int $size Size bytes
+     * @param int         $size Size bytes
      * @param string|null $unit Unit support 'GB', 'MB', 'KB'
+     *
      * @return string
      */
     public static function humanSize($size, $unit = null)
     {
-        if (($unit === null && $size >= 1 << 30) || $unit === "GB") {
-            return number_format($size / (1 << 30), 2) . "GB";
+        if (($unit === null && $size >= 1 << 30) || $unit === 'GB') {
+            return number_format($size / (1 << 30), 2) . 'GB';
         }
-        if (($unit === null && $size >= 1 << 20) || $unit === "MB") {
-            return number_format($size / (1 << 20), 2) . "MB";
+
+        if (($unit === null && $size >= 1 << 20) || $unit === 'MB') {
+            return number_format($size / (1 << 20), 2) . 'MB';
         }
-        if (($unit === null && $size >= 1 << 10) || $unit === "KB") {
-            return number_format($size / (1 << 10), 2) . "KB";
+
+        if (($unit === null && $size >= 1 << 10) || $unit === 'KB') {
+            return number_format($size / (1 << 10), 2) . 'KB';
         }
-        return number_format($size) . " bytes";
+
+        return number_format($size) . ' bytes';
     }
 
     /**
      * Normalizes zip path.
      *
      * @param string $path Zip path
+     *
      * @return string
      */
     public static function normalizeZipPath($path)
@@ -237,7 +268,7 @@ class FilesUtil
         return implode(
             '/',
             array_filter(
-                explode('/', (string)$path),
+                explode('/', (string) $path),
                 static function ($part) {
                     return $part !== '.' && $part !== '..';
                 }

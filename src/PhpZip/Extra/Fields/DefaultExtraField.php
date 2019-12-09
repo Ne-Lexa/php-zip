@@ -14,26 +14,23 @@ use PhpZip\Extra\ExtraField;
  */
 class DefaultExtraField implements ExtraField
 {
-    /**
-     * @var int
-     */
+    /** @var int */
     private static $headerId;
 
-    /**
-     * @var string
-     */
+    /** @var string */
     protected $data;
 
     /**
      * Constructs a new Extra Field.
      *
      * @param int $headerId an unsigned short integer (two bytes) indicating the
-     *         type of the Extra Field.
+     *                      type of the Extra Field
+     *
      * @throws ZipException
      */
     public function __construct($headerId)
     {
-        if (0x0000 > $headerId || $headerId > 0xffff) {
+        if ($headerId < 0x0000 || $headerId > 0xffff) {
             throw new ZipException('headerId out of range');
         }
         self::$headerId = $headerId;
@@ -53,6 +50,7 @@ class DefaultExtraField implements ExtraField
 
     /**
      * Serializes a Data Block.
+     *
      * @return string
      */
     public function serialize()
@@ -62,6 +60,7 @@ class DefaultExtraField implements ExtraField
 
     /**
      * Initializes this Extra Field by deserializing a Data Block.
+     *
      * @param string $data
      */
     public function deserialize($data)

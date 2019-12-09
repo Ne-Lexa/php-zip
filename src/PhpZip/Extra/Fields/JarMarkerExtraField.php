@@ -30,6 +30,7 @@ class JarMarkerExtraField implements ExtraField
 
     /**
      * Serializes a Data Block.
+     *
      * @return string
      */
     public function serialize()
@@ -39,12 +40,14 @@ class JarMarkerExtraField implements ExtraField
 
     /**
      * Initializes this Extra Field by deserializing a Data Block.
+     *
      * @param string $data
+     *
      * @throws ZipException
      */
     public function deserialize($data)
     {
-        if (strlen($data) !== 0) {
+        if ($data !== '') {
             throw new ZipException("JarMarker doesn't expect any data");
         }
     }

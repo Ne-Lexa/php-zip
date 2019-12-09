@@ -5,59 +5,77 @@ namespace PhpZip\Stream;
 use Psr\Http\Message\StreamInterface;
 
 /**
- * Implement PSR Message Stream
+ * Implement PSR Message Stream.
  */
 class ResponseStream implements StreamInterface
 {
-    /**
-     * @var array
-     */
+    /** @var array */
     private static $readWriteHash = [
         'read' => [
-            'r' => true, 'w+' => true, 'r+' => true, 'x+' => true, 'c+' => true,
-            'rb' => true, 'w+b' => true, 'r+b' => true, 'x+b' => true,
-            'c+b' => true, 'rt' => true, 'w+t' => true, 'r+t' => true,
-            'x+t' => true, 'c+t' => true, 'a+' => true,
+            'r' => true,
+            'w+' => true,
+            'r+' => true,
+            'x+' => true,
+            'c+' => true,
+            'rb' => true,
+            'w+b' => true,
+            'r+b' => true,
+            'x+b' => true,
+            'c+b' => true,
+            'rt' => true,
+            'w+t' => true,
+            'r+t' => true,
+            'x+t' => true,
+            'c+t' => true,
+            'a+' => true,
         ],
         'write' => [
-            'w' => true, 'w+' => true, 'rw' => true, 'r+' => true, 'x+' => true,
-            'c+' => true, 'wb' => true, 'w+b' => true, 'r+b' => true,
-            'x+b' => true, 'c+b' => true, 'w+t' => true, 'r+t' => true,
-            'x+t' => true, 'c+t' => true, 'a' => true, 'a+' => true,
+            'w' => true,
+            'w+' => true,
+            'rw' => true,
+            'r+' => true,
+            'x+' => true,
+            'c+' => true,
+            'wb' => true,
+            'w+b' => true,
+            'r+b' => true,
+            'x+b' => true,
+            'c+b' => true,
+            'w+t' => true,
+            'r+t' => true,
+            'x+t' => true,
+            'c+t' => true,
+            'a' => true,
+            'a+' => true,
         ],
     ];
-    /**
-     * @var resource
-     */
+
+    /** @var resource */
     private $stream;
-    /**
-     * @var int
-     */
+
+    /** @var int */
     private $size;
-    /**
-     * @var bool
-     */
+
+    /** @var bool */
     private $seekable;
-    /**
-     * @var bool
-     */
+
+    /** @var bool */
     private $readable;
-    /**
-     * @var bool
-     */
+
+    /** @var bool */
     private $writable;
-    /**
-     * @var array|mixed|null
-     */
+
+    /** @var array|mixed|null */
     private $uri;
 
     /**
-     * @param resource $stream Stream resource to wrap.
+     * @param resource $stream stream resource to wrap
+     *
      * @throws \InvalidArgumentException if the stream is not a stream resource
      */
     public function __construct($stream)
     {
-        if (!is_resource($stream)) {
+        if (!\is_resource($stream)) {
             throw new \InvalidArgumentException('Stream must be a resource');
         }
         $this->stream = $stream;
@@ -74,11 +92,13 @@ class ResponseStream implements StreamInterface
      * The keys returned are identical to the keys returned from PHP's
      * stream_get_meta_data() function.
      *
-     * @link http://php.net/manual/en/function.stream-get-meta-data.php
-     * @param string $key Specific metadata to retrieve.
+     * @see http://php.net/manual/en/function.stream-get-meta-data.php
+     *
+     * @param string $key specific metadata to retrieve
+     *
      * @return array|mixed|null Returns an associative array if no key is
-     *     provided. Returns a specific key value if a key is provided and the
-     *     value is found, or null if the key is not found.
+     *                          provided. Returns a specific key value if a key is provided and the
+     *                          value is found, or null if the key is not found.
      */
     public function getMetadata($key = null)
     {
@@ -86,6 +106,7 @@ class ResponseStream implements StreamInterface
             return $key ? null : [];
         }
         $meta = stream_get_meta_data($this->stream);
+
         return isset($meta[$key]) ? $meta[$key] : null;
     }
 
@@ -101,6 +122,7 @@ class ResponseStream implements StreamInterface
      * string casting operations.
      *
      * @see http://php.net/manual/en/language.oop5.magic.php#object.tostring
+     *
      * @return string
      */
     public function __toString()
@@ -109,7 +131,8 @@ class ResponseStream implements StreamInterface
             return '';
         }
         $this->rewind();
-        return (string)stream_get_contents($this->stream);
+
+        return (string) stream_get_contents($this->stream);
     }
 
     /**
@@ -118,9 +141,10 @@ class ResponseStream implements StreamInterface
      * If the stream is not seekable, this method will raise an exception;
      * otherwise, it will perform a seek(0).
      *
+     * @throws \RuntimeException on failure
+     *
+     * @see http://www.php.net/manual/en/function.fseek.php
      * @see seek()
-     * @link http://www.php.net/manual/en/function.fseek.php
-     * @throws \RuntimeException on failure.
      */
     public function rewind()
     {
@@ -130,13 +154,14 @@ class ResponseStream implements StreamInterface
     /**
      * Get the size of the stream if known.
      *
-     * @return int|null Returns the size in bytes if known, or null if unknown.
+     * @return int|null returns the size in bytes if known, or null if unknown
      */
     public function getSize()
     {
         if ($this->size !== null) {
             return $this->size;
         }
+
         if (!$this->stream) {
             return null;
         }
@@ -145,18 +170,22 @@ class ResponseStream implements StreamInterface
             clearstatcache(true, $this->uri);
         }
         $stats = fstat($this->stream);
+
         if (isset($stats['size'])) {
             $this->size = $stats['size'];
+
             return $this->size;
         }
+
         return null;
     }
 
     /**
-     * Returns the current position of the file read/write pointer
+     * Returns the current position of the file read/write pointer.
+     *
+     * @throws \RuntimeException on error
      *
      * @return int Position of the file pointer
-     * @throws \RuntimeException on error.
      */
     public function tell()
     {
@@ -186,16 +215,18 @@ class ResponseStream implements StreamInterface
     /**
      * Seek to a position in the stream.
      *
-     * @link http://www.php.net/manual/en/function.fseek.php
+     * @see http://www.php.net/manual/en/function.fseek.php
+     *
      * @param int $offset Stream offset
      * @param int $whence Specifies how the cursor position will be calculated
-     *     based on the seek offset. Valid values are identical to the built-in
-     *     PHP $whence values for `fseek()`.  SEEK_SET: Set position equal to
-     *     offset bytes SEEK_CUR: Set position to current location plus offset
-     *     SEEK_END: Set position to end-of-stream plus offset.
-     * @throws \RuntimeException on failure.
+     *                    based on the seek offset. Valid values are identical to the built-in
+     *                    PHP $whence values for `fseek()`.  SEEK_SET: Set position equal to
+     *                    offset bytes SEEK_CUR: Set position to current location plus offset
+     *                    SEEK_END: Set position to end-of-stream plus offset.
+     *
+     * @throws \RuntimeException on failure
      */
-    public function seek($offset, $whence = SEEK_SET)
+    public function seek($offset, $whence = \SEEK_SET)
     {
         $this->seekable && fseek($this->stream, $offset, $whence);
     }
@@ -213,13 +244,16 @@ class ResponseStream implements StreamInterface
     /**
      * Write data to the stream.
      *
-     * @param string $string The string that is to be written.
-     * @return int Returns the number of bytes written to the stream.
-     * @throws \RuntimeException on failure.
+     * @param string $string the string that is to be written
+     *
+     * @throws \RuntimeException on failure
+     *
+     * @return int returns the number of bytes written to the stream
      */
     public function write($string)
     {
         $this->size = null;
+
         return $this->writable ? fwrite($this->stream, $string) : false;
     }
 
@@ -237,23 +271,26 @@ class ResponseStream implements StreamInterface
      * Read data from the stream.
      *
      * @param int $length Read up to $length bytes from the object and return
-     *     them. Fewer than $length bytes may be returned if underlying stream
-     *     call returns fewer bytes.
-     * @return string Returns the data read from the stream, or an empty string
-     *     if no bytes are available.
-     * @throws \RuntimeException if an error occurs.
+     *                    them. Fewer than $length bytes may be returned if underlying stream
+     *                    call returns fewer bytes.
+     *
+     * @throws \RuntimeException if an error occurs
+     *
+     * @return string returns the data read from the stream, or an empty string
+     *                if no bytes are available
      */
     public function read($length)
     {
-        return $this->readable ? fread($this->stream, $length) : "";
+        return $this->readable ? fread($this->stream, $length) : '';
     }
 
     /**
-     * Returns the remaining contents in a string
+     * Returns the remaining contents in a string.
+     *
+     * @throws \RuntimeException if unable to read or an error occurs while
+     *                           reading
      *
      * @return string
-     * @throws \RuntimeException if unable to read or an error occurs while
-     *     reading.
      */
     public function getContents()
     {
@@ -261,7 +298,7 @@ class ResponseStream implements StreamInterface
     }
 
     /**
-     * Closes the stream when the destructed
+     * Closes the stream when the destructed.
      */
     public function __destruct()
     {
@@ -270,12 +307,10 @@ class ResponseStream implements StreamInterface
 
     /**
      * Closes the stream and any underlying resources.
-     *
-     * @return void
      */
     public function close()
     {
-        if (is_resource($this->stream)) {
+        if (\is_resource($this->stream)) {
             fclose($this->stream);
         }
         $this->detach();
@@ -293,6 +328,7 @@ class ResponseStream implements StreamInterface
         $result = $this->stream;
         $this->stream = $this->size = $this->uri = null;
         $this->readable = $this->writable = $this->seekable = false;
+
         return $result;
     }
 }

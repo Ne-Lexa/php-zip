@@ -4,32 +4,27 @@ namespace PhpZip\Model;
 
 use PhpZip\Exception\ZipException;
 use PhpZip\Extra\ExtraFieldsCollection;
-use PhpZip\ZipFileInterface;
+use PhpZip\ZipFile;
 
 /**
  * ZIP file entry.
  *
  * @see https://pkware.cachefly.net/webdocs/casestudies/APPNOTE.TXT .ZIP File Format Specification
+ *
  * @author Ne-Lexa alexey@nelexa.ru
  * @license MIT
  */
 interface ZipEntry
 {
-    // Bit masks for initialized fields.
-    const BIT_PLATFORM = 1,
-        BIT_METHOD = 2 /* 1 << 1 */,
-        BIT_CRC = 4 /* 1 << 2 */,
-        BIT_DATE_TIME = 64 /* 1 << 6 */,
-        BIT_EXTERNAL_ATTR = 128 /* 1 << 7*/
-    ;
-
     /** The unknown value for numeric properties. */
     const UNKNOWN = -1;
 
     /** Windows platform. */
     const PLATFORM_FAT = 0;
+
     /** Unix platform. */
     const PLATFORM_UNIX = 3;
+
     /** MacOS platform */
     const PLATFORM_OS_X = 19;
 
@@ -40,26 +35,33 @@ interface ZipEntry
     const METHOD_WINZIP_AES = 99;
 
     /** General Purpose Bit Flag mask for encrypted data. */
-    const GPBF_ENCRYPTED = 1; // 1 << 0
-//    (For Methods 8 and 9 - Deflating)
-//    Bit 2  Bit 1
-//    0      0    Normal compression
-//    0      1    Maximum compression
-//    1      0    Fast compression
-//    1      1    Super Fast compression
+    const GPBF_ENCRYPTED = 1;
+
+    //    (For Methods 8 and 9 - Deflating)
+    //    Bit 2  Bit 1
+    //    0      0    Normal compression
+    //    0      1    Maximum compression
+    //    1      0    Fast compression
+    //    1      1    Super Fast compression
     const GPBF_COMPRESSION_FLAG1 = 2; // 1 << 1
+
     const GPBF_COMPRESSION_FLAG2 = 4; // 1 << 2
+
     /** General Purpose Bit Flag mask for data descriptor. */
     const GPBF_DATA_DESCRIPTOR = 8; // 1 << 3
+
     /** General Purpose Bit Flag mask for strong encryption. */
     const GPBF_STRONG_ENCRYPTION = 64; // 1 << 6
+
     /** General Purpose Bit Flag mask for UTF-8. */
     const GPBF_UTF8 = 2048; // 1 << 11
 
     /** Local File Header signature. */
     const LOCAL_FILE_HEADER_SIG = 0x04034B50;
+
     /** Data Descriptor signature. */
     const DATA_DESCRIPTOR_SIG = 0x08074B50;
+
     /**
      * The minimum length of the Local File Header record.
      *
@@ -76,6 +78,7 @@ interface ZipEntry
      * extra field length               2
      */
     const LOCAL_FILE_HEADER_MIN_LEN = 30;
+
     /**
      * Local File Header signature      4
      * Version Needed To Extract        2
@@ -85,12 +88,11 @@ interface ZipEntry
      * Last Mod File Date               2
      * CRC-32                           4
      * Compressed Size                  4
-     * Uncompressed Size                4
+     * Uncompressed Size                4.
      */
     const LOCAL_FILE_HEADER_FILE_NAME_LENGTH_POS = 26;
-    /**
-     * Default compression level for bzip2
-     */
+
+    /** Default compression level for bzip2 */
     const LEVEL_DEFAULT_BZIP2_COMPRESSION = 4;
 
     /**
@@ -104,24 +106,76 @@ interface ZipEntry
      * Set entry name.
      *
      * @param string $name New entry name
-     * @return ZipEntry
+     *
      * @throws ZipException
+     *
+     * @return ZipEntry
      */
     public function setName($name);
 
     /**
      * @return int Get platform
+     *
+     * @deprecated Use {@see ZipEntry::getCreatedOS()}
      */
     public function getPlatform();
 
     /**
-     * Set platform
-     *
      * @param int $platform
-     * @return ZipEntry
+     *
      * @throws ZipException
+     *
+     * @return ZipEntry
+     *
+     * @deprecated Use {@see ZipEntry::setCreatedOS()}
      */
     public function setPlatform($platform);
+
+    /**
+     * Returns created OS.
+     *
+     * @return int Get platform
+     */
+    public function getCreatedOS();
+
+    /**
+     * Set created OS.
+     *
+     * @param int $platform
+     *
+     * @throws ZipException
+     *
+     * @return ZipEntry
+     */
+    public function setCreatedOS($platform);
+
+    /**
+     * @return int
+     */
+    public function getExtractedOS();
+
+    /**
+     * Set extracted OS.
+     *
+     * @param int $platform
+     *
+     * @throws ZipException
+     *
+     * @return ZipEntry
+     */
+    public function setExtractedOS($platform);
+
+    /**
+     * @return int
+     */
+    public function getSoftwareVersion();
+
+    /**
+     * @param int $softwareVersion
+     *
+     * @return ZipEntry
+     */
+    public function setSoftwareVersion($softwareVersion);
 
     /**
      * Version needed to extract.
@@ -134,6 +188,7 @@ interface ZipEntry
      * Set version needed to extract.
      *
      * @param int $version
+     *
      * @return ZipEntry
      */
     public function setVersionNeededToExtract($version);
@@ -153,9 +208,11 @@ interface ZipEntry
     /**
      * Sets the compressed size of this entry.
      *
-     * @param int $compressedSize The Compressed Size.
-     * @return ZipEntry
+     * @param int $compressedSize the Compressed Size
+     *
      * @throws ZipException
+     *
+     * @return ZipEntry
      */
     public function setCompressedSize($compressedSize);
 
@@ -169,9 +226,11 @@ interface ZipEntry
     /**
      * Sets the uncompressed size of this entry.
      *
-     * @param int $size The (Uncompressed) Size.
-     * @return ZipEntry
+     * @param int $size the (Uncompressed) Size
+     *
      * @throws ZipException
+     *
+     * @return ZipEntry
      */
     public function setSize($size);
 
@@ -184,8 +243,10 @@ interface ZipEntry
 
     /**
      * @param int $offset
-     * @return ZipEntry
+     *
      * @throws ZipException
+     *
+     * @return ZipEntry
      */
     public function setOffset($offset);
 
@@ -207,9 +268,13 @@ interface ZipEntry
     /**
      * Sets the General Purpose Bit Flags.
      *
-     * @var int general
-     * @return ZipEntry
+     * @param mixed $general
+     *
      * @throws ZipException
+     *
+     * @return ZipEntry
+     *
+     * @var int general
      */
     public function setGeneralPurposeBitFlags($general);
 
@@ -217,6 +282,7 @@ interface ZipEntry
      * Returns the indexed General Purpose Bit Flag.
      *
      * @param int $mask
+     *
      * @return bool
      */
     public function getGeneralPurposeBitFlag($mask);
@@ -224,8 +290,9 @@ interface ZipEntry
     /**
      * Sets the indexed General Purpose Bit Flag.
      *
-     * @param int $mask
+     * @param int  $mask
      * @param bool $bit
+     *
      * @return ZipEntry
      */
     public function setGeneralPurposeBitFlag($mask, $bit);
@@ -241,6 +308,7 @@ interface ZipEntry
      * Sets the encryption flag for this ZIP entry.
      *
      * @param bool $encrypted
+     *
      * @return ZipEntry
      */
     public function setEncrypted($encrypted);
@@ -264,13 +332,15 @@ interface ZipEntry
      * Sets the compression method for this entry.
      *
      * @param int $method
+     *
+     * @throws ZipException if method is not STORED, DEFLATED, BZIP2 or UNKNOWN
+     *
      * @return ZipEntry
-     * @throws ZipException If method is not STORED, DEFLATED, BZIP2 or UNKNOWN.
      */
     public function setMethod($method);
 
     /**
-     * Get Unix Timestamp
+     * Get Unix Timestamp.
      *
      * @return int
      */
@@ -280,37 +350,62 @@ interface ZipEntry
      * Set time from unix timestamp.
      *
      * @param int $unixTimestamp
+     *
      * @return ZipEntry
      */
     public function setTime($unixTimestamp);
 
     /**
-     * Get Dos Time
+     * Get Dos Time.
      *
      * @return int
      */
     public function getDosTime();
 
     /**
-     * Set Dos Time
+     * Set Dos Time.
+     *
      * @param int $dosTime
+     *
      * @throws ZipException
+     *
+     * @return ZipEntry
      */
     public function setDosTime($dosTime);
 
     /**
      * Returns the external file attributes.
      *
-     * @return int The external file attributes.
+     * @return int the external file attributes
      */
     public function getExternalAttributes();
 
     /**
+     * Sets the internal file attributes.
+     *
+     * @param int $attributes the internal file attributes
+     *
+     * @throws ZipException
+     *
+     * @return ZipEntry
+     */
+    public function setInternalAttributes($attributes);
+
+    /**
+     * Returns the internal file attributes.
+     *
+     * @return int the internal file attributes
+     */
+    public function getInternalAttributes();
+
+    /**
      * Sets the external file attributes.
      *
-     * @param int $externalAttributes the external file attributes.
-     * @return ZipEntry
+     * @param int $externalAttributes the external file attributes
+     *
      * @throws ZipException
+     *
+     * @return ZipEntry
      */
     public function setExternalAttributes($externalAttributes);
 
@@ -335,13 +430,16 @@ interface ZipEntry
      * (application) data.
      * Consider storing such data in a separate entry instead.
      *
-     * @param string $data The byte array holding the serialized Extra Fields.
+     * @param string $data the byte array holding the serialized Extra Fields
+     *
      * @throws ZipException if the serialized Extra Fields exceed 64 KB
+     *
+     * @return ZipEntry
      */
     public function setExtra($data);
 
     /**
-     * Returns comment entry
+     * Returns comment entry.
      *
      * @return string
      */
@@ -351,6 +449,7 @@ interface ZipEntry
      * Set entry comment.
      *
      * @param $comment
+     *
      * @return ZipEntry
      */
     public function setComment($comment);
@@ -361,7 +460,7 @@ interface ZipEntry
     public function isDataDescriptorRequired();
 
     /**
-     * Return crc32 content or 0 for WinZip AES v2
+     * Return crc32 content or 0 for WinZip AES v2.
      *
      * @return int
      */
@@ -371,8 +470,10 @@ interface ZipEntry
      * Set crc32 content.
      *
      * @param int $crc
-     * @return ZipEntry
+     *
      * @throws ZipException
+     *
+     * @return ZipEntry
      */
     public function setCrc($crc);
 
@@ -382,10 +483,11 @@ interface ZipEntry
     public function getPassword();
 
     /**
-     * Set password and encryption method from entry
+     * Set password and encryption method from entry.
      *
-     * @param string $password
-     * @param null|int $encryptionMethod
+     * @param string   $password
+     * @param int|null $encryptionMethod
+     *
      * @return ZipEntry
      */
     public function setPassword($password, $encryptionMethod = null);
@@ -396,32 +498,36 @@ interface ZipEntry
     public function getEncryptionMethod();
 
     /**
-     * Set encryption method
-     *
-     * @see ZipFileInterface::ENCRYPTION_METHOD_TRADITIONAL
-     * @see ZipFileInterface::ENCRYPTION_METHOD_WINZIP_AES_128
-     * @see ZipFileInterface::ENCRYPTION_METHOD_WINZIP_AES_192
-     * @see ZipFileInterface::ENCRYPTION_METHOD_WINZIP_AES_256
+     * Set encryption method.
      *
      * @param int $encryptionMethod
-     * @return ZipEntry
+     *
      * @throws ZipException
+     *
+     * @return ZipEntry
+     *
+     * @see ZipFile::ENCRYPTION_METHOD_WINZIP_AES_256
+     * @see ZipFile::ENCRYPTION_METHOD_TRADITIONAL
+     * @see ZipFile::ENCRYPTION_METHOD_WINZIP_AES_128
+     * @see ZipFile::ENCRYPTION_METHOD_WINZIP_AES_192
      */
     public function setEncryptionMethod($encryptionMethod);
 
     /**
      * Returns an string content of the given entry.
      *
-     * @return null|string
      * @throws ZipException
+     *
+     * @return string|null
      */
     public function getEntryContent();
 
     /**
      * @param int $compressionLevel
+     *
      * @return ZipEntry
      */
-    public function setCompressionLevel($compressionLevel = ZipFileInterface::LEVEL_DEFAULT_COMPRESSION);
+    public function setCompressionLevel($compressionLevel = ZipFile::LEVEL_DEFAULT_COMPRESSION);
 
     /**
      * @return int

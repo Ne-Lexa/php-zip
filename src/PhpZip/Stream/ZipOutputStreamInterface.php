@@ -5,7 +5,7 @@ namespace PhpZip\Stream;
 use PhpZip\Model\ZipEntry;
 
 /**
- * Write zip file
+ * Write zip file.
  *
  * @author Ne-Lexa alexey@nelexa.ru
  * @license MIT

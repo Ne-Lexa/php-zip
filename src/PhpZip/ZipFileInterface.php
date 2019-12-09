@@ -18,6 +18,7 @@ use Psr\Http\Message\ResponseInterface;
  * Support ZipAlign functional.
  *
  * @see https://pkware.cachefly.net/webdocs/casestudies/APPNOTE.TXT .ZIP File Format Specification
+ *
  * @author Ne-Lexa alexey@nelexa.ru
  * @license MIT
  */
@@ -25,67 +26,66 @@ interface ZipFileInterface extends \Countable, \ArrayAccess, \Iterator
 {
     /**
      * Method for Stored (uncompressed) entries.
+     *
      * @see ZipEntry::setMethod()
      */
     const METHOD_STORED = 0;
+
     /**
      * Method for Deflated compressed entries.
+     *
      * @see ZipEntry::setMethod()
      */
     const METHOD_DEFLATED = 8;
+
     /**
      * Method for BZIP2 compressed entries.
      * Require php extension bz2.
+     *
      * @see ZipEntry::setMethod()
      */
     const METHOD_BZIP2 = 12;
 
-    /**
-     * Default compression level.
-     */
+    /** Default compression level. */
     const LEVEL_DEFAULT_COMPRESSION = -1;
-    /**
-     * Compression level for fastest compression.
-     */
+
+    /** Compression level for fastest compression. */
     const LEVEL_FAST = 2;
-    /**
-     * Compression level for fastest compression.
-     */
+
+    /** Compression level for fastest compression. */
     const LEVEL_BEST_SPEED = 1;
+
     const LEVEL_SUPER_FAST = self::LEVEL_BEST_SPEED;
-    /**
-     * Compression level for best compression.
-     */
+
+    /** Compression level for best compression. */
     const LEVEL_BEST_COMPRESSION = 9;
 
-    /**
-     * No specified method for set encryption method to Traditional PKWARE encryption.
-     */
+    /** No specified method for set encryption method to Traditional PKWARE encryption. */
     const ENCRYPTION_METHOD_TRADITIONAL = 0;
+
     /**
      * No specified method for set encryption method to WinZip AES encryption.
-     * Default value 256 bit
+     * Default value 256 bit.
      */
     const ENCRYPTION_METHOD_WINZIP_AES = self::ENCRYPTION_METHOD_WINZIP_AES_256;
-    /**
-     * No specified method for set encryption method to WinZip AES encryption 128 bit.
-     */
+
+    /** No specified method for set encryption method to WinZip AES encryption 128 bit. */
     const ENCRYPTION_METHOD_WINZIP_AES_128 = 2;
-    /**
-     * No specified method for set encryption method to WinZip AES encryption 194 bit.
-     */
+
+    /** No specified method for set encryption method to WinZip AES encryption 194 bit. */
     const ENCRYPTION_METHOD_WINZIP_AES_192 = 3;
-    /**
-     * No specified method for set encryption method to WinZip AES encryption 256 bit.
-     */
+
+    /** No specified method for set encryption method to WinZip AES encryption 256 bit. */
     const ENCRYPTION_METHOD_WINZIP_AES_256 = 1;
 
     /**
-     * Open zip archive from file
+     * Open zip archive from file.
      *
      * @param string $filename
+     *
+     * @throws ZipException if can't open file
+     *
      * @return ZipFileInterface
-     * @throws ZipException             if can't open file.
      */
     public function openFile($filename);
 
@@ -93,35 +93,39 @@ interface ZipFileInterface extends \Countable, \ArrayAccess, \Iterator
      * Open zip archive from raw string data.
      *
      * @param string $data
+     *
+     * @throws ZipException if can't open temp stream
+     *
      * @return ZipFileInterface
-     * @throws ZipException             if can't open temp stream.
      */
     public function openFromString($data);
 
     /**
-     * Open zip archive from stream resource
+     * Open zip archive from stream resource.
      *
      * @param resource $handle
+     *
      * @return ZipFileInterface
      */
     public function openFromStream($handle);
 
     /**
-     * @return string[] Returns the list files.
+     * @return string[] returns the list files
      */
     public function getListFiles();
 
     /**
      * Returns the file comment.
      *
-     * @return string The file comment.
+     * @return string the file comment
      */
     public function getArchiveComment();
 
     /**
      * Set archive comment.
      *
-     * @param null|string $comment
+     * @param string|null $comment
+     *
      * @return ZipFileInterface
      */
     public function setArchiveComment($comment = null);
@@ -132,8 +136,10 @@ interface ZipFileInterface extends \Countable, \ArrayAccess, \Iterator
      * (i.e. end with '/').
      *
      * @param string $entryName
-     * @return bool
+     *
      * @throws ZipEntryNotFoundException
+     *
+     * @return bool
      */
     public function isDirectory($entryName);
 
@@ -141,18 +147,22 @@ interface ZipFileInterface extends \Countable, \ArrayAccess, \Iterator
      * Returns entry comment.
      *
      * @param string $entryName
-     * @return string
+     *
      * @throws ZipEntryNotFoundException
+     *
+     * @return string
      */
     public function getEntryComment($entryName);
 
     /**
      * Set entry comment.
      *
-     * @param string $entryName
+     * @param string      $entryName
      * @param string|null $comment
-     * @return ZipFileInterface
+     *
      * @throws ZipEntryNotFoundException
+     *
+     * @return ZipFileInterface
      */
     public function setEntryComment($entryName, $comment = null);
 
@@ -160,6 +170,7 @@ interface ZipFileInterface extends \Countable, \ArrayAccess, \Iterator
      * Returns the entry contents.
      *
      * @param string $entryName
+     *
      * @return string
      */
     public function getEntryContents($entryName);
@@ -168,6 +179,7 @@ interface ZipFileInterface extends \Countable, \ArrayAccess, \Iterator
      * Checks if there is an entry in the archive.
      *
      * @param string $entryName
+     *
      * @return bool
      */
     public function hasEntry($entryName);
@@ -176,8 +188,10 @@ interface ZipFileInterface extends \Countable, \ArrayAccess, \Iterator
      * Get info by entry.
      *
      * @param string|ZipEntry $entryName
-     * @return ZipInfo
+     *
      * @throws ZipEntryNotFoundException
+     *
+     * @return ZipInfo
      */
     public function getEntryInfo($entryName);
 
@@ -194,60 +208,68 @@ interface ZipFileInterface extends \Countable, \ArrayAccess, \Iterator
     public function matcher();
 
     /**
-     * Extract the archive contents
+     * Extract the archive contents.
      *
      * Extract the complete archive or the given files to the specified destination.
      *
-     * @param string $destination Location where to extract the files.
-     * @param array|string|null $entries The entries to extract. It accepts either
-     *                                   a single entry name or an array of names.
-     * @return ZipFileInterface
+     * @param string            $destination location where to extract the files
+     * @param array|string|null $entries     The entries to extract. It accepts either
+     *                                       a single entry name or an array of names.
+     *
      * @throws ZipException
+     *
+     * @return ZipFileInterface
      */
     public function extractTo($destination, $entries = null);
 
     /**
      * Add entry from the string.
      *
-     * @param string $localName Zip entry name.
-     * @param string $contents String contents.
+     * @param string   $localName         zip entry name
+     * @param string   $contents          string contents
      * @param int|null $compressionMethod Compression method.
-     *                 Use ZipFile::METHOD_STORED, ZipFile::METHOD_DEFLATED or ZipFile::METHOD_BZIP2.
-     *                 If null, then auto choosing method.
+     *                                    Use ZipFile::METHOD_STORED, ZipFile::METHOD_DEFLATED or ZipFile::METHOD_BZIP2.
+     *                                    If null, then auto choosing method.
+     *
      * @return ZipFileInterface
-     * @see ZipFileInterface::METHOD_STORED
-     * @see ZipFileInterface::METHOD_DEFLATED
-     * @see ZipFileInterface::METHOD_BZIP2
+     *
+     * @see ZipFile::METHOD_STORED
+     * @see ZipFile::METHOD_DEFLATED
+     * @see ZipFile::METHOD_BZIP2
      */
     public function addFromString($localName, $contents, $compressionMethod = null);
 
     /**
      * Add entry from the file.
      *
-     * @param string $filename Destination file.
-     * @param string|null $localName Zip Entry name.
-     * @param int|null $compressionMethod Compression method.
-     *                 Use ZipFile::METHOD_STORED, ZipFile::METHOD_DEFLATED or ZipFile::METHOD_BZIP2.
-     *                 If null, then auto choosing method.
+     * @param string      $filename          destination file
+     * @param string|null $localName         zip Entry name
+     * @param int|null    $compressionMethod Compression method.
+     *                                       Use ZipFile::METHOD_STORED, ZipFile::METHOD_DEFLATED or
+     *                                       ZipFile::METHOD_BZIP2. If null, then auto choosing method.
+     *
      * @return ZipFileInterface
-     * @see ZipFileInterface::METHOD_STORED
-     * @see ZipFileInterface::METHOD_DEFLATED
-     * @see ZipFileInterface::METHOD_BZIP2
+     *
+     * @see ZipFile::METHOD_STORED
+     * @see ZipFile::METHOD_DEFLATED
+     * @see ZipFile::METHOD_BZIP2
      */
     public function addFile($filename, $localName = null, $compressionMethod = null);
 
     /**
      * Add entry from the stream.
      *
-     * @param resource $stream Stream resource.
-     * @param string $localName Zip Entry name.
+     * @param resource $stream            stream resource
+     * @param string   $localName         zip Entry name
      * @param int|null $compressionMethod Compression method.
-     *                 Use ZipFile::METHOD_STORED, ZipFile::METHOD_DEFLATED or ZipFile::METHOD_BZIP2.
-     *                 If null, then auto choosing method.
+     *                                    Use ZipFile::METHOD_STORED, ZipFile::METHOD_DEFLATED or ZipFile::METHOD_BZIP2.
+     *                                    If null, then auto choosing method.
+     *
      * @return ZipFileInterface
-     * @see ZipFileInterface::METHOD_STORED
-     * @see ZipFileInterface::METHOD_DEFLATED
-     * @see ZipFileInterface::METHOD_BZIP2
+     *
+     * @see ZipFile::METHOD_STORED
+     * @see ZipFile::METHOD_DEFLATED
+     * @see ZipFile::METHOD_BZIP2
      */
     public function addFromStream($stream, $localName, $compressionMethod = null);
 
@@ -255,6 +277,7 @@ interface ZipFileInterface extends \Countable, \ArrayAccess, \Iterator
      * Add an empty directory in the zip archive.
      *
      * @param string $dirName
+     *
      * @return ZipFileInterface
      */
     public function addEmptyDir($dirName);
@@ -262,54 +285,60 @@ interface ZipFileInterface extends \Countable, \ArrayAccess, \Iterator
     /**
      * Add directory not recursively to the zip archive.
      *
-     * @param string $inputDir Input directory
-     * @param string $localPath Add files to this directory, or the root.
+     * @param string   $inputDir          Input directory
+     * @param string   $localPath         add files to this directory, or the root
      * @param int|null $compressionMethod Compression method.
-     *                 Use ZipFile::METHOD_STORED, ZipFile::METHOD_DEFLATED or ZipFile::METHOD_BZIP2.
-     *                 If null, then auto choosing method.
+     *                                    Use ZipFile::METHOD_STORED, ZipFile::METHOD_DEFLATED or ZipFile::METHOD_BZIP2.
+     *                                    If null, then auto choosing method.
+     *
      * @return ZipFileInterface
      */
-    public function addDir($inputDir, $localPath = "/", $compressionMethod = null);
+    public function addDir($inputDir, $localPath = '/', $compressionMethod = null);
 
     /**
      * Add recursive directory to the zip archive.
      *
-     * @param string $inputDir Input directory
-     * @param string $localPath Add files to this directory, or the root.
+     * @param string   $inputDir          Input directory
+     * @param string   $localPath         add files to this directory, or the root
      * @param int|null $compressionMethod Compression method.
-     *                 Use ZipFile::METHOD_STORED, ZipFile::METHOD_DEFLATED or ZipFile::METHOD_BZIP2.
-     *                 If null, then auto choosing method.
+     *                                    Use ZipFile::METHOD_STORED, ZipFile::METHOD_DEFLATED or ZipFile::METHOD_BZIP2.
+     *                                    If null, then auto choosing method.
+     *
      * @return ZipFileInterface
-     * @see ZipFileInterface::METHOD_STORED
-     * @see ZipFileInterface::METHOD_DEFLATED
-     * @see ZipFileInterface::METHOD_BZIP2
+     *
+     * @see ZipFile::METHOD_STORED
+     * @see ZipFile::METHOD_DEFLATED
+     * @see ZipFile::METHOD_BZIP2
      */
-    public function addDirRecursive($inputDir, $localPath = "/", $compressionMethod = null);
+    public function addDirRecursive($inputDir, $localPath = '/', $compressionMethod = null);
 
     /**
      * Add directories from directory iterator.
      *
-     * @param \Iterator $iterator Directory iterator.
-     * @param string $localPath Add files to this directory, or the root.
-     * @param int|null $compressionMethod Compression method.
-     *                 Use ZipFile::METHOD_STORED, ZipFile::METHOD_DEFLATED or ZipFile::METHOD_BZIP2.
-     *                 If null, then auto choosing method.
+     * @param \Iterator $iterator          directory iterator
+     * @param string    $localPath         add files to this directory, or the root
+     * @param int|null  $compressionMethod Compression method.
+     *                                     Use ZipFile::METHOD_STORED, ZipFile::METHOD_DEFLATED or
+     *                                     ZipFile::METHOD_BZIP2. If null, then auto choosing method.
+     *
      * @return ZipFileInterface
-     * @see ZipFileInterface::METHOD_STORED
-     * @see ZipFileInterface::METHOD_DEFLATED
-     * @see ZipFileInterface::METHOD_BZIP2
+     *
+     * @see ZipFile::METHOD_STORED
+     * @see ZipFile::METHOD_DEFLATED
+     * @see ZipFile::METHOD_BZIP2
      */
     public function addFilesFromIterator(\Iterator $iterator, $localPath = '/', $compressionMethod = null);
 
     /**
      * Add files from glob pattern.
      *
-     * @param string $inputDir Input directory
-     * @param string $globPattern Glob pattern.
-     * @param string|null $localPath Add files to this directory, or the root.
-     * @param int|null $compressionMethod Compression method.
-     *                 Use ZipFile::METHOD_STORED, ZipFile::METHOD_DEFLATED or ZipFile::METHOD_BZIP2.
-     *                 If null, then auto choosing method.
+     * @param string      $inputDir          Input directory
+     * @param string      $globPattern       glob pattern
+     * @param string|null $localPath         add files to this directory, or the root
+     * @param int|null    $compressionMethod Compression method.
+     *                                       Use ZipFile::METHOD_STORED, ZipFile::METHOD_DEFLATED or
+     *                                       ZipFile::METHOD_BZIP2. If null, then auto choosing method.
+     *
      * @return ZipFileInterface
      * @sse https://en.wikipedia.org/wiki/Glob_(programming) Glob pattern syntax
      */
@@ -318,12 +347,13 @@ interface ZipFileInterface extends \Countable, \ArrayAccess, \Iterator
     /**
      * Add files recursively from glob pattern.
      *
-     * @param string $inputDir Input directory
-     * @param string $globPattern Glob pattern.
-     * @param string|null $localPath Add files to this directory, or the root.
-     * @param int|null $compressionMethod Compression method.
-     *                 Use ZipFile::METHOD_STORED, ZipFile::METHOD_DEFLATED or ZipFile::METHOD_BZIP2.
-     *                 If null, then auto choosing method.
+     * @param string      $inputDir          Input directory
+     * @param string      $globPattern       glob pattern
+     * @param string|null $localPath         add files to this directory, or the root
+     * @param int|null    $compressionMethod Compression method.
+     *                                       Use ZipFile::METHOD_STORED, ZipFile::METHOD_DEFLATED or
+     *                                       ZipFile::METHOD_BZIP2. If null, then auto choosing method.
+     *
      * @return ZipFileInterface
      * @sse https://en.wikipedia.org/wiki/Glob_(programming) Glob pattern syntax
      */
@@ -332,56 +362,64 @@ interface ZipFileInterface extends \Countable, \ArrayAccess, \Iterator
     /**
      * Add files from regex pattern.
      *
-     * @param string $inputDir Search files in this directory.
-     * @param string $regexPattern Regex pattern.
-     * @param string|null $localPath Add files to this directory, or the root.
-     * @param int|null $compressionMethod Compression method.
-     *                 Use ZipFile::METHOD_STORED, ZipFile::METHOD_DEFLATED or ZipFile::METHOD_BZIP2.
-     *                 If null, then auto choosing method.
+     * @param string      $inputDir          search files in this directory
+     * @param string      $regexPattern      regex pattern
+     * @param string|null $localPath         add files to this directory, or the root
+     * @param int|null    $compressionMethod Compression method.
+     *                                       Use ZipFile::METHOD_STORED, ZipFile::METHOD_DEFLATED or
+     *                                       ZipFile::METHOD_BZIP2. If null, then auto choosing method.
+     *
      * @return ZipFileInterface
-     * @internal param bool $recursive Recursive search.
+     *
+     * @internal param bool $recursive Recursive search
      */
-    public function addFilesFromRegex($inputDir, $regexPattern, $localPath = "/", $compressionMethod = null);
+    public function addFilesFromRegex($inputDir, $regexPattern, $localPath = '/', $compressionMethod = null);
 
     /**
      * Add files recursively from regex pattern.
      *
-     * @param string $inputDir Search files in this directory.
-     * @param string $regexPattern Regex pattern.
-     * @param string|null $localPath Add files to this directory, or the root.
-     * @param int|null $compressionMethod Compression method.
-     *                 Use ZipFile::METHOD_STORED, ZipFile::METHOD_DEFLATED or ZipFile::METHOD_BZIP2.
-     *                 If null, then auto choosing method.
+     * @param string      $inputDir          search files in this directory
+     * @param string      $regexPattern      regex pattern
+     * @param string|null $localPath         add files to this directory, or the root
+     * @param int|null    $compressionMethod Compression method.
+     *                                       Use ZipFile::METHOD_STORED, ZipFile::METHOD_DEFLATED or
+     *                                       ZipFile::METHOD_BZIP2. If null, then auto choosing method.
+     *
      * @return ZipFileInterface
-     * @internal param bool $recursive Recursive search.
+     *
+     * @internal param bool $recursive Recursive search
      */
-    public function addFilesFromRegexRecursive($inputDir, $regexPattern, $localPath = "/", $compressionMethod = null);
+    public function addFilesFromRegexRecursive($inputDir, $regexPattern, $localPath = '/', $compressionMethod = null);
 
     /**
      * Add array data to archive.
      * Keys is local names.
      * Values is contents.
      *
-     * @param array $mapData Associative array for added to zip.
+     * @param array $mapData associative array for added to zip
      */
     public function addAll(array $mapData);
 
     /**
      * Rename the entry.
      *
-     * @param string $oldName Old entry name.
-     * @param string $newName New entry name.
-     * @return ZipFileInterface
+     * @param string $oldName old entry name
+     * @param string $newName new entry name
+     *
      * @throws ZipEntryNotFoundException
+     *
+     * @return ZipFileInterface
      */
     public function rename($oldName, $newName);
 
     /**
      * Delete entry by name.
      *
-     * @param string $entryName Zip Entry name.
+     * @param string $entryName zip Entry name
+     *
+     * @throws ZipEntryNotFoundException if entry not found
+     *
      * @return ZipFileInterface
-     * @throws ZipEntryNotFoundException If entry not found.
      */
     public function deleteFromName($entryName);
 
@@ -389,6 +427,7 @@ interface ZipFileInterface extends \Countable, \ArrayAccess, \Iterator
      * Delete entries by glob pattern.
      *
      * @param string $globPattern Glob pattern
+     *
      * @return ZipFileInterface
      * @sse https://en.wikipedia.org/wiki/Glob_(programming) Glob pattern syntax
      */
@@ -398,12 +437,14 @@ interface ZipFileInterface extends \Countable, \ArrayAccess, \Iterator
      * Delete entries by regex pattern.
      *
      * @param string $regexPattern Regex pattern
+     *
      * @return ZipFileInterface
      */
     public function deleteFromRegex($regexPattern);
 
     /**
-     * Delete all entries
+     * Delete all entries.
+     *
      * @return ZipFileInterface
      */
     public function deleteAll();
@@ -412,34 +453,42 @@ interface ZipFileInterface extends \Countable, \ArrayAccess, \Iterator
      * Set compression level for new entries.
      *
      * @param int $compressionLevel
-     * @see ZipFileInterface::LEVEL_DEFAULT_COMPRESSION
-     * @see ZipFileInterface::LEVEL_SUPER_FAST
-     * @see ZipFileInterface::LEVEL_FAST
-     * @see ZipFileInterface::LEVEL_BEST_COMPRESSION
+     *
      * @return ZipFileInterface
+     *
+     * @see ZipFile::LEVEL_SUPER_FAST
+     * @see ZipFile::LEVEL_FAST
+     * @see ZipFile::LEVEL_BEST_COMPRESSION
+     * @see ZipFile::LEVEL_DEFAULT_COMPRESSION
      */
     public function setCompressionLevel($compressionLevel = self::LEVEL_DEFAULT_COMPRESSION);
 
     /**
      * @param string $entryName
-     * @param int $compressionLevel
-     * @return ZipFileInterface
+     * @param int    $compressionLevel
+     *
      * @throws ZipException
-     * @see ZipFileInterface::LEVEL_DEFAULT_COMPRESSION
-     * @see ZipFileInterface::LEVEL_SUPER_FAST
-     * @see ZipFileInterface::LEVEL_FAST
-     * @see ZipFileInterface::LEVEL_BEST_COMPRESSION
+     *
+     * @return ZipFileInterface
+     *
+     * @see ZipFile::LEVEL_DEFAULT_COMPRESSION
+     * @see ZipFile::LEVEL_SUPER_FAST
+     * @see ZipFile::LEVEL_FAST
+     * @see ZipFile::LEVEL_BEST_COMPRESSION
      */
     public function setCompressionLevelEntry($entryName, $compressionLevel);
 
     /**
      * @param string $entryName
-     * @param int $compressionMethod
-     * @return ZipFileInterface
+     * @param int    $compressionMethod
+     *
      * @throws ZipException
-     * @see ZipFileInterface::METHOD_STORED
-     * @see ZipFileInterface::METHOD_DEFLATED
-     * @see ZipFileInterface::METHOD_BZIP2
+     *
+     * @return ZipFileInterface
+     *
+     * @see ZipFile::METHOD_STORED
+     * @see ZipFile::METHOD_DEFLATED
+     * @see ZipFile::METHOD_BZIP2
      */
     public function setCompressionMethodEntry($entryName, $compressionMethod);
 
@@ -447,8 +496,10 @@ interface ZipFileInterface extends \Countable, \ArrayAccess, \Iterator
      * zipalign is optimization to Android application (APK) files.
      *
      * @param int|null $align
+     *
      * @return ZipFileInterface
-     * @link https://developer.android.com/studio/command-line/zipalign.html
+     *
+     * @see https://developer.android.com/studio/command-line/zipalign.html
      */
     public function setZipAlign($align = null);
 
@@ -456,8 +507,10 @@ interface ZipFileInterface extends \Countable, \ArrayAccess, \Iterator
      * Set password to all input encrypted entries.
      *
      * @param string $password Password
+     *
      * @return ZipFileInterface
-     * @deprecated using ZipFileInterface::setReadPassword()
+     *
+     * @deprecated using ZipFile::setReadPassword()
      */
     public function withReadPassword($password);
 
@@ -465,6 +518,7 @@ interface ZipFileInterface extends \Countable, \ArrayAccess, \Iterator
      * Set password to all input encrypted entries.
      *
      * @param string $password Password
+     *
      * @return ZipFileInterface
      */
     public function setReadPassword($password);
@@ -473,7 +527,8 @@ interface ZipFileInterface extends \Countable, \ArrayAccess, \Iterator
      * Set password to concrete input entry.
      *
      * @param string $entryName
-     * @param string $password Password
+     * @param string $password  Password
+     *
      * @return ZipFileInterface
      */
     public function setReadPasswordEntry($entryName, $password);
@@ -481,18 +536,21 @@ interface ZipFileInterface extends \Countable, \ArrayAccess, \Iterator
     /**
      * Set password for all entries for update.
      *
-     * @param string $password If password null then encryption clear
+     * @param string   $password         If password null then encryption clear
      * @param int|null $encryptionMethod Encryption method
+     *
      * @return ZipFileInterface
-     * @deprecated using ZipFileInterface::setPassword()
+     *
+     * @deprecated using ZipFile::setPassword()
      */
     public function withNewPassword($password, $encryptionMethod = self::ENCRYPTION_METHOD_WINZIP_AES_256);
 
     /**
      * Sets a new password for all files in the archive.
      *
-     * @param string $password
+     * @param string   $password
      * @param int|null $encryptionMethod Encryption method
+     *
      * @return ZipFileInterface
      */
     public function setPassword($password, $encryptionMethod = self::ENCRYPTION_METHOD_WINZIP_AES_256);
@@ -500,41 +558,49 @@ interface ZipFileInterface extends \Countable, \ArrayAccess, \Iterator
     /**
      * Sets a new password of an entry defined by its name.
      *
-     * @param string $entryName
-     * @param string $password
+     * @param string   $entryName
+     * @param string   $password
      * @param int|null $encryptionMethod
+     *
      * @return ZipFileInterface
      */
     public function setPasswordEntry($entryName, $password, $encryptionMethod = null);
 
     /**
      * Remove password for all entries for update.
+     *
      * @return ZipFileInterface
-     * @deprecated using ZipFileInterface::disableEncryption()
+     *
+     * @deprecated using ZipFile::disableEncryption()
      */
     public function withoutPassword();
 
     /**
      * Disable encryption for all entries that are already in the archive.
+     *
      * @return ZipFileInterface
      */
     public function disableEncryption();
 
     /**
      * Disable encryption of an entry defined by its name.
+     *
      * @param string $entryName
+     *
      * @return ZipFileInterface
      */
     public function disableEncryptionEntry($entryName);
 
     /**
-     * Undo all changes done in the archive
+     * Undo all changes done in the archive.
+     *
      * @return ZipFileInterface
      */
     public function unchangeAll();
 
     /**
-     * Undo change archive comment
+     * Undo change archive comment.
+     *
      * @return ZipFileInterface
      */
     public function unchangeArchiveComment();
@@ -543,6 +609,7 @@ interface ZipFileInterface extends \Countable, \ArrayAccess, \Iterator
      * Revert all changes done to an entry with the given name.
      *
      * @param string|ZipEntry $entry Entry name or ZipEntry
+     *
      * @return ZipFileInterface
      */
     public function unchangeEntry($entry);
@@ -551,8 +618,10 @@ interface ZipFileInterface extends \Countable, \ArrayAccess, \Iterator
      * Save as file.
      *
      * @param string $filename Output filename
-     * @return ZipFileInterface
+     *
      * @throws ZipException
+     *
+     * @return ZipFileInterface
      */
     public function saveAsFile($filename);
 
@@ -560,8 +629,10 @@ interface ZipFileInterface extends \Countable, \ArrayAccess, \Iterator
      * Save as stream.
      *
      * @param resource $handle Output stream resource
-     * @return ZipFileInterface
+     *
      * @throws ZipException
+     *
+     * @return ZipFileInterface
      */
     public function saveAsStream($handle);
 
@@ -569,33 +640,42 @@ interface ZipFileInterface extends \Countable, \ArrayAccess, \Iterator
      * Output .ZIP archive as attachment.
      * Die after output.
      *
-     * @param string $outputFilename Output filename
-     * @param string|null $mimeType Mime-Type
-     * @param bool $attachment Http Header 'Content-Disposition' if true then attachment otherwise inline
+     * @param string      $outputFilename Output filename
+     * @param string|null $mimeType       Mime-Type
+     * @param bool        $attachment     Http Header 'Content-Disposition' if true then attachment otherwise inline
      */
     public function outputAsAttachment($outputFilename, $mimeType = null, $attachment = true);
 
     /**
      * Output .ZIP archive as PSR-7 Response.
      *
-     * @param ResponseInterface $response Instance PSR-7 Response
-     * @param string $outputFilename Output filename
-     * @param string|null $mimeType Mime-Type
-     * @param bool $attachment Http Header 'Content-Disposition' if true then attachment otherwise inline
+     * @param ResponseInterface $response       Instance PSR-7 Response
+     * @param string            $outputFilename Output filename
+     * @param string|null       $mimeType       Mime-Type
+     * @param bool              $attachment     Http Header 'Content-Disposition' if true then attachment otherwise inline
+     *
      * @return ResponseInterface
      */
-    public function outputAsResponse(ResponseInterface $response, $outputFilename, $mimeType = null, $attachment = true);
+    public function outputAsResponse(
+        ResponseInterface $response,
+        $outputFilename,
+        $mimeType = null,
+        $attachment = true
+    );
 
     /**
      * Returns the zip archive as a string.
+     *
      * @return string
      */
     public function outputAsString();
 
     /**
      * Save and reopen zip archive.
-     * @return ZipFileInterface
+     *
      * @throws ZipException
+     *
+     * @return ZipFileInterface
      */
     public function rewrite();
 

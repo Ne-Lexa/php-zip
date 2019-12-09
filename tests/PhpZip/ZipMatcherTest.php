@@ -2,11 +2,16 @@
 
 namespace PhpZip;
 
+use PHPUnit\Framework\TestCase;
 use PhpZip\Model\ZipEntryMatcher;
 use PhpZip\Model\ZipInfo;
-use PhpZip\Util\CryptoUtil;
 
-class ZipMatcherTest extends \PHPUnit_Framework_TestCase
+/**
+ * @internal
+ *
+ * @small
+ */
+class ZipMatcherTest extends TestCase
 {
     public function testMatcher()
     {
@@ -16,50 +21,65 @@ class ZipMatcherTest extends \PHPUnit_Framework_TestCase
         }
 
         $matcher = $zipFile->matcher();
-        $this->assertInstanceOf(ZipEntryMatcher::class, $matcher);
+        static::assertInstanceOf(ZipEntryMatcher::class, $matcher);
 
-        $this->assertTrue(is_array($matcher->getMatches()));
-        $this->assertCount(0, $matcher);
+        static::assertInternalType('array', $matcher->getMatches());
+        static::assertCount(0, $matcher);
 
         $matcher->add(1)->add(10)->add(20);
-        $this->assertCount(3, $matcher);
-        $this->assertEquals($matcher->getMatches(), ['1', '10', '20']);
+        static::assertCount(3, $matcher);
+        static::assertEquals($matcher->getMatches(), ['1', '10', '20']);
 
         $matcher->delete();
-        $this->assertCount(97, $zipFile);
-        $this->assertCount(0, $matcher);
+        static::assertCount(97, $zipFile);
+        static::assertCount(0, $matcher);
 
         $matcher->match('~^[2][1-5]|[3][6-9]|40$~s');
-        $this->assertCount(10, $matcher);
+        static::assertCount(10, $matcher);
         $actualMatches = [
-            '21', '22', '23', '24', '25',
-            '36', '37', '38', '39',
-            '40'
+            '21',
+            '22',
+            '23',
+            '24',
+            '25',
+            '36',
+            '37',
+            '38',
+            '39',
+            '40',
         ];
-        $this->assertEquals($matcher->getMatches(), $actualMatches);
+        static::assertSame($matcher->getMatches(), $actualMatches);
         $matcher->setPassword('qwerty');
         $info = $zipFile->getAllInfo();
-        array_walk($info, function (ZipInfo $zipInfo) use ($actualMatches) {
-            $this->assertEquals($zipInfo->isEncrypted(), in_array($zipInfo->getName(), $actualMatches));
-        });
+        array_walk(
+            $info,
+            function (ZipInfo $zipInfo) use ($actualMatches) {
+                $this->assertSame($zipInfo->isEncrypted(), \in_array($zipInfo->getName(), $actualMatches, true));
+            }
+        );
 
         $matcher->all();
-        $this->assertCount(count($zipFile), $matcher);
+        static::assertCount(\count($zipFile), $matcher);
 
         $expectedNames = [];
-        $matcher->invoke(function ($entryName) use (&$expectedNames) {
-            $expectedNames[] = $entryName;
-        });
-        $this->assertEquals($expectedNames, $matcher->getMatches());
+        $matcher->invoke(
+            static function ($entryName) use (&$expectedNames) {
+                $expectedNames[] = $entryName;
+            }
+        );
+        static::assertSame($expectedNames, $matcher->getMatches());
 
         $zipFile->close();
     }
 
+    /**
+     * @throws \Exception
+     */
     public function testDocsExample()
     {
         $zipFile = new ZipFile();
         for ($i = 0; $i < 100; $i++) {
-            $zipFile['file_'.$i.'.jpg'] = CryptoUtil::randomBytes(100);
+            $zipFile['file_' . $i . '.jpg'] = random_bytes(100);
         }
 
         $renameEntriesArray = [
@@ -86,24 +106,26 @@ class ZipMatcherTest extends \PHPUnit_Framework_TestCase
         ];
 
         foreach ($renameEntriesArray as $name) {
-            $this->assertTrue(isset($zipFile[$name]));
+            static::assertTrue(isset($zipFile[$name]));
         }
 
         $matcher = $zipFile->matcher();
         $matcher->match('~^file_(1|5)\d+~');
-        $this->assertEquals($matcher->getMatches(), $renameEntriesArray);
+        static::assertSame($matcher->getMatches(), $renameEntriesArray);
 
-        $matcher->invoke(function ($entryName) use ($zipFile) {
-            $newName = preg_replace('~\.(jpe?g)$~i', '.no_optimize.$1', $entryName);
-            $zipFile->rename($entryName, $newName);
-        });
+        $matcher->invoke(
+            static function ($entryName) use ($zipFile) {
+                $newName = preg_replace('~\.(jpe?g)$~i', '.no_optimize.$1', $entryName);
+                $zipFile->rename($entryName, $newName);
+            }
+        );
 
         foreach ($renameEntriesArray as $name) {
-            $this->assertFalse(isset($zipFile[$name]));
+            static::assertFalse(isset($zipFile[$name]));
 
             $pathInfo = pathinfo($name);
-            $newName = $pathInfo['filename'].'.no_optimize.'.$pathInfo['extension'];
-            $this->assertTrue(isset($zipFile[$newName]));
+            $newName = $pathInfo['filename'] . '.no_optimize.' . $pathInfo['extension'];
+            static::assertTrue(isset($zipFile[$newName]));
         }
 
         $zipFile->close();

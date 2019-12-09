@@ -6,31 +6,31 @@ use PhpZip\Extra\ExtraField;
 use PhpZip\Util\PackUtil;
 
 /**
- * NTFS Extra Field
+ * NTFS Extra Field.
  *
  * @see https://pkware.cachefly.net/webdocs/casestudies/APPNOTE.TXT .ZIP File Format Specification
+ *
  * @author Ne-Lexa alexey@nelexa.ru
  * @license MIT
  */
 class NtfsExtraField implements ExtraField
 {
-
     /**
-     * Modify time
+     * Modify time.
      *
      * @var int Unix Timestamp
      */
     private $mtime;
 
     /**
-     * Access Time
+     * Access Time.
      *
      * @var int Unix Timestamp
      */
     private $atime;
 
     /**
-     * Create Time
+     * Create Time.
      *
      * @var int Unix Time
      */
@@ -50,11 +50,13 @@ class NtfsExtraField implements ExtraField
 
     /**
      * Initializes this Extra Field by deserializing a Data Block.
+     *
      * @param string $data
      */
     public function deserialize($data)
     {
         $unpack = unpack('vtag/vsizeAttr', substr($data, 0, 4));
+
         if ($unpack['sizeAttr'] === 24) {
             $tagData = substr($data, 4, $unpack['sizeAttr']);
             $this->mtime = PackUtil::unpackLongLE(substr($tagData, 0, 8)) / 10000000 - 11644473600;
@@ -65,11 +67,13 @@ class NtfsExtraField implements ExtraField
 
     /**
      * Serializes a Data Block.
+     *
      * @return string
      */
     public function serialize()
     {
         $serialize = '';
+
         if ($this->mtime !== null && $this->atime !== null && $this->ctime !== null) {
             $mtimeLong = ($this->mtime + 11644473600) * 10000000;
             $atimeLong = ($this->atime + 11644473600) * 10000000;
@@ -80,6 +84,7 @@ class NtfsExtraField implements ExtraField
                 . PackUtil::packLongLE($atimeLong)
                 . PackUtil::packLongLE($ctimeLong);
         }
+
         return $serialize;
     }
 
@@ -96,7 +101,7 @@ class NtfsExtraField implements ExtraField
      */
     public function setMtime($mtime)
     {
-        $this->mtime = (int)$mtime;
+        $this->mtime = (int) $mtime;
     }
 
     /**
@@ -112,7 +117,7 @@ class NtfsExtraField implements ExtraField
      */
     public function setAtime($atime)
     {
-        $this->atime = (int)$atime;
+        $this->atime = (int) $atime;
     }
 
     /**
@@ -128,6 +133,6 @@ class NtfsExtraField implements ExtraField
      */
     public function setCtime($ctime)
     {
-        $this->ctime = (int)$ctime;
+        $this->ctime = (int) $ctime;
     }
 }

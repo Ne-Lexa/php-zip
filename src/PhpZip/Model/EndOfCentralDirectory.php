@@ -3,7 +3,7 @@
 namespace PhpZip\Model;
 
 /**
- * Read End of Central Directory
+ * End of Central Directory.
  *
  * @author Ne-Lexa alexey@nelexa.ru
  * @license MIT
@@ -11,11 +11,14 @@ namespace PhpZip\Model;
 class EndOfCentralDirectory
 {
     /** Zip64 End Of Central Directory Record. */
-    const ZIP64_END_OF_CENTRAL_DIRECTORY_RECORD_SIG = 0x06064B50;
+    const ZIP64_END_OF_CD_RECORD_SIG = 0x06064B50;
+
     /** Zip64 End Of Central Directory Locator. */
-    const ZIP64_END_OF_CENTRAL_DIRECTORY_LOCATOR_SIG = 0x07064B50;
+    const ZIP64_END_OF_CD_LOCATOR_SIG = 0x07064B50;
+
     /** End Of Central Directory Record signature. */
-    const END_OF_CENTRAL_DIRECTORY_RECORD_SIG = 0x06054B50;
+    const END_OF_CD_SIG = 0x06054B50;
+
     /**
      * The minimum length of the End Of Central Directory Record.
      *
@@ -34,6 +37,7 @@ class EndOfCentralDirectory
      * zipfile comment length          2
      */
     const END_OF_CENTRAL_DIRECTORY_RECORD_MIN_LEN = 22;
+
     /**
      * The length of the Zip64 End Of Central Directory Locator.
      * zip64 end of central dir locator
@@ -43,9 +47,10 @@ class EndOfCentralDirectory
      * central directory               4
      * relative offset of the zip64
      * end of central directory record 8
-     * total number of disks           4
+     * total number of disks           4.
      */
-    const ZIP64_END_OF_CENTRAL_DIRECTORY_LOCATOR_LEN = 20;
+    const ZIP64_END_OF_CD_LOCATOR_LEN = 20;
+
     /**
      * The minimum length of the Zip64 End Of Central Directory Record.
      *
@@ -68,38 +73,46 @@ class EndOfCentralDirectory
      * the starting disk number         8
      */
     const ZIP64_END_OF_CENTRAL_DIRECTORY_RECORD_MIN_LEN = 56;
-    /**
-     * @var string|null The archive comment.
-     */
-    private $comment;
-    /**
-     * @var int
-     */
+
+    /** @var int Count files. */
     private $entryCount;
-    /**
-     * @var bool
-     */
-    private $zip64 = false;
+
+    /** @var int Central Directory Offset. */
+    private $cdOffset;
+
+    /** @var int */
+    private $cdSize;
+
+    /** @var string|null The archive comment. */
+    private $comment;
+
+    /** @var bool Zip64 extension */
+    private $zip64;
 
     /**
      * EndOfCentralDirectory constructor.
-     * @param int $entryCount
-     * @param null|string $comment
-     * @param bool $zip64
+     *
+     * @param int        $entryCount
+     * @param int        $cdOffset
+     * @param int        $cdSize
+     * @param bool       $zip64
+     * @param mixed|null $comment
      */
-    public function __construct($entryCount, $comment, $zip64 = false)
+    public function __construct($entryCount, $cdOffset, $cdSize, $zip64, $comment = null)
     {
         $this->entryCount = $entryCount;
-        $this->comment = $comment;
+        $this->cdOffset = $cdOffset;
+        $this->cdSize = $cdSize;
         $this->zip64 = $zip64;
+        $this->comment = $comment;
     }
 
     /**
-     * @return null|string
+     * @param string|null $comment
      */
-    public function getComment()
+    public function setComment($comment)
     {
-        return $this->comment;
+        $this->comment = $comment;
     }
 
     /**
@@ -108,6 +121,30 @@ class EndOfCentralDirectory
     public function getEntryCount()
     {
         return $this->entryCount;
+    }
+
+    /**
+     * @return int
+     */
+    public function getCdOffset()
+    {
+        return $this->cdOffset;
+    }
+
+    /**
+     * @return int
+     */
+    public function getCdSize()
+    {
+        return $this->cdSize;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getComment()
+    {
+        return $this->comment;
     }
 
     /**

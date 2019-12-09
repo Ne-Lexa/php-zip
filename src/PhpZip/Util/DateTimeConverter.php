@@ -28,13 +28,14 @@ class DateTimeConverter
      * Convert a 32 bit integer DOS date/time value to a UNIX timestamp value.
      *
      * @param int $dosTime Dos date/time
+     *
      * @return int Unix timestamp
      */
     public static function toUnixTimestamp($dosTime)
     {
-        if (self::MIN_DOS_TIME > $dosTime) {
+        if ($dosTime < self::MIN_DOS_TIME) {
             $dosTime = self::MIN_DOS_TIME;
-        } elseif (self::MAX_DOS_TIME < $dosTime) {
+        } elseif ($dosTime > self::MAX_DOS_TIME) {
             $dosTime = self::MAX_DOS_TIME;
         }
 
@@ -51,17 +52,19 @@ class DateTimeConverter
     /**
      * Converts a UNIX timestamp value to a DOS date/time value.
      *
-     * @param int $unixTimestamp The number of seconds since midnight, January 1st,
-     *         1970 AD UTC.
-     * @return int A DOS date/time value reflecting the local time zone and
-     *         rounded down to even seconds
-     *         and is in between DateTimeConverter::MIN_DOS_TIME and DateTimeConverter::MAX_DOS_TIME.
-     * @throws ZipException If unix timestamp is negative.
+     * @param int $unixTimestamp the number of seconds since midnight, January 1st,
+     *                           1970 AD UTC
+     *
+     * @throws ZipException if unix timestamp is negative
+     *
+     * @return int a DOS date/time value reflecting the local time zone and
+     *             rounded down to even seconds
+     *             and is in between DateTimeConverter::MIN_DOS_TIME and DateTimeConverter::MAX_DOS_TIME
      */
     public static function toDosTime($unixTimestamp)
     {
-        if (0 > $unixTimestamp) {
-            throw new ZipException("Negative unix timestamp: " . $unixTimestamp);
+        if ($unixTimestamp < 0) {
+            throw new ZipException('Negative unix timestamp: ' . $unixTimestamp);
         }
 
         $date = getdate($unixTimestamp);
@@ -71,8 +74,9 @@ class DateTimeConverter
         }
 
         $date['year'] -= 1980;
-        return ($date['year'] << 25 | $date['mon'] << 21 |
+
+        return $date['year'] << 25 | $date['mon'] << 21 |
             $date['mday'] << 16 | $date['hours'] << 11 |
-            $date['minutes'] << 5 | $date['seconds'] >> 1);
+            $date['minutes'] << 5 | $date['seconds'] >> 1;
     }
 }
