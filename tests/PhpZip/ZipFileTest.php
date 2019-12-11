@@ -2212,4 +2212,60 @@ class ZipFileTest extends ZipTestCase
         static::assertFalse($zipFile->getEntryInfo('file 2')->isEncrypted());
         $zipFile->close();
     }
+
+    /**
+     * @runInSeparateProcess
+     *
+     * @dataProvider provideOutputAsAttachment
+     *
+     * @param string      $zipFilename
+     * @param string|null $mimeType
+     * @param string      $expectedMimeType
+     * @param bool        $attachment
+     * @param string      $expectedAttachment
+     *
+     * @throws ZipException
+     */
+    public function testOutputAsAttachment($zipFilename, $mimeType, $expectedMimeType, $attachment, $expectedAttachment)
+    {
+        $zipFile = new ZipFile();
+        $file1Contents = 'content 1';
+        $zipFile['file 1'] = $file1Contents;
+
+        ob_start();
+        $zipFile->outputAsAttachment($zipFilename, $mimeType, $attachment);
+        $zipContents = ob_get_clean();
+
+        $zipFile->close();
+
+        $length = \strlen($zipContents);
+        static::assertTrue($length > 0);
+
+        $zipFile->openFromString($zipContents);
+        static::assertSame($zipFile['file 1'], $file1Contents);
+        $zipFile->close();
+
+        if (\function_exists('xdebug_get_headers')) {
+            $expectedHeaders = [
+                'Content-Disposition: ' . $expectedAttachment . '; filename="' . $zipFilename . '"',
+                'Content-Type: ' . $expectedMimeType,
+                'Content-Length: ' . $length,
+            ];
+            /** @noinspection ForgottenDebugOutputInspection */
+            /** @noinspection PhpComposerExtensionStubsInspection */
+            static::assertSame($expectedHeaders, xdebug_get_headers());
+        }
+    }
+
+    /**
+     * @return array
+     */
+    public function provideOutputAsAttachment()
+    {
+        return [
+            ['file.zip', null, 'application/zip', true, 'attachment'],
+            ['file.zip', 'application/x-zip', 'application/x-zip', false, 'inline'],
+            ['file.apk', null, 'application/vnd.android.package-archive', true, 'attachment'],
+        ];
+    }
 }
