@@ -61,12 +61,12 @@ class ZipFileAddDirTest extends ZipTestCase
     }
 
     /**
-     * @param ZipFileInterface $zipFile
-     * @param array            $actualResultFiles
-     * @param string           $localPath
+     * @param ZipFile $zipFile
+     * @param array   $actualResultFiles
+     * @param string  $localPath
      */
     protected static function assertFilesResult(
-        ZipFileInterface $zipFile,
+        ZipFile $zipFile,
         array $actualResultFiles = [],
         $localPath = '/'
     ) {

@@ -199,9 +199,9 @@ abstract class ZipAbstractEntry implements ZipEntry
     /**
      * @param int $platform
      *
-     * @return ZipEntry
-     *
      * @throws ZipException
+     *
+     * @return ZipEntry
      *
      * @deprecated Use {@see ZipEntry::setCreatedOS()}
      * @noinspection PhpUsageOfSilenceOperatorInspection
