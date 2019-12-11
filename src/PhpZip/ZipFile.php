@@ -83,7 +83,7 @@ class ZipFile implements ZipFileInterface
      *
      * @throws ZipException if can't open file
      *
-     * @return ZipFileInterface
+     * @return ZipFile
      */
     public function openFile($filename)
     {
@@ -106,7 +106,7 @@ class ZipFile implements ZipFileInterface
      *
      * @throws ZipException if can't open temp stream
      *
-     * @return ZipFileInterface
+     * @return ZipFile
      */
     public function openFromString($data)
     {
@@ -131,7 +131,7 @@ class ZipFile implements ZipFileInterface
      *
      * @throws ZipException
      *
-     * @return ZipFileInterface
+     * @return ZipFile
      */
     public function openFromStream($handle)
     {
@@ -189,7 +189,7 @@ class ZipFile implements ZipFileInterface
      *
      * @param string|null $comment
      *
-     * @return ZipFileInterface
+     * @return ZipFile
      */
     public function setArchiveComment($comment = null)
     {
@@ -237,7 +237,7 @@ class ZipFile implements ZipFileInterface
      * @throws ZipException
      * @throws ZipEntryNotFoundException
      *
-     * @return ZipFileInterface
+     * @return ZipFile
      */
     public function setEntryComment($entryName, $comment = null)
     {
@@ -316,7 +316,7 @@ class ZipFile implements ZipFileInterface
      *
      * @throws ZipException
      *
-     * @return ZipFileInterface
+     * @return ZipFile
      */
     public function extractTo($destination, $entries = null)
     {
@@ -396,7 +396,7 @@ class ZipFile implements ZipFileInterface
      *
      * @throws ZipException
      *
-     * @return ZipFileInterface
+     * @return ZipFile
      *
      * @see ZipFile::METHOD_STORED
      * @see ZipFile::METHOD_DEFLATED
@@ -447,12 +447,12 @@ class ZipFile implements ZipFileInterface
      * @param string      $filename          destination file
      * @param string|null $localName         zip Entry name
      * @param int|null    $compressionMethod Compression method.
-     *                                       Use ZipFile::METHOD_STORED, ZipFile::METHOD_DEFLATED or
-     *                                       ZipFile::METHOD_BZIP2. If null, then auto choosing method.
+     *                                       Use {@see ZipFile::METHOD_STORED}, {@see ZipFile::METHOD_DEFLATED} or
+     *                                       {@see ZipFile::METHOD_BZIP2}. If null, then auto choosing method.
      *
      * @throws ZipException
      *
-     * @return ZipFileInterface
+     * @return ZipFile
      *
      * @see ZipFile::METHOD_STORED
      * @see ZipFile::METHOD_DEFLATED
@@ -513,12 +513,12 @@ class ZipFile implements ZipFileInterface
      * @param resource $stream            stream resource
      * @param string   $localName         zip Entry name
      * @param int|null $compressionMethod Compression method.
-     *                                    Use ZipFile::METHOD_STORED, ZipFile::METHOD_DEFLATED or ZipFile::METHOD_BZIP2.
-     *                                    If null, then auto choosing method.
+     *                                    Use {@see ZipFile::METHOD_STORED}, {@see ZipFile::METHOD_DEFLATED} or
+     *                                    {@see ZipFile::METHOD_BZIP2}. If null, then auto choosing method.
      *
      * @throws ZipException
      *
-     * @return ZipFileInterface
+     * @return ZipFile
      *
      * @see ZipFile::METHOD_STORED
      * @see ZipFile::METHOD_DEFLATED
@@ -579,7 +579,7 @@ class ZipFile implements ZipFileInterface
      *
      * @throws ZipException
      *
-     * @return ZipFileInterface
+     * @return ZipFile
      */
     public function addEmptyDir($dirName)
     {
@@ -614,12 +614,12 @@ class ZipFile implements ZipFileInterface
      * @param string   $inputDir          Input directory
      * @param string   $localPath         add files to this directory, or the root
      * @param int|null $compressionMethod Compression method.
-     *                                    Use ZipFile::METHOD_STORED, ZipFile::METHOD_DEFLATED or ZipFile::METHOD_BZIP2.
-     *                                    If null, then auto choosing method.
+     *                                    Use {@see ZipFile::METHOD_STORED}, {@see ZipFile::METHOD_DEFLATED} or
+     *                                    {@see ZipFile::METHOD_BZIP2}. If null, then auto choosing method.
      *
      * @throws ZipException
      *
-     * @return ZipFileInterface
+     * @return ZipFile
      */
     public function addDir($inputDir, $localPath = '/', $compressionMethod = null)
     {
@@ -648,12 +648,12 @@ class ZipFile implements ZipFileInterface
      * @param string   $inputDir          Input directory
      * @param string   $localPath         add files to this directory, or the root
      * @param int|null $compressionMethod Compression method.
-     *                                    Use ZipFile::METHOD_STORED, ZipFile::METHOD_DEFLATED or ZipFile::METHOD_BZIP2.
-     *                                    If null, then auto choosing method.
+     *                                    Use {@see ZipFile::METHOD_STORED}, {@see ZipFile::METHOD_DEFLATED} or
+     *                                    {@see ZipFile::METHOD_BZIP2}. If null, then auto choosing method.
      *
      * @throws ZipException
      *
-     * @return ZipFileInterface
+     * @return ZipFile
      *
      * @see ZipFile::METHOD_STORED
      * @see ZipFile::METHOD_DEFLATED
@@ -686,12 +686,12 @@ class ZipFile implements ZipFileInterface
      * @param \Iterator $iterator          directory iterator
      * @param string    $localPath         add files to this directory, or the root
      * @param int|null  $compressionMethod Compression method.
-     *                                     Use ZipFile::METHOD_STORED, ZipFile::METHOD_DEFLATED or
-     *                                     ZipFile::METHOD_BZIP2. If null, then auto choosing method.
+     *                                     Use {@see ZipFile::METHOD_STORED}, {@see ZipFile::METHOD_DEFLATED} or
+     *                                     {@see ZipFile::METHOD_BZIP2}. If null, then auto choosing method.
      *
      * @throws ZipException
      *
-     * @return ZipFileInterface
+     * @return ZipFile
      *
      * @see ZipFile::METHOD_STORED
      * @see ZipFile::METHOD_DEFLATED
@@ -752,12 +752,12 @@ class ZipFile implements ZipFileInterface
      * @param string      $globPattern       glob pattern
      * @param string|null $localPath         add files to this directory, or the root
      * @param int|null    $compressionMethod Compression method.
-     *                                       Use ZipFile::METHOD_STORED, ZipFile::METHOD_DEFLATED or
-     *                                       ZipFile::METHOD_BZIP2. If null, then auto choosing method.
+     *                                       Use {@see ZipFile::METHOD_STORED}, {@see ZipFile::METHOD_DEFLATED} or
+     *                                       {@see ZipFile::METHOD_BZIP2}. If null, then auto choosing method.
      *
      * @throws ZipException
      *
-     * @return ZipFileInterface
+     * @return ZipFile
      * @sse https://en.wikipedia.org/wiki/Glob_(programming) Glob pattern syntax
      */
     public function addFilesFromGlob($inputDir, $globPattern, $localPath = '/', $compressionMethod = null)
@@ -773,12 +773,12 @@ class ZipFile implements ZipFileInterface
      * @param string|null $localPath         add files to this directory, or the root
      * @param bool        $recursive         recursive search
      * @param int|null    $compressionMethod Compression method.
-     *                                       Use ZipFile::METHOD_STORED, ZipFile::METHOD_DEFLATED or
-     *                                       ZipFile::METHOD_BZIP2. If null, then auto choosing method.
+     *                                       Use {@see ZipFile::METHOD_STORED}, {@see ZipFile::METHOD_DEFLATED} or
+     *                                       {@see ZipFile::METHOD_BZIP2}. If null, then auto choosing method.
      *
      * @throws ZipException
      *
-     * @return ZipFileInterface
+     * @return ZipFile
      * @sse https://en.wikipedia.org/wiki/Glob_(programming) Glob pattern syntax
      */
     private function addGlob(
@@ -827,12 +827,12 @@ class ZipFile implements ZipFileInterface
      * @param string      $globPattern       glob pattern
      * @param string|null $localPath         add files to this directory, or the root
      * @param int|null    $compressionMethod Compression method.
-     *                                       Use ZipFile::METHOD_STORED, ZipFile::METHOD_DEFLATED or
-     *                                       ZipFile::METHOD_BZIP2. If null, then auto choosing method.
+     *                                       Use {@see ZipFile::METHOD_STORED}, {@see ZipFile::METHOD_DEFLATED} or
+     *                                       {@see ZipFile::METHOD_BZIP2}. If null, then auto choosing method.
      *
      * @throws ZipException
      *
-     * @return ZipFileInterface
+     * @return ZipFile
      * @sse https://en.wikipedia.org/wiki/Glob_(programming) Glob pattern syntax
      */
     public function addFilesFromGlobRecursive($inputDir, $globPattern, $localPath = '/', $compressionMethod = null)
@@ -847,12 +847,12 @@ class ZipFile implements ZipFileInterface
      * @param string      $regexPattern      regex pattern
      * @param string|null $localPath         add files to this directory, or the root
      * @param int|null    $compressionMethod Compression method.
-     *                                       Use ZipFile::METHOD_STORED, ZipFile::METHOD_DEFLATED or
-     *                                       ZipFile::METHOD_BZIP2. If null, then auto choosing method.
+     *                                       Use {@see ZipFile::METHOD_STORED}, {@see ZipFile::METHOD_DEFLATED} or
+     *                                       {@see ZipFile::METHOD_BZIP2}. If null, then auto choosing method.
      *
      * @throws ZipException
      *
-     * @return ZipFileInterface
+     * @return ZipFile
      *
      * @internal param bool $recursive Recursive search
      */
@@ -869,12 +869,12 @@ class ZipFile implements ZipFileInterface
      * @param string|null $localPath         add files to this directory, or the root
      * @param bool        $recursive         recursive search
      * @param int|null    $compressionMethod Compression method.
-     *                                       Use ZipFile::METHOD_STORED, ZipFile::METHOD_DEFLATED or
-     *                                       ZipFile::METHOD_BZIP2. If null, then auto choosing method.
+     *                                       Use {@see ZipFile::METHOD_STORED}, {@see ZipFile::METHOD_DEFLATED} or
+     *                                       {@see ZipFile::METHOD_BZIP2}. If null, then auto choosing method.
      *
      * @throws ZipException
      *
-     * @return ZipFileInterface
+     * @return ZipFile
      */
     private function addRegex(
         $inputDir,
@@ -950,12 +950,12 @@ class ZipFile implements ZipFileInterface
      * @param string      $regexPattern      regex pattern
      * @param string|null $localPath         add files to this directory, or the root
      * @param int|null    $compressionMethod Compression method.
-     *                                       Use ZipFile::METHOD_STORED, ZipFile::METHOD_DEFLATED or
-     *                                       ZipFile::METHOD_BZIP2. If null, then auto choosing method.
+     *                                       Use {@see ZipFile::METHOD_STORED}, {@see ZipFile::METHOD_DEFLATED} or
+     *                                       {@see ZipFile::METHOD_BZIP2}. If null, then auto choosing method.
      *
      * @throws ZipException
      *
-     * @return ZipFileInterface
+     * @return ZipFile
      *
      * @internal param bool $recursive Recursive search
      */
@@ -986,7 +986,7 @@ class ZipFile implements ZipFileInterface
      *
      * @throws ZipException
      *
-     * @return ZipFileInterface
+     * @return ZipFile
      */
     public function rename($oldName, $newName)
     {
@@ -1010,7 +1010,7 @@ class ZipFile implements ZipFileInterface
      *
      * @throws ZipEntryNotFoundException if entry not found
      *
-     * @return ZipFileInterface
+     * @return ZipFile
      */
     public function deleteFromName($entryName)
     {
@@ -1028,7 +1028,7 @@ class ZipFile implements ZipFileInterface
      *
      * @param string $globPattern Glob pattern
      *
-     * @return ZipFileInterface
+     * @return ZipFile
      * @sse https://en.wikipedia.org/wiki/Glob_(programming) Glob pattern syntax
      */
     public function deleteFromGlob($globPattern)
@@ -1047,7 +1047,7 @@ class ZipFile implements ZipFileInterface
      *
      * @param string $regexPattern Regex pattern
      *
-     * @return ZipFileInterface
+     * @return ZipFile
      */
     public function deleteFromRegex($regexPattern)
     {
@@ -1062,7 +1062,7 @@ class ZipFile implements ZipFileInterface
     /**
      * Delete all entries.
      *
-     * @return ZipFileInterface
+     * @return ZipFile
      */
     public function deleteAll()
     {
@@ -1076,7 +1076,7 @@ class ZipFile implements ZipFileInterface
      *
      * @param int $compressionLevel
      *
-     * @return ZipFileInterface
+     * @return ZipFile
      *
      * @see ZipFile::LEVEL_DEFAULT_COMPRESSION
      * @see ZipFile::LEVEL_SUPER_FAST
@@ -1108,7 +1108,7 @@ class ZipFile implements ZipFileInterface
      *
      * @throws ZipException
      *
-     * @return ZipFileInterface
+     * @return ZipFile
      *
      * @see ZipFile::LEVEL_DEFAULT_COMPRESSION
      * @see ZipFile::LEVEL_SUPER_FAST
@@ -1139,11 +1139,13 @@ class ZipFile implements ZipFileInterface
 
     /**
      * @param string $entryName
-     * @param int    $compressionMethod
+     * @param int    $compressionMethod Compression method.
+     *                                  Use {@see ZipFile::METHOD_STORED}, {@see ZipFile::METHOD_DEFLATED} or
+     *                                  {@see ZipFile::METHOD_BZIP2}. If null, then auto choosing method.
      *
      * @throws ZipException
      *
-     * @return ZipFileInterface
+     * @return ZipFile
      *
      * @see ZipFile::METHOD_STORED
      * @see ZipFile::METHOD_DEFLATED
@@ -1171,7 +1173,7 @@ class ZipFile implements ZipFileInterface
      *
      * @param int|null $align
      *
-     * @return ZipFileInterface
+     * @return ZipFile
      *
      * @see https://developer.android.com/studio/command-line/zipalign.html
      */
@@ -1189,7 +1191,7 @@ class ZipFile implements ZipFileInterface
      *
      * @throws ZipException
      *
-     * @return ZipFileInterface
+     * @return ZipFile
      *
      * @deprecated using ZipFile::setReadPassword()
      */
@@ -1205,7 +1207,7 @@ class ZipFile implements ZipFileInterface
      *
      * @throws ZipException
      *
-     * @return ZipFileInterface
+     * @return ZipFile
      */
     public function setReadPassword($password)
     {
@@ -1222,7 +1224,7 @@ class ZipFile implements ZipFileInterface
      *
      * @throws ZipException
      *
-     * @return ZipFileInterface
+     * @return ZipFile
      */
     public function setReadPasswordEntry($entryName, $password)
     {
@@ -1239,7 +1241,7 @@ class ZipFile implements ZipFileInterface
      *
      * @throws ZipException
      *
-     * @return ZipFileInterface
+     * @return ZipFile
      *
      * @deprecated using ZipFile::setPassword()
      */
@@ -1256,7 +1258,7 @@ class ZipFile implements ZipFileInterface
      *
      * @throws ZipException
      *
-     * @return ZipFileInterface
+     * @return ZipFile
      */
     public function setPassword($password, $encryptionMethod = self::ENCRYPTION_METHOD_WINZIP_AES_256)
     {
@@ -1281,7 +1283,7 @@ class ZipFile implements ZipFileInterface
      *
      * @throws ZipException
      *
-     * @return ZipFileInterface
+     * @return ZipFile
      */
     public function setPasswordEntry($entryName, $password, $encryptionMethod = null)
     {
@@ -1296,7 +1298,7 @@ class ZipFile implements ZipFileInterface
     /**
      * Remove password for all entries for update.
      *
-     * @return ZipFileInterface
+     * @return ZipFile
      *
      * @deprecated using ZipFile::disableEncryption()
      */
@@ -1308,7 +1310,7 @@ class ZipFile implements ZipFileInterface
     /**
      * Disable encryption for all entries that are already in the archive.
      *
-     * @return ZipFileInterface
+     * @return ZipFile
      */
     public function disableEncryption()
     {
@@ -1322,7 +1324,7 @@ class ZipFile implements ZipFileInterface
      *
      * @param string $entryName
      *
-     * @return ZipFileInterface
+     * @return ZipFile
      */
     public function disableEncryptionEntry($entryName)
     {
@@ -1334,7 +1336,7 @@ class ZipFile implements ZipFileInterface
     /**
      * Undo all changes done in the archive.
      *
-     * @return ZipFileInterface
+     * @return ZipFile
      */
     public function unchangeAll()
     {
@@ -1346,7 +1348,7 @@ class ZipFile implements ZipFileInterface
     /**
      * Undo change archive comment.
      *
-     * @return ZipFileInterface
+     * @return ZipFile
      */
     public function unchangeArchiveComment()
     {
@@ -1360,7 +1362,7 @@ class ZipFile implements ZipFileInterface
      *
      * @param string|ZipEntry $entry Entry name or ZipEntry
      *
-     * @return ZipFileInterface
+     * @return ZipFile
      */
     public function unchangeEntry($entry)
     {
@@ -1376,7 +1378,7 @@ class ZipFile implements ZipFileInterface
      *
      * @throws ZipException
      *
-     * @return ZipFileInterface
+     * @return ZipFile
      */
     public function saveAsFile($filename)
     {
@@ -1407,7 +1409,7 @@ class ZipFile implements ZipFileInterface
      *
      * @throws ZipException
      *
-     * @return ZipFileInterface
+     * @return ZipFile
      */
     public function saveAsStream($handle)
     {
@@ -1430,8 +1432,6 @@ class ZipFile implements ZipFileInterface
      * @param bool        $attachment     Http Header 'Content-Disposition' if true then attachment otherwise inline
      *
      * @throws ZipException
-     *
-     * @return string
      */
     public function outputAsAttachment($outputFilename, $mimeType = null, $attachment = true)
     {
@@ -1462,7 +1462,7 @@ class ZipFile implements ZipFileInterface
         rewind($handle);
 
         try {
-            return stream_get_contents($handle, -1, 0);
+            echo stream_get_contents($handle, -1, 0);
         } finally {
             fclose($handle);
         }
@@ -1587,7 +1587,7 @@ class ZipFile implements ZipFileInterface
      *
      * @throws ZipException
      *
-     * @return ZipFileInterface
+     * @return ZipFile
      */
     public function rewrite()
     {
