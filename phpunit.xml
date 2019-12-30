@@ -10,8 +10,15 @@
     </php>
 
     <testsuites>
-        <testsuite name="PhpZip test suite">
+        <testsuite name="all_tests">
             <directory>tests</directory>
+        </testsuite>
+        <testsuite name="only_fast_tests">
+            <directory>tests</directory>
+            <exclude>tests/SlowTests</exclude>
+        </testsuite>
+        <testsuite name="only_slow_tests">
+            <directory>tests/SlowTests</directory>
         </testsuite>
     </testsuites>
 
