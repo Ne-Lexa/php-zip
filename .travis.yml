@@ -19,7 +19,7 @@ before_script:
 
 script:
   - composer validate --no-check-lock
-    - vendor/bin/phpunit -v -c phpunit.xml.dist --coverage-clover=coverage.clover
+  - vendor/bin/phpunit -v -c phpunit.xml.dist --testsuite only_fast_tests --coverage-clover=coverage.clover
 
 after_success:
   - wget https://scrutinizer-ci.com/ocular.phar
