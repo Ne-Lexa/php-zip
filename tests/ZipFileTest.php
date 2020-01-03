@@ -2,6 +2,7 @@
 
 namespace PhpZip\Tests;
 
+use GuzzleHttp\Psr7\Response;
 use PhpZip\Constants\ZipCompressionLevel;
 use PhpZip\Constants\ZipCompressionMethod;
 use PhpZip\Constants\ZipPlatform;
@@ -14,7 +15,6 @@ use PhpZip\Model\ZipInfo;
 use PhpZip\Util\FilesUtil;
 use PhpZip\ZipFile;
 use Psr\Http\Message\ResponseInterface;
-use Zend\Diactoros\Response;
 
 /**
  * ZipFile test.
