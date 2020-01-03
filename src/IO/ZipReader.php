@@ -302,27 +302,32 @@ class ZipReader
 
         $data = unpack(
 //            'Psize/vversionMadeBy/vextractVersion/' .
-            'VdiskNo/VcdDiskNo/PcdEntriesDisk/PentryCount/PcdSize/PcdPos',
-            substr($buffer, 16)
+            'VdiskNo/VcdDiskNo',
+            substr($buffer, 16, 8)
         );
+
+        $cdEntriesDisk = PackUtil::unpackLongLE(substr($buffer, 24, 8));
+        $entryCount = PackUtil::unpackLongLE(substr($buffer, 32, 8));
+        $cdSize = PackUtil::unpackLongLE(substr($buffer, 40, 8));
+        $cdPos = PackUtil::unpackLongLE(substr($buffer, 48, 8));
 
 //        $platform = ZipPlatform::fromValue(($data['versionMadeBy'] & 0xFF00) >> 8);
 //        $softwareVersion = $data['versionMadeBy'] & 0x00FF;
 
-        if ($data['diskNo'] !== 0 || $data['cdDiskNo'] !== 0 || $data['entryCount'] !== $data['cdEntriesDisk']) {
+        if ($data['diskNo'] !== 0 || $data['cdDiskNo'] !== 0 || $entryCount !== $cdEntriesDisk) {
             throw new ZipException('ZIP file spanning/splitting is not supported!');
         }
 
-        if ($data['entryCount'] < 0 || $data['entryCount'] > 0x7fffffff) {
+        if ($entryCount < 0 || $entryCount > 0x7fffffff) {
             throw new ZipException('Total Number Of Entries In The Central Directory out of range!');
         }
 
         // skip zip64 extensible data sector (variable sizeEndCD)
 
         return new EndOfCentralDirectory(
-            $data['entryCount'],
-            $data['cdPos'],
-            $data['cdSize'],
+            $entryCount,
+            $cdPos,
+            $cdSize,
             true
         );
     }
