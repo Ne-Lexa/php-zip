@@ -1,6 +1,7 @@
 <?php
 
 /** @noinspection AdditionOperationOnArraysInspection */
+
 /** @noinspection PhpUsageOfSilenceOperatorInspection */
 
 namespace PhpZip;
@@ -243,8 +244,8 @@ class ZipFile implements ZipFileInterface
      *
      * @param string $entryName
      *
-     * @throws ZipEntryNotFoundException
      * @throws ZipException
+     * @throws ZipEntryNotFoundException
      *
      * @return string
      */
@@ -259,8 +260,8 @@ class ZipFile implements ZipFileInterface
      * @param string      $entryName
      * @param string|null $comment
      *
-     * @throws ZipException
      * @throws ZipEntryNotFoundException
+     * @throws ZipException
      *
      * @return ZipFile
      */
@@ -276,8 +277,8 @@ class ZipFile implements ZipFileInterface
      *
      * @param string $entryName
      *
-     * @throws ZipException
      * @throws ZipEntryNotFoundException
+     * @throws ZipException
      *
      * @return string
      */
@@ -295,8 +296,8 @@ class ZipFile implements ZipFileInterface
     /**
      * @param string $entryName
      *
-     * @throws ZipException
      * @throws ZipEntryNotFoundException
+     * @throws ZipException
      *
      * @return resource
      */
@@ -313,8 +314,8 @@ class ZipFile implements ZipFileInterface
      *
      * @param string|ZipEntry $entryName
      *
-     * @throws ZipEntryNotFoundException
      * @throws ZipException
+     * @throws ZipEntryNotFoundException
      *
      * @return ZipInfo
      */
@@ -395,19 +396,7 @@ class ZipFile implements ZipFileInterface
 
             if (\is_array($entries)) {
                 $entries = array_unique($entries);
-                $flipEntries = array_flip($entries);
-                $zipEntries = array_filter(
-                    $zipEntries,
-                    /**
-                     * @param string $entryName
-                     *
-                     * @return bool
-                     */
-                    static function ($entryName) use ($flipEntries) {
-                        return isset($flipEntries[$entryName]);
-                    },
-                    \ARRAY_FILTER_USE_KEY
-                );
+                $zipEntries = array_intersect_key($zipEntries, array_flip($entries));
             }
         }
 

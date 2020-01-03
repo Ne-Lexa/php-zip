@@ -765,6 +765,11 @@ class ZipReader
             $filters[] = $encContextFilter;
         }
 
+        // hack, see https://groups.google.com/forum/#!topic/alt.comp.lang.php/37_JZeW63uc
+        $pos = ftell($this->inStream);
+        rewind($this->inStream);
+        fseek($this->inStream, $pos);
+
         $contextDecompress = null;
         switch ($compressionMethod) {
             case ZipCompressionMethod::STORED:
