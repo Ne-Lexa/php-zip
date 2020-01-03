@@ -24,6 +24,7 @@ use PhpZip\Model\Extra\ZipExtraDriver;
 use PhpZip\Model\Extra\ZipExtraField;
 use PhpZip\Model\ImmutableZipContainer;
 use PhpZip\Model\ZipEntry;
+use PhpZip\Util\PackUtil;
 
 /**
  * Zip reader.
@@ -249,13 +250,15 @@ class ZipReader
      */
     protected function findZip64ECDPosition()
     {
-        $data = unpack('VdiskNo/Pzip64ECDPos/VtotalDisks', fread($this->inStream, 16));
+        $diskNo = unpack('V', fread($this->inStream, 4))[1];
+        $zip64ECDPos = PackUtil::unpackLongLE(fread($this->inStream, 8));
+        $totalDisks = unpack('V', fread($this->inStream, 4))[1];
 
-        if ($data['diskNo'] !== 0 || $data['totalDisks'] > 1) {
+        if ($diskNo !== 0 || $totalDisks > 1) {
             throw new ZipException('ZIP file spanning/splitting is not supported!');
         }
 
-        return $data['zip64ECDPos'];
+        return $zip64ECDPos;
     }
 
     /**
