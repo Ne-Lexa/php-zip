@@ -11,7 +11,7 @@ use PhpZip\Constants\ZipOptions;
 use PhpZip\Exception\Crc32Exception;
 use PhpZip\Exception\InvalidArgumentException;
 use PhpZip\Exception\ZipException;
-use PhpZip\IO\Filter\Cipher\Traditional\PKDecryptionStreamFilter;
+use PhpZip\IO\Filter\Cipher\Pkware\PKDecryptionStreamFilter;
 use PhpZip\IO\Filter\Cipher\WinZipAes\WinZipAesDecryptionStreamFilter;
 use PhpZip\Model\Data\ZipSourceFileData;
 use PhpZip\Model\EndOfCentralDirectory;
@@ -713,7 +713,7 @@ class ZipReader
             throw new InvalidArgumentException('outStream is not resource');
         }
 
-        $entry = $zipFileData->getZipEntry();
+        $entry = $zipFileData->getSourceEntry();
 
 //        if ($entry->isDirectory()) {
 //            throw new InvalidArgumentException('Streams not supported for directories');

@@ -570,7 +570,7 @@ class ZipFile implements ZipFileInterface
         $zipEntry->setCompressionMethod($compressionMethod);
         $zipEntry->setCreatedOS(ZipPlatform::OS_UNIX);
         $zipEntry->setExtractedOS(ZipPlatform::OS_UNIX);
-        $zipEntry->setUnixMode(010644);
+        $zipEntry->setUnixMode(0100644);
         $zipEntry->setTime(time());
 
         $this->addZipEntry($zipEntry);
@@ -794,7 +794,7 @@ class ZipFile implements ZipFileInterface
         $zipEntry = new ZipEntry($entryName);
 
         if ($fstat !== false) {
-            $unixMode = (int) sprintf('%o', $fstat['mode']);
+            $unixMode = $fstat['mode'];
             $length = $fstat['size'];
 
             if ($compressionMethod === null || $compressionMethod === ZipEntry::UNKNOWN) {
@@ -812,7 +812,7 @@ class ZipFile implements ZipFileInterface
                 $zipEntry->setUncompressedSize($length);
             }
         } else {
-            $unixMode = 010644;
+            $unixMode = 0100644;
 
             if ($compressionMethod === null || $compressionMethod === ZipEntry::UNKNOWN) {
                 $compressionMethod = ZipCompressionMethod::DEFLATED;

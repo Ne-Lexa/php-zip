@@ -1,6 +1,6 @@
 <?php
 
-namespace PhpZip\IO\Filter\Cipher\Traditional;
+namespace PhpZip\IO\Filter\Cipher\Pkware;
 
 use PhpZip\Exception\ZipException;
 use PhpZip\Model\ZipEntry;

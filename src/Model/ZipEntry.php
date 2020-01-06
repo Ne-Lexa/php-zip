@@ -31,9 +31,9 @@ use PhpZip\Util\StringUtil;
 /**
  * ZIP file entry.
  *
- * @see https://pkware.cachefly.net/webdocs/casestudies/APPNOTE.TXT .ZIP File Format Specification
+ * @see     https://pkware.cachefly.net/webdocs/casestudies/APPNOTE.TXT .ZIP File Format Specification
  *
- * @author Ne-Lexa alexey@nelexa.ru
+ * @author  Ne-Lexa alexey@nelexa.ru
  * @license MIT
  */
 class ZipEntry
@@ -152,11 +152,12 @@ class ZipEntry
     /**
      * ZipEntry constructor.
      *
-     * @param string $name Entry name
+     * @param string      $name    Entry name
+     * @param string|null $charset DOS charset
      */
-    public function __construct($name)
+    public function __construct($name, $charset = null)
     {
-        $this->setName($name);
+        $this->setName($name, $charset);
 
         $this->cdExtraFields = new ExtraFieldsCollection();
         $this->localExtraFields = new ExtraFieldsCollection();
@@ -185,6 +186,7 @@ class ZipEntry
      * @return ZipEntry
      *
      * @internal
+     *
      * @noinspection PhpTooManyParametersInspection
      */
     public static function create(
@@ -229,11 +231,12 @@ class ZipEntry
     /**
      * Set entry name.
      *
-     * @param string $name New entry name
+     * @param string      $name    New entry name
+     * @param string|null $charset
      *
      * @return ZipEntry
      */
-    private function setName($name)
+    private function setName($name, $charset = null)
     {
         if ($name === null) {
             throw new InvalidArgumentException('zip entry name is null');
@@ -252,12 +255,23 @@ class ZipEntry
             throw new InvalidArgumentException('Illegal zip entry name parameter');
         }
 
-        if (!StringUtil::isASCII($name)) {
+        $this->setCharset($charset);
+
+        if ($this->charset === null && !StringUtil::isASCII($name)) {
             $this->enableUtf8Name(true);
         }
         $this->name = $name;
         $this->isDirectory = ($length = \strlen($name)) >= 1 && $name[$length - 1] === '/';
         $this->externalAttributes = $this->isDirectory ? DosAttrs::DOS_DIRECTORY : DosAttrs::DOS_ARCHIVE;
+
+        if ($this->extractVersion !== self::UNKNOWN) {
+            $this->extractVersion = max(
+                $this->extractVersion,
+                $this->isDirectory ?
+                    ZipVersion::v20_DEFLATED_FOLDER_ZIPCRYPTO :
+                    ZipVersion::v10_DEFAULT_MIN
+            );
+        }
 
         return $this;
     }
@@ -291,6 +305,8 @@ class ZipEntry
      * @param string $newName New entry name
      *
      * @return ZipEntry new {@see ZipEntry} object with new name
+     *
+     * @internal
      */
     public function rename($newName)
     {
@@ -314,6 +330,8 @@ class ZipEntry
 
     /**
      * @return ZipData|null
+     *
+     * @internal
      */
     public function getData()
     {
@@ -322,6 +340,8 @@ class ZipEntry
 
     /**
      * @param ZipData|null $data
+     *
+     * @internal
      */
     public function setData($data)
     {
@@ -458,7 +478,7 @@ class ZipEntry
                 return ZipVersion::v51_ENCR_AES_RC2_CORRECT;
             }
 
-            if ($this->getCompressionMethod() === ZipCompressionMethod::BZIP2) {
+            if ($this->compressionMethod === ZipCompressionMethod::BZIP2) {
                 return ZipVersion::v46_BZIP2;
             }
 
@@ -466,9 +486,15 @@ class ZipEntry
                 return ZipVersion::v45_ZIP64_EXT;
             }
 
-            return $this->getCompressionMethod() === ZipCompressionMethod::DEFLATED || $this->isDirectory() ?
-                ZipVersion::v20_DEFLATED_FOLDER_ZIPCRYPTO :
-                ZipVersion::v10_DEFAULT_MIN;
+            if (
+                $this->compressionMethod === ZipCompressionMethod::DEFLATED ||
+                $this->isDirectory ||
+                $this->encryptionMethod === ZipEncryptionMethod::PKWARE
+            ) {
+                return ZipVersion::v20_DEFLATED_FOLDER_ZIPCRYPTO;
+            }
+
+            return ZipVersion::v10_DEFAULT_MIN;
         }
 
         return $this->extractVersion;
@@ -520,9 +546,16 @@ class ZipEntry
      * @param int $compressedSize the Compressed Size
      *
      * @return ZipEntry
+     *
+     * @internal
      */
     public function setCompressedSize($compressedSize)
     {
+        $compressedSize = (int) $compressedSize;
+
+        if ($compressedSize < self::UNKNOWN) {
+            throw new InvalidArgumentException('Compressed size < ' . self::UNKNOWN);
+        }
         $this->compressedSize = $compressedSize;
 
         return $this;
@@ -550,6 +583,8 @@ class ZipEntry
      * @return ZipEntry
      *
      * @deprecated Use {@see ZipEntry::setUncompressedSize()}
+     *
+     * @internal
      */
     public function setSize($size)
     {
@@ -574,9 +609,16 @@ class ZipEntry
      * @param int $uncompressedSize the (Uncompressed) Size
      *
      * @return ZipEntry
+     *
+     * @internal
      */
     public function setUncompressedSize($uncompressedSize)
     {
+        $uncompressedSize = (int) $uncompressedSize;
+
+        if ($uncompressedSize < self::UNKNOWN) {
+            throw new InvalidArgumentException('Uncompressed size < ' . self::UNKNOWN);
+        }
         $this->uncompressedSize = $uncompressedSize;
 
         return $this;
@@ -596,10 +638,17 @@ class ZipEntry
      * @param int $localHeaderOffset
      *
      * @return ZipEntry
+     *
+     * @internal
      */
     public function setLocalHeaderOffset($localHeaderOffset)
     {
-        $this->localHeaderOffset = (int) $localHeaderOffset;
+        $localHeaderOffset = (int) $localHeaderOffset;
+
+        if ($localHeaderOffset < 0) {
+            throw new InvalidArgumentException('Negative $localHeaderOffset');
+        }
+        $this->localHeaderOffset = $localHeaderOffset;
 
         return $this;
     }
@@ -627,6 +676,8 @@ class ZipEntry
      * @return ZipEntry
      *
      * @deprecated Use {@see ZipEntry::setLocalHeaderOffset()}
+     *
+     * @internal
      */
     public function setOffset($offset)
     {
@@ -645,24 +696,26 @@ class ZipEntry
      */
     public function getGeneralPurposeBitFlags()
     {
-        return $this->generalPurposeBitFlags & 0xffff;
+        return $this->generalPurposeBitFlags;
     }
 
     /**
      * Sets the General Purpose Bit Flags.
      *
-     * @param mixed $general
+     * @param int $gpbf general purpose bit flags
      *
      * @return ZipEntry
      *
-     * @var int general
+     * @internal
      */
-    public function setGeneralPurposeBitFlags($general)
+    public function setGeneralPurposeBitFlags($gpbf)
     {
-        if ($general < 0x0000 || $general > 0xffff) {
-            throw new InvalidArgumentException('general out of range');
+        $gpbf = (int) $gpbf;
+
+        if ($gpbf < 0x0000 || $gpbf > 0xffff) {
+            throw new InvalidArgumentException('general purpose bit flags out of range');
         }
-        $this->generalPurposeBitFlags = $general;
+        $this->generalPurposeBitFlags = $gpbf;
         $this->updateCompressionLevel();
 
         return $this;
@@ -710,7 +763,7 @@ class ZipEntry
      */
     private function isSetGeneralBitFlag($mask)
     {
-        return ($this->generalPurposeBitFlags & $mask) !== 0;
+        return ($this->generalPurposeBitFlags & $mask) === $mask;
     }
 
     /**
@@ -775,7 +828,9 @@ class ZipEntry
     {
         $this->setEncrypted(false);
         $this->removeExtraField(WinZipAesExtraField::HEADER_ID);
+        $this->encryptionMethod = ZipEncryptionMethod::NONE;
         $this->password = null;
+        $this->extractVersion = self::UNKNOWN;
 
         return $this;
     }
@@ -858,7 +913,9 @@ class ZipEntry
      */
     public function setCompressionMethod($compressionMethod)
     {
-        if (($compressionMethod < 0x0000 || $compressionMethod > 0xffff) && $compressionMethod !== self::UNKNOWN) {
+        $compressionMethod = (int) $compressionMethod;
+
+        if ($compressionMethod < 0x0000 || $compressionMethod > 0xffff) {
             throw new InvalidArgumentException('method out of range: ' . $compressionMethod);
         }
 
@@ -866,6 +923,7 @@ class ZipEntry
 
         $this->compressionMethod = $compressionMethod;
         $this->updateCompressionLevel();
+        $this->extractVersion = self::UNKNOWN;
 
         return $this;
     }
@@ -881,7 +939,7 @@ class ZipEntry
             return self::UNKNOWN;
         }
 
-        return DateTimeConverter::toUnixTimestamp($this->getDosTime());
+        return DateTimeConverter::msDosToUnix($this->getDosTime());
     }
 
     /**
@@ -922,10 +980,8 @@ class ZipEntry
      */
     public function setTime($unixTimestamp)
     {
-        $known = $unixTimestamp !== self::UNKNOWN;
-
-        if ($known) {
-            $this->dosTime = DateTimeConverter::toDosTime($unixTimestamp);
+        if ($unixTimestamp !== self::UNKNOWN) {
+            $this->setDosTime(DateTimeConverter::unixToMsDos($unixTimestamp));
         } else {
             $this->dosTime = 0;
         }
@@ -954,6 +1010,11 @@ class ZipEntry
     {
         $this->externalAttributes = (int) $externalAttributes;
 
+        if ($externalAttributes < 0x00000000 || $externalAttributes > 0xffffffff) {
+            throw new InvalidArgumentException('external attributes out of range: ' . $externalAttributes);
+        }
+        $this->externalAttributes = $externalAttributes;
+
         return $this;
     }
 
@@ -970,13 +1031,18 @@ class ZipEntry
     /**
      * Sets the internal file attributes.
      *
-     * @param int $attributes the internal file attributes
+     * @param int $internalAttributes the internal file attributes
      *
      * @return ZipEntry
      */
-    public function setInternalAttributes($attributes)
+    public function setInternalAttributes($internalAttributes)
     {
-        $this->internalAttributes = (int) $attributes;
+        $internalAttributes = (int) $internalAttributes;
+
+        if ($internalAttributes < 0x0000 || $internalAttributes > 0xffff) {
+            throw new InvalidArgumentException('internal attributes out of range');
+        }
+        $this->internalAttributes = $internalAttributes;
 
         return $this;
     }
@@ -1095,6 +1161,31 @@ class ZipEntry
     }
 
     /**
+     * @param ZipExtraField $zipExtraField
+     */
+    public function addExtraField(ZipExtraField $zipExtraField)
+    {
+        $this->addLocalExtraField($zipExtraField);
+        $this->addCdExtraField($zipExtraField);
+    }
+
+    /**
+     * @param ZipExtraField $zipExtraField
+     */
+    public function addLocalExtraField(ZipExtraField $zipExtraField)
+    {
+        $this->localExtraFields->add($zipExtraField);
+    }
+
+    /**
+     * @param ZipExtraField $zipExtraField
+     */
+    public function addCdExtraField(ZipExtraField $zipExtraField)
+    {
+        $this->cdExtraFields->add($zipExtraField);
+    }
+
+    /**
      * Returns comment entry.
      *
      * @return string
@@ -1116,11 +1207,11 @@ class ZipEntry
         if ($comment !== null) {
             $commentLength = \strlen($comment);
 
-            if ($commentLength < 0x0000 || $commentLength > 0xffff) {
+            if ($commentLength > 0xffff) {
                 throw new InvalidArgumentException('Comment too long');
             }
 
-            if (!StringUtil::isASCII($comment)) {
+            if ($this->charset === null && !StringUtil::isASCII($comment)) {
                 $this->enableUtf8Name(true);
             }
         }
@@ -1153,6 +1244,8 @@ class ZipEntry
      * @param int $crc
      *
      * @return ZipEntry
+     *
+     * @internal
      */
     public function setCrc($crc)
     {
@@ -1180,15 +1273,19 @@ class ZipEntry
     public function setPassword($password, $encryptionMethod = null)
     {
         if (!$this->isDirectory) {
-            if ($encryptionMethod !== null) {
-                $this->setEncryptionMethod($encryptionMethod);
-            }
-
             if ($password === null || $password === '') {
                 $this->password = null;
                 $this->disableEncryption();
             } else {
                 $this->password = (string) $password;
+
+                if ($encryptionMethod === null && $this->encryptionMethod === ZipEncryptionMethod::NONE) {
+                    $encryptionMethod = ZipEncryptionMethod::WINZIP_AES_256;
+                }
+
+                if ($encryptionMethod !== null) {
+                    $this->setEncryptionMethod($encryptionMethod);
+                }
                 $this->setEncrypted(true);
             }
         }
@@ -1228,6 +1325,7 @@ class ZipEntry
         $this->encryptionMethod = $encryptionMethod;
 
         $this->setEncrypted($this->encryptionMethod !== ZipEncryptionMethod::NONE);
+        $this->extractVersion = self::UNKNOWN;
 
         return $this;
     }
@@ -1329,18 +1427,21 @@ class ZipEntry
      */
     public function getUnixMode()
     {
-        /** @var AsiExtraField|null $asiExtraField */
-        $asiExtraField = $this->getExtraField(AsiExtraField::HEADER_ID);
-
-        if ($asiExtraField !== null) {
-            return $asiExtraField->getMode();
-        }
+        $mode = 0;
 
         if ($this->createdOS === ZipPlatform::OS_UNIX) {
-            return ($this->externalAttributes >> 16) & 0xFFFF;
+            $mode = ($this->externalAttributes >> 16) & 0xFFFF;
+        } elseif ($this->hasExtraField(AsiExtraField::HEADER_ID)) {
+            /** @var AsiExtraField $asiExtraField */
+            $asiExtraField = $this->getExtraField(AsiExtraField::HEADER_ID);
+            $mode = $asiExtraField->getMode();
         }
 
-        return $this->isDirectory ? 040755 : 0100664;
+        if ($mode > 0) {
+            return $mode;
+        }
+
+        return $this->isDirectory ? 040755 : 0100644;
     }
 
     /**
@@ -1351,8 +1452,8 @@ class ZipEntry
      */
     public function isZip64ExtensionsRequired()
     {
-        return $this->compressedSize >= ZipConstants::ZIP64_MAGIC
-            || $this->uncompressedSize >= ZipConstants::ZIP64_MAGIC;
+        return $this->compressedSize > ZipConstants::ZIP64_MAGIC
+            || $this->uncompressedSize > ZipConstants::ZIP64_MAGIC;
     }
 
     /**

@@ -282,34 +282,6 @@ class ZipContainer extends ImmutableZipContainer
     }
 
     /**
-     * @param ZipEntry $entry
-     *
-     * @return bool
-     */
-    public function hasRecompressData(ZipEntry $entry)
-    {
-        // todo test with rename, check exists ZipSourceData
-        if ($this->sourceContainer && isset($this->sourceContainer->entries[$entry->getName()])) {
-            $sourceEntry = $this->sourceContainer->entries[$entry->getName()];
-
-            if (
-                $sourceEntry->getCompressionLevel() !== $entry->getCompressionLevel() ||
-                $sourceEntry->getCompressionMethod() !== $entry->getCompressionMethod() ||
-                $sourceEntry->isEncrypted() !== $entry->isEncrypted() ||
-                $sourceEntry->getEncryptionMethod() !== $entry->getEncryptionMethod() ||
-                $sourceEntry->getPassword() !== $entry->getPassword() ||
-                $sourceEntry->getCompressedSize() !== $entry->getCompressedSize() ||
-                $sourceEntry->getUncompressedSize() !== $entry->getUncompressedSize() ||
-                $sourceEntry->getCrc() !== $entry->getCrc()
-            ) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /**
      * @return ZipEntryMatcher
      */
     public function matcher()

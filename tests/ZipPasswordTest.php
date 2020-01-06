@@ -57,8 +57,7 @@ class ZipPasswordTest extends ZipFileSetTestCase
             try {
                 $zipFile[$entryName];
                 static::fail('Expected Exception has not been raised.');
-            } catch (ZipAuthenticationException $ae) {
-                static::assertContains('Invalid password', $ae->getMessage());
+            } catch (ZipException $e) {
             }
         }
 

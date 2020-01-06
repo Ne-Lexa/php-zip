@@ -22,6 +22,12 @@ class Zip64Test extends ZipTestCase
      */
     public function testOver65535FilesInZip()
     {
+        if (\PHP_INT_SIZE === 4) { // php 32 bit
+            static::markTestSkipped('Only php-64 bit.');
+
+            return;
+        }
+
         $countFiles = 0xffff + 1;
 
         $zipFile = new ZipFile();

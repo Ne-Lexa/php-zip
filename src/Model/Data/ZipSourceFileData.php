@@ -20,7 +20,7 @@ class ZipSourceFileData implements ZipData
     private $stream;
 
     /** @var ZipEntry */
-    private $zipEntry;
+    private $sourceEntry;
 
     /** @var int */
     private $offset;
@@ -42,9 +42,26 @@ class ZipSourceFileData implements ZipData
     {
         $this->zipReader = $zipReader;
         $this->offset = $offsetData;
-        $this->zipEntry = $zipEntry;
+        $this->sourceEntry = $zipEntry;
         $this->compressedSize = $zipEntry->getCompressedSize();
         $this->uncompressedSize = $zipEntry->getUncompressedSize();
+    }
+
+    /**
+     * @param ZipEntry $entry
+     *
+     * @return bool
+     */
+    public function hasRecompressData(ZipEntry $entry)
+    {
+        return $this->sourceEntry->getCompressionLevel() !== $entry->getCompressionLevel() ||
+            $this->sourceEntry->getCompressionMethod() !== $entry->getCompressionMethod() ||
+            $this->sourceEntry->isEncrypted() !== $entry->isEncrypted() ||
+            $this->sourceEntry->getEncryptionMethod() !== $entry->getEncryptionMethod() ||
+            $this->sourceEntry->getPassword() !== $entry->getPassword() ||
+            $this->sourceEntry->getCompressedSize() !== $entry->getCompressedSize() ||
+            $this->sourceEntry->getUncompressedSize() !== $entry->getUncompressedSize() ||
+            $this->sourceEntry->getCrc() !== $entry->getCrc();
     }
 
     /**
@@ -114,9 +131,9 @@ class ZipSourceFileData implements ZipData
     /**
      * @return ZipEntry
      */
-    public function getZipEntry()
+    public function getSourceEntry()
     {
-        return $this->zipEntry;
+        return $this->sourceEntry;
     }
 
     /**

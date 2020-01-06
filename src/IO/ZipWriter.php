@@ -10,7 +10,7 @@ use PhpZip\Constants\ZipPlatform;
 use PhpZip\Constants\ZipVersion;
 use PhpZip\Exception\ZipException;
 use PhpZip\Exception\ZipUnsupportMethodException;
-use PhpZip\IO\Filter\Cipher\Traditional\PKEncryptionStreamFilter;
+use PhpZip\IO\Filter\Cipher\Pkware\PKEncryptionStreamFilter;
 use PhpZip\IO\Filter\Cipher\WinZipAes\WinZipAesEncryptionStreamFilter;
 use PhpZip\Model\Data\ZipSourceFileData;
 use PhpZip\Model\Extra\Fields\ApkAlignmentExtraField;
@@ -109,7 +109,6 @@ class ZipWriter
         $compressedSize = $entry->getCompressedSize();
         $uncompressedSize = $entry->getUncompressedSize();
 
-        // todo check on 32bit system
         $entry->getLocalExtraFields()->remove(Zip64ExtraField::HEADER_ID);
 
         if ($compressedSize > ZipConstants::ZIP64_MAGIC || $uncompressedSize > ZipConstants::ZIP64_MAGIC) {
@@ -331,7 +330,7 @@ class ZipWriter
         //     (PHP cannot apply the filter for encryption after the compression
         //     filter, so a temporary stream is created for the compressed data)
 
-        if ($zipData instanceof ZipSourceFileData && !$this->zipContainer->hasRecompressData($entry)) {
+        if ($zipData instanceof ZipSourceFileData && !$zipData->hasRecompressData($entry)) {
             // data of source zip file -> copy compressed data
             $zipData->copyCompressedDataToStream($outStream);
 
@@ -631,7 +630,6 @@ class ZipWriter
         $uncompressedSize = $entry->getUncompressedSize();
         $localHeaderOffset = $entry->getLocalHeaderOffset();
 
-        // todo check on 32bit system
         $entry->getCdExtraFields()->remove(Zip64ExtraField::HEADER_ID);
 
         if (

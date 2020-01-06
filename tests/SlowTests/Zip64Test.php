@@ -17,8 +17,6 @@ class Zip64Test extends ZipTestCase
 {
     /**
      * @throws ZipException
-     *
-     * @runInSeparateProcess
      */
     public function testCreateLargeZip64File()
     {

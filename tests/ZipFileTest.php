@@ -2389,4 +2389,33 @@ class ZipFileTest extends ZipTestCase
         }
         $zipFile->close();
     }
+
+    /**
+     * @throws ZipException
+     */
+    public function testRenameWithRecompressData()
+    {
+        $entryName = 'file.txt';
+        $newEntryName = 'rename_file.txt';
+        $contents = str_repeat('Test' . \PHP_EOL, 1024);
+
+        $zipFile = new ZipFile();
+        $zipFile->addFromString($entryName, $contents, ZipCompressionMethod::DEFLATED);
+        $zipFile->saveAsFile($this->outputFilename);
+        $zipFile->close();
+
+        self::assertCorrectZipArchive($this->outputFilename);
+
+        $zipFile->openFile($this->outputFilename);
+        $zipFile->rename($entryName, $newEntryName);
+        $zipFile->setCompressionMethodEntry($newEntryName, ZipCompressionMethod::STORED);
+        $zipFile->saveAsFile($this->outputFilename);
+        $zipFile->close();
+
+        self::assertCorrectZipArchive($this->outputFilename);
+
+        $zipFile->openFile($this->outputFilename);
+        static::assertSame($zipFile->getEntry($newEntryName)->getCompressionMethod(), ZipCompressionMethod::STORED);
+        $zipFile->close();
+    }
 }
