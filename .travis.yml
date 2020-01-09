@@ -1,36 +1,69 @@
-dist: trusty
-
 language: php
 
 env:
   global:
+    - ZIPALIGN_INSTALL=false
+    - COVERAGE=false
     - PHPUNIT_FLAGS="-v -c phpunit.xml --testsuite only_fast_tests"
 
 matrix:
   include:
-    - php: 5.5
-    - php: 5.6
-    - php: 7.0
-    - php: 7.1
-    - php: 7.2
-    - php: 7.3
-      env: COVERAGE=false
+    - os: linux
+      php: 5.5
+      dist: trusty
 
-    - php: 7.4
-      env: COVERAGE=true PHPUNIT_FLAGS="-v -c phpunit.xml --testsuite only_fast_tests --format=php-clover coverage.clover"
+    - os: linux
+      php: 5.6
+      dist: trusty
+
+    - os: linux
+      dist: xenial
+      php: 7.0
+      env: ZIPALIGN_INSTALL=true
+
+    - os: linux
+      dist: xenial
+      php: 7.1
+      env: ZIPALIGN_INSTALL=true
+
+    - os: linux
+      dist: xenial
+      php: 7.2
+      env: ZIPALIGN_INSTALL=true
+
+    - os: linux
+      dist: xenial
+      php: 7.3
+      env: ZIPALIGN_INSTALL=true
+
+    - os: linux
+      dist: bionic
+      php: 7.4
+      env: COVERAGE=true PHPUNIT_FLAGS="-v -c phpunit.xml --testsuite only_fast_tests --format=php-clover coverage.clover ZIPALIGN_INSTALL=true"
+
+    - os: linux
+      php: nightly
+      dist: bionic
 
 before_install:
   - if [[ $COVERAGE != true ]]; then phpenv config-rm xdebug.ini || true; fi
+  - php --version
 
 install:
   - travis_retry composer self-update && composer --version
   - travis_retry composer install --no-interaction
 
+addons:
+  apt:
+    packages:
+      - unzip
+      - p7zip-full
+
 before_script:
-  - sudo apt-get install p7zip-full
-  - composer validate --no-check-lock
+  - if [[ ZIPALIGN_INSTALL = true ]]; sudo apt-get install -y zipalign; fi
 
 script:
+  - composer validate --no-check-lock
   - vendor/bin/phpunit -v -c phpunit.xml --testsuite only_fast_tests --coverage-clover=coverage.clover
 
 after_success:
