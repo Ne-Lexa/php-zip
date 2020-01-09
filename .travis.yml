@@ -41,11 +41,6 @@ matrix:
       php: 7.4
       env: COVERAGE=true ZIPALIGN_INSTALL=true PHPUNIT_FLAGS="-v -c phpunit.xml --testsuite only_fast_tests --format=php-clover coverage.clover"
 
-    - os: linux
-      php: nightly
-      dist: bionic
-      env: ZIPALIGN_INSTALL=true
-
 before_install:
   - if [[ $COVERAGE != true ]]; then phpenv config-rm xdebug.ini || true; fi
 
