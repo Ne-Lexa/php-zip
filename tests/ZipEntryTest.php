@@ -770,19 +770,13 @@ class ZipEntryTest extends TestCase
      * @dataProvider provideDosTime
      *
      * @param int $dosTime
-     * @param int $timestamp
      */
-    public function testDosTime($dosTime, $timestamp)
+    public function testDosTime($dosTime)
     {
         $zipEntry = new ZipEntry('entry');
         static::assertSame($zipEntry->getDosTime(), ZipEntry::UNKNOWN);
 
         $zipEntry->setDosTime($dosTime);
-        static::assertSame($zipEntry->getDosTime(), $dosTime);
-        static::assertSame($zipEntry->getTime(), $timestamp);
-
-        $zipEntry->setTime($timestamp);
-        static::assertSame($zipEntry->getTime(), $timestamp);
         static::assertSame($zipEntry->getDosTime(), $dosTime);
     }
 
@@ -792,10 +786,10 @@ class ZipEntryTest extends TestCase
     public function provideDosTime()
     {
         return [
-            [0, 312757200],
-            [1043487716, 1295339468],
-            [1177556759, 1421366206],
-            [1282576076, 1521384864],
+            [0],
+            [1043487716],
+            [1177556759],
+            [1282576076],
         ];
     }
 
