@@ -44,10 +44,10 @@ matrix:
     - os: linux
       php: nightly
       dist: bionic
+      env: ZIPALIGN_INSTALL=true
 
 before_install:
   - if [[ $COVERAGE != true ]]; then phpenv config-rm xdebug.ini || true; fi
-  - php --version
 
 install:
   - travis_retry composer self-update && composer --version
@@ -60,12 +60,12 @@ addons:
       - p7zip-full
 
 before_script:
-  - if [[ ZIPALIGN_INSTALL = true ]]; sudo apt-get install -y zipalign; fi
+  - if [[ $ZIPALIGN_INSTALL = true ]]; then sudo apt-get install -y zipalign; fi
 
 script:
   - composer validate --no-check-lock
   - vendor/bin/phpunit -v -c phpunit.xml --testsuite only_fast_tests --coverage-clover=coverage.clover
 
 after_success:
-  - if [[ $COVERAGE = true ]]; wget https://scrutinizer-ci.com/ocular.phar; fi
-  - if [[ $COVERAGE = true ]]; php ocular.phar code-coverage:upload --format=php-clover coverage.clover; fi
+  - if [[ $COVERAGE = true ]]; then wget https://scrutinizer-ci.com/ocular.phar; fi
+  - if [[ $COVERAGE = true ]]; then php ocular.phar code-coverage:upload --format=php-clover coverage.clover; fi
