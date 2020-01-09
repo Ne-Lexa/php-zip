@@ -232,9 +232,10 @@ $rules = [
         'mute_deprecation_error' => true,
         'noise_remaining_usages' => true,
         'noise_remaining_usages_exclude' => [
-            'gzinflate',
             'fclose',
             'fopen',
+            'gzinflate',
+            'iconv',
             'mime_content_type',
             'rename',
             'unlink',
