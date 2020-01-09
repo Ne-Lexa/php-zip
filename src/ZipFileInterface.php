@@ -586,7 +586,7 @@ interface ZipFileInterface extends \Countable, \ArrayAccess, \Iterator
      * @see ZipCompressionLevel::FAST
      * @see ZipCompressionLevel::MAXIMUM
      */
-    public function setCompressionLevel($compressionLevel = self::LEVEL_DEFAULT_COMPRESSION);
+    public function setCompressionLevel($compressionLevel = ZipCompressionLevel::NORMAL);
 
     /**
      * @param string $entryName

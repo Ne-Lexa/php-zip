@@ -1353,14 +1353,13 @@ class ZipFile implements ZipFileInterface
      * @see ZipCompressionLevel::FAST
      * @see ZipCompressionLevel::MAXIMUM
      */
-    public function setCompressionLevel($compressionLevel = self::LEVEL_DEFAULT_COMPRESSION)
+    public function setCompressionLevel($compressionLevel = ZipCompressionLevel::NORMAL)
     {
-        $this->matcher()->all()->invoke(
-            /** @param string $entry */
-            function ($entry) use ($compressionLevel) {
-                $this->setCompressionLevelEntry($entry, $compressionLevel);
-            }
-        );
+        $compressionLevel = (int) $compressionLevel;
+
+        foreach ($this->zipContainer->getEntries() as $entry) {
+            $entry->setCompressionLevel($compressionLevel);
+        }
 
         return $this;
     }

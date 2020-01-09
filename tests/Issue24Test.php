@@ -2,6 +2,7 @@
 
 namespace PhpZip\Tests;
 
+use PhpZip\Constants\ZipCompressionMethod;
 use PhpZip\Exception\ZipException;
 use PhpZip\Tests\Internal\DummyFileSystemStream;
 use PhpZip\ZipFile;
@@ -38,7 +39,7 @@ class Issue24Test extends ZipTestCase
         $zip->addFromString(
             'file.txt',
             $fileContents,
-            ZipFile::METHOD_DEFLATED
+            ZipCompressionMethod::DEFLATED
         );
         $zip->saveAsFile($this->outputFilename);
         $zip->close();
