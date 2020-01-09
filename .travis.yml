@@ -8,38 +8,39 @@ env:
 
 matrix:
   include:
-    - os: linux
-      php: 5.5
+    - php: 5.5
+      os: linux
       dist: trusty
 
-    - os: linux
-      php: 5.6
-      dist: trusty
-
-    - os: linux
+    - php: 5.6
+      os: linux
       dist: xenial
-      php: 7.0
       env: ZIPALIGN_INSTALL=true
 
-    - os: linux
+    - php: 7.0
+      os: linux
       dist: xenial
-      php: 7.1
       env: ZIPALIGN_INSTALL=true
 
-    - os: linux
+    - php: 7.1
+      os: linux
       dist: xenial
-      php: 7.2
       env: ZIPALIGN_INSTALL=true
 
-    - os: linux
+    - php: 7.2
+      os: linux
       dist: xenial
-      php: 7.3
       env: ZIPALIGN_INSTALL=true
 
-    - os: linux
+    - php: 7.3
+      os: linux
+      dist: xenial
+      env: ZIPALIGN_INSTALL=true
+
+    - php: 7.4
+      os: linux
       dist: bionic
-      php: 7.4
-      env: COVERAGE=true ZIPALIGN_INSTALL=true PHPUNIT_FLAGS="-v -c phpunit.xml --testsuite only_fast_tests --format=php-clover coverage.clover"
+      env: COVERAGE=true ZIPALIGN_INSTALL=true PHPUNIT_FLAGS="-v -c phpunit.xml --testsuite only_fast_tests --coverage-clover=coverage.clover"
 
 before_install:
   - if [[ $COVERAGE != true ]]; then phpenv config-rm xdebug.ini || true; fi
