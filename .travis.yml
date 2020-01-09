@@ -1,22 +1,67 @@
-dist: trusty
-
 language: php
-php:
-  - '5.5'
-  - '5.6'
-  - '7.0'
-  - '7.1'
-  - '7.2'
-  - '7.3'
-  - '7.4'
+
+env:
+  global:
+    - ZIPALIGN_INSTALL=false
+    - COVERAGE=false
+    - PHPUNIT_FLAGS="-v -c phpunit.xml --testsuite only_fast_tests"
+
+matrix:
+  include:
+    - php: 5.5
+      os: linux
+      dist: trusty
+
+    - php: 5.6
+      os: linux
+      dist: xenial
+      env: ZIPALIGN_INSTALL=true
+
+    - php: 7.0
+      os: linux
+      dist: xenial
+      env: ZIPALIGN_INSTALL=true
+
+    - php: 7.1
+      os: linux
+      dist: xenial
+      env: ZIPALIGN_INSTALL=true
+
+    - php: 7.2
+      os: linux
+      dist: xenial
+      env: ZIPALIGN_INSTALL=true
+
+    - php: 7.3
+      os: linux
+      dist: xenial
+      env: ZIPALIGN_INSTALL=true
+
+    - php: 7.4
+      os: linux
+      dist: bionic
+      env: COVERAGE=true ZIPALIGN_INSTALL=true PHPUNIT_FLAGS="-v -c phpunit.xml --testsuite only_fast_tests --coverage-clover=coverage.clover"
+
+before_install:
+  - if [[ $COVERAGE != true ]]; then phpenv config-rm xdebug.ini || true; fi
 
 install:
   - travis_retry composer self-update && composer --version
   - travis_retry composer install --no-interaction
 
+addons:
+  apt:
+    packages:
+      - unzip
+      - p7zip-full
+
 before_script:
-  - sudo apt-get install p7zip-full
+  - if [[ $ZIPALIGN_INSTALL = true ]]; then sudo apt-get install -y zipalign; fi
 
 script:
   - composer validate --no-check-lock
-  - vendor/bin/phpunit -v -c phpunit.xml
+  - vendor/bin/phpunit ${PHPUNIT_FLAGS}
+
+after_success:
+  - if [[ $COVERAGE = true ]]; then wget https://scrutinizer-ci.com/ocular.phar; fi
+  - if [[ $COVERAGE = true ]]; then php ocular.phar code-coverage:upload --format=php-clover coverage.clover; fi

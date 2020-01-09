@@ -80,9 +80,9 @@
 $zipFile = new \PhpZip\ZipFile();
 try{
     $zipFile
-        ->addFromString("zip/entry/filename", "Is file content") // добавить запись из строки
-        ->addFile("/path/to/file", "data/tofile") // добавить запись из файла
-        ->addDir(__DIR__, "to/path/") // добавить файлы из директории
+        ->addFromString('zip/entry/filename', "Is file content") // добавить запись из строки
+        ->addFile('/path/to/file', 'data/tofile') // добавить запись из файла
+        ->addDir(__DIR__, 'to/path/') // добавить файлы из директории
         ->saveAsFile($outputFilename) // сохранить архив в файл
         ->close(); // закрыть архив
             
@@ -115,6 +115,8 @@ finally{
 - [ZipFile::addDirRecursive](#Documentation-ZipFile-addDirRecursive) - добавляет файлы из директории по указанному пути c вложенными директориями.
 - [ZipFile::addEmptyDir](#Documentation-ZipFile-addEmptyDir) - добавляет в ZIP-архив новую директорию.
 - [ZipFile::addFile](#Documentation-ZipFile-addFile) - добавляет в ZIP-архив файл по указанному пути.
+- [ZipFile::addSplFile](#Documentation-ZipFile-addSplFile) - добавляет объект `\SplFileInfo` в zip-архив.
+- [ZipFile::addFromFinder](#Documentation-ZipFile-addFromFinder) - добавляет файлы из `Symfony\Component\Finder\Finder` в zip архив.
 - [ZipFile::addFilesFromIterator](#Documentation-ZipFile-addFilesFromIterator) - добавляет файлы из итератора директорий.
 - [ZipFile::addFilesFromGlob](#Documentation-ZipFile-addFilesFromGlob) - добавляет файлы из директории в соответствии с glob шаблоном без вложенных директорий.
 - [ZipFile::addFilesFromGlobRecursive](#Documentation-ZipFile-addFilesFromGlobRecursive) - добавляет файлы из директории в соответствии с glob шаблоном c вложенными директориями.
@@ -192,12 +194,15 @@ $zipFile->openFromStream($stream);
 #### <a name="Documentation-Open-Zip-Entries"></a> Чтение записей из архива
 <a name="Documentation-ZipFile-count"></a> **ZipFile::count** - возвращает количество записей в архиве.
 ```php
+$zipFile = new \PhpZip\ZipFile();
+
 $count = count($zipFile);
 // или
 $count = $zipFile->count();
 ```
 <a name="Documentation-ZipFile-getListFiles"></a> **ZipFile::getListFiles** - возвращает список файлов архива.
 ```php
+$zipFile = new \PhpZip\ZipFile();
 $listFiles = $zipFile->getListFiles();
 
 // Пример содержимого массива:
@@ -210,6 +215,7 @@ $listFiles = $zipFile->getListFiles();
 <a name="Documentation-ZipFile-getEntryContent"></a> **ZipFile::getEntryContent** - возвращает содержимое записи.
 ```php
 // $entryName = 'path/to/example-entry-name.txt';
+$zipFile = new \PhpZip\ZipFile();
 
 $contents = $zipFile[$entryName];
 // или
@@ -218,6 +224,7 @@ $contents = $zipFile->getEntryContents($entryName);
 <a name="Documentation-ZipFile-hasEntry"></a> **ZipFile::hasEntry** - проверяет, присутствует ли запись в архиве.
 ```php
 // $entryName = 'path/to/example-entry-name.txt';
+$zipFile = new \PhpZip\ZipFile();
 
 $hasEntry = isset($zipFile[$entryName]);
 // или
@@ -226,23 +233,26 @@ $hasEntry = $zipFile->hasEntry($entryName);
 <a name="Documentation-ZipFile-isDirectory"></a> **ZipFile::isDirectory** - проверяет, является ли запись в архиве директорией.
 ```php
 // $entryName = 'path/to/';
+$zipFile = new \PhpZip\ZipFile();
 
 $isDirectory = $zipFile->isDirectory($entryName);
 ```
 <a name="Documentation-ZipFile-extractTo"></a> **ZipFile::extractTo** - извлекает содержимое архива в заданную директорию.
 Директория должна существовать.
 ```php
+$zipFile = new \PhpZip\ZipFile();
 $zipFile->extractTo($directory);
 ```
 Можно извлечь только некоторые записи в заданную директорию.
 Директория должна существовать.
 ```php
 $extractOnlyFiles = [
-    "filename1", 
-    "filename2", 
-    "dir/dir/dir/"
+    'filename1', 
+    'filename2', 
+    'dir/dir/dir/'
 ];
-$zipFile->extractTo($directory, $extractOnlyFiles);
+$zipFile = new \PhpZip\ZipFile();
+$zipFile->extractTo($toDirectory, $extractOnlyFiles);
 ```
 #### <a name="Documentation-Zip-Iterate"></a> Перебор записей/Итератор
 `ZipFile` является итератором.
@@ -251,7 +261,7 @@ $zipFile->extractTo($directory, $extractOnlyFiles);
 foreach($zipFile as $entryName => $contents){
     echo "Файл: $entryName" . PHP_EOL;
     echo "Содержимое: $contents" . PHP_EOL;
-    echo "-----------------------------" . PHP_EOL;
+    echo '-----------------------------' . PHP_EOL;
 }
 ```
 Можно использовать паттерн `Iterator`.
@@ -264,7 +274,7 @@ while ($iterator->valid())
 
     echo "Файл: $entryName" . PHP_EOL;
     echo "Содержимое: $contents" . PHP_EOL;
-    echo "-----------------------------" . PHP_EOL;
+    echo '-----------------------------' . PHP_EOL;
 
     $iterator->next();
 }
@@ -280,110 +290,85 @@ $commentEntry = $zipFile->getEntryComment($entryName);
 ```
 <a name="Documentation-ZipFile-getEntryInfo"></a> **ZipFile::getEntryInfo** - возвращает подробную информацию о записи в архиве.
 ```php
+$zipFile = new \PhpZip\ZipFile();
 $zipInfo = $zipFile->getEntryInfo('file.txt');
-
-$arrayInfo = $zipInfo->toArray();
-// Пример содержимого массива:
-// array (
-//   'name' => 'file.gif',
-//   'folder' => false,
-//   'size' => '43',
-//   'compressed_size' => '43',
-//   'modified' => 1510489440,
-//   'created' => null,
-//   'accessed' => null,
-//   'attributes' => '-rw-r--r--',
-//   'encrypted' => false,
-//   'encryption_method' => 0,
-//   'comment' => '',
-//   'crc' => 782934147,
-//   'method_name' => 'No compression',
-//   'compression_method' => 0,
-//   'platform' => 'UNIX',
-//   'version' => 10,
-// )
-
-print_r($zipInfo);
-// Вывод:
-//PhpZip\Model\ZipInfo Object
-//(
-//    [name:PhpZip\Model\ZipInfo:private] => file.gif
-//    [folder:PhpZip\Model\ZipInfo:private] => 
-//    [size:PhpZip\Model\ZipInfo:private] => 43
-//    [compressedSize:PhpZip\Model\ZipInfo:private] => 43
-//    [mtime:PhpZip\Model\ZipInfo:private] => 1510489324
-//    [ctime:PhpZip\Model\ZipInfo:private] => 
-//    [atime:PhpZip\Model\ZipInfo:private] => 
-//    [encrypted:PhpZip\Model\ZipInfo:private] => 
-//    [comment:PhpZip\Model\ZipInfo:private] => 
-//    [crc:PhpZip\Model\ZipInfo:private] => 782934147
-//    [methodName:PhpZip\Model\ZipInfo:private] => No compression
-//    [compressionMethod:PhpZip\Model\ZipInfo:private] => 0
-//    [platform:PhpZip\Model\ZipInfo:private] => UNIX
-//    [version:PhpZip\Model\ZipInfo:private] => 10
-//    [attributes:PhpZip\Model\ZipInfo:private] => -rw-r--r--
-//    [encryptionMethod:PhpZip\Model\ZipInfo:private] => 0
-//    [compressionLevel:PhpZip\Model\ZipInfo:private] => -1
-//)
-
-echo $zipInfo;
-// Вывод:
-// PhpZip\Model\ZipInfo {Name="file.gif", Size="43 bytes", Compressed size="43 bytes", Modified time="2017-11-12T15:22:04+03:00", Crc=0x2eaaa083, Method name="No compression", Attributes="-rw-r--r--", Platform="UNIX", Version=10}
 ```
 <a name="Documentation-ZipFile-getAllInfo"></a> **ZipFile::getAllInfo** - возвращает подробную информацию обо всех записях в архиве.
 ```php
 $zipAllInfo = $zipFile->getAllInfo();
-
-print_r($zipAllInfo);
-//Array
-//(
-//    [file.txt] => PhpZip\Model\ZipInfo Object
-//    (
-//            ...
-//    )
-//
-//    [file2.txt] => PhpZip\Model\ZipInfo Object
-//    (
-//            ...
-//    )
-//    
-//    ...
-//)
 ```
 #### <a name="Documentation-Add-Zip-Entries"></a> Добавление записей в архив
 
 Все методы добавления записей в ZIP-архив позволяют указать метод сжатия содержимого.
 
 Доступны следующие методы сжатия:
-- `\PhpZip\ZipFile::METHOD_STORED` - без сжатия
-- `\PhpZip\ZipFile::METHOD_DEFLATED` - Deflate сжатие
-- `\PhpZip\ZipFile::METHOD_BZIP2` - Bzip2 сжатие при наличии расширения `ext-bz2`
+- `\PhpZip\Constants\ZipCompressionMethod::STORED` - без сжатия
+- `\PhpZip\Constants\ZipCompressionMethod::DEFLATED` - Deflate сжатие
+- `\PhpZip\Constants\ZipCompressionMethod::BZIP2` - Bzip2 сжатие при наличии расширения `ext-bz2`
 
 <a name="Documentation-ZipFile-addFile"></a> **ZipFile::addFile** - добавляет в ZIP-архив файл по указанному пути из файловой системы.
 ```php
+$zipFile = new \PhpZip\ZipFile();
 // $file = '...../file.ext'; 
 $zipFile->addFile($file);
 
 // можно указать имя записи в архиве (если null, то используется последний компонент из имени файла)
 $zipFile->addFile($file, $entryName);
-// или
-$zipFile[$entryName] = new \SplFileInfo($file);
 
 // можно указать метод сжатия
-$zipFile->addFile($file, $entryName, ZipFile::METHOD_STORED); // Без сжатия
-$zipFile->addFile($file, $entryName, ZipFile::METHOD_DEFLATED); // Deflate сжатие
-$zipFile->addFile($file, $entryName, ZipFile::METHOD_BZIP2); // BZIP2 сжатие
+$zipFile->addFile($file, $entryName, \PhpZip\Constants\ZipCompressionMethod::STORED); // Без сжатия
+$zipFile->addFile($file, $entryName, \PhpZip\Constants\ZipCompressionMethod::DEFLATED); // Deflate сжатие
+$zipFile->addFile($file, $entryName, \PhpZip\Constants\ZipCompressionMethod::BZIP2); // BZIP2 сжатие
+```
+<a name="Documentation-ZipFile-addSplFile"></a>
+**ZipFile::addSplFile"** - добавляет объект `\SplFileInfo` в zip-архив.
+```php
+// $file = '...../file.ext'; 
+// $entryName = 'file2.ext'
+$zipFile = new \PhpZip\ZipFile();
+
+$splFile = new \SplFileInfo('README.md');
+
+$zipFile->addSplFile($splFile);
+$zipFile->addSplFile($splFile, $entryName);
+// or
+$zipFile[$entryName] = new \SplFileInfo($file);
+
+// установить метод сжатия
+$zipFile->addSplFile($splFile, $entryName, $options = [
+    \PhpZip\Constants\ZipOptions::COMPRESSION_METHOD => \PhpZip\Constants\ZipCompressionMethod::DEFLATED,
+]);
+```
+<a name="Documentation-ZipFile-addFromFinder"></a>
+**ZipFile::addFromFinder"** - добавляет файлы из `Symfony\Component\Finder\Finder` в zip архив.
+https://symfony.com/doc/current/components/finder.html
+```php
+$finder = new \Symfony\Component\Finder\Finder();
+$finder
+    ->files()
+    ->name('*.{jpg,jpeg,gif,png}')
+    ->name('/^[0-9a-f]\./')
+    ->contains('/lorem\s+ipsum$/i')
+    ->in('path');
+
+$zipFile = new \PhpZip\ZipFile();
+$zipFile->addFromFinder($finder, $options = [
+    \PhpZip\Constants\ZipOptions::COMPRESSION_METHOD => \PhpZip\Constants\ZipCompressionMethod::DEFLATED,
+    \PhpZip\Constants\ZipOptions::MODIFIED_TIME => new \DateTimeImmutable('-1 day 5 min')
+]);
 ```
 <a name="Documentation-ZipFile-addFromString"></a> **ZipFile::addFromString** - добавляет файл в ZIP-архив, используя его содержимое в виде строки.
 ```php
+$zipFile = new \PhpZip\ZipFile();
+
 $zipFile[$entryName] = $contents;
 // или
 $zipFile->addFromString($entryName, $contents);
 
 // можно указать метод сжатия
-$zipFile->addFromString($entryName, $contents, ZipFile::METHOD_STORED); // Без сжатия
-$zipFile->addFromString($entryName, $contents, ZipFile::METHOD_DEFLATED); // Deflate сжатие
-$zipFile->addFromString($entryName, $contents, ZipFile::METHOD_BZIP2); // BZIP2 сжатие
+$zipFile->addFromString($entryName, $contents, \PhpZip\Constants\ZipCompressionMethod::STORED); // Без сжатия
+$zipFile->addFromString($entryName, $contents, \PhpZip\Constants\ZipCompressionMethod::DEFLATED); // Deflate сжатие
+$zipFile->addFromString($entryName, $contents, \PhpZip\Constants\ZipCompressionMethod::BZIP2); // BZIP2 сжатие
 ```
 <a name="Documentation-ZipFile-addFromStream"></a> **ZipFile::addFromStream** - добавляет в ZIP-архив запись из потока.
 ```php
@@ -392,9 +377,9 @@ $zipFile->addFromString($entryName, $contents, ZipFile::METHOD_BZIP2); // BZIP2 
 $zipFile->addFromStream($stream, $entryName);
 
 // можно указать метод сжатия
-$zipFile->addFromStream($stream, $entryName, ZipFile::METHOD_STORED); // Без сжатия
-$zipFile->addFromStream($stream, $entryName, ZipFile::METHOD_DEFLATED); // Deflate сжатие
-$zipFile->addFromStream($stream, $entryName, ZipFile::METHOD_BZIP2); // BZIP2 сжатие
+$zipFile->addFromStream($stream, $entryName, \PhpZip\Constants\ZipCompressionMethod::STORED); // Без сжатия
+$zipFile->addFromStream($stream, $entryName, \PhpZip\Constants\ZipCompressionMethod::DEFLATED); // Deflate сжатие
+$zipFile->addFromStream($stream, $entryName, \PhpZip\Constants\ZipCompressionMethod::BZIP2); // BZIP2 сжатие
 ```
 <a name="Documentation-ZipFile-addEmptyDir"></a> **ZipFile::addEmptyDir** - добавляет в ZIP-архив новую (пустую) директорию.
 ```php
@@ -424,9 +409,9 @@ $localPath = "to/path/";
 $zipFile->addDir($dirName, $localPath);
 
 // можно указать метод сжатия
-$zipFile->addDir($dirName, $localPath, ZipFile::METHOD_STORED); // Без сжатия
-$zipFile->addDir($dirName, $localPath, ZipFile::METHOD_DEFLATED); // Deflate сжатие
-$zipFile->addDir($dirName, $localPath, ZipFile::METHOD_BZIP2); // BZIP2 сжатие
+$zipFile->addDir($dirName, $localPath, \PhpZip\Constants\ZipCompressionMethod::STORED); // Без сжатия
+$zipFile->addDir($dirName, $localPath, \PhpZip\Constants\ZipCompressionMethod::DEFLATED); // Deflate сжатие
+$zipFile->addDir($dirName, $localPath, \PhpZip\Constants\ZipCompressionMethod::BZIP2); // BZIP2 сжатие
 ```
 <a name="Documentation-ZipFile-addDirRecursive"></a> **ZipFile::addDirRecursive** - добавляет файлы из директории по указанному пути c вложенными директориями.
 ```php
@@ -437,9 +422,9 @@ $localPath = "to/path/";
 $zipFile->addDirRecursive($dirName, $localPath);
 
 // можно указать метод сжатия
-$zipFile->addDirRecursive($dirName, $localPath, ZipFile::METHOD_STORED); // Без сжатия
-$zipFile->addDirRecursive($dirName, $localPath, ZipFile::METHOD_DEFLATED); // Deflate сжатие
-$zipFile->addDirRecursive($dirName, $localPath, ZipFile::METHOD_BZIP2); // BZIP2 сжатие
+$zipFile->addDirRecursive($dirName, $localPath, \PhpZip\Constants\ZipCompressionMethod::STORED); // Без сжатия
+$zipFile->addDirRecursive($dirName, $localPath, \PhpZip\Constants\ZipCompressionMethod::DEFLATED); // Deflate сжатие
+$zipFile->addDirRecursive($dirName, $localPath, \PhpZip\Constants\ZipCompressionMethod::BZIP2); // BZIP2 сжатие
 ```
 <a name="Documentation-ZipFile-addFilesFromIterator"></a> **ZipFile::addFilesFromIterator** - добавляет файлы из итератора директорий.
 ```php
@@ -455,9 +440,9 @@ $zipFile->addFilesFromIterator($directoryIterator, $localPath);
 $zipFile[$localPath] = $directoryIterator;
 
 // можно указать метод сжатия
-$zipFile->addFilesFromIterator($directoryIterator, $localPath, ZipFile::METHOD_STORED); // Без сжатия
-$zipFile->addFilesFromIterator($directoryIterator, $localPath, ZipFile::METHOD_DEFLATED); // Deflate сжатие
-$zipFile->addFilesFromIterator($directoryIterator, $localPath, ZipFile::METHOD_BZIP2); // BZIP2 сжатие
+$zipFile->addFilesFromIterator($directoryIterator, $localPath, \PhpZip\Constants\ZipCompressionMethod::STORED); // Без сжатия
+$zipFile->addFilesFromIterator($directoryIterator, $localPath, \PhpZip\Constants\ZipCompressionMethod::DEFLATED); // Deflate сжатие
+$zipFile->addFilesFromIterator($directoryIterator, $localPath, \PhpZip\Constants\ZipCompressionMethod::BZIP2); // BZIP2 сжатие
 ```
 Пример добавления файлов из директории в архив с игнорированием некоторых файлов при помощи итератора директорий.
 ```php
@@ -488,9 +473,9 @@ $localPath = "to/path/";
 $zipFile->addFilesFromGlob($dir, $globPattern, $localPath);
 
 // можно указать метод сжатия
-$zipFile->addFilesFromGlob($dir, $globPattern, $localPath, ZipFile::METHOD_STORED); // Без сжатия
-$zipFile->addFilesFromGlob($dir, $globPattern, $localPath, ZipFile::METHOD_DEFLATED); // Deflate сжатие
-$zipFile->addFilesFromGlob($dir, $globPattern, $localPath, ZipFile::METHOD_BZIP2); // BZIP2 сжатие
+$zipFile->addFilesFromGlob($dir, $globPattern, $localPath, \PhpZip\Constants\ZipCompressionMethod::STORED); // Без сжатия
+$zipFile->addFilesFromGlob($dir, $globPattern, $localPath, \PhpZip\Constants\ZipCompressionMethod::DEFLATED); // Deflate сжатие
+$zipFile->addFilesFromGlob($dir, $globPattern, $localPath, \PhpZip\Constants\ZipCompressionMethod::BZIP2); // BZIP2 сжатие
 ```
 <a name="Documentation-ZipFile-addFilesFromGlobRecursive"></a> **ZipFile::addFilesFromGlobRecursive** - добавляет файлы из директории в соответствии с [glob шаблоном](https://en.wikipedia.org/wiki/Glob_(programming)) c вложенными директориями.
 ```php
@@ -503,9 +488,9 @@ $localPath = "to/path/";
 $zipFile->addFilesFromGlobRecursive($dir, $globPattern, $localPath);
 
 // можно указать метод сжатия
-$zipFile->addFilesFromGlobRecursive($dir, $globPattern, $localPath, ZipFile::METHOD_STORED); // Без сжатия
-$zipFile->addFilesFromGlobRecursive($dir, $globPattern, $localPath, ZipFile::METHOD_DEFLATED); // Deflate сжатие
-$zipFile->addFilesFromGlobRecursive($dir, $globPattern, $localPath, ZipFile::METHOD_BZIP2); // BZIP2 сжатие
+$zipFile->addFilesFromGlobRecursive($dir, $globPattern, $localPath, \PhpZip\Constants\ZipCompressionMethod::STORED); // Без сжатия
+$zipFile->addFilesFromGlobRecursive($dir, $globPattern, $localPath, \PhpZip\Constants\ZipCompressionMethod::DEFLATED); // Deflate сжатие
+$zipFile->addFilesFromGlobRecursive($dir, $globPattern, $localPath, \PhpZip\Constants\ZipCompressionMethod::BZIP2); // BZIP2 сжатие
 ```
 <a name="Documentation-ZipFile-addFilesFromRegex"></a> **ZipFile::addFilesFromRegex** - добавляет файлы из директории в соответствии с [регулярным выражением](https://en.wikipedia.org/wiki/Regular_expression) без вложенных директорий.
 ```php
@@ -518,9 +503,9 @@ $localPath = "to/path/";
 $zipFile->addFilesFromRegex($dir, $regexPattern, $localPath);
 
 // можно указать метод сжатия
-$zipFile->addFilesFromRegex($dir, $regexPattern, $localPath, ZipFile::METHOD_STORED); // Без сжатия
-$zipFile->addFilesFromRegex($dir, $regexPattern, $localPath, ZipFile::METHOD_DEFLATED); // Deflate сжатие
-$zipFile->addFilesFromRegex($dir, $regexPattern, $localPath, ZipFile::METHOD_BZIP2); // BZIP2 сжатие
+$zipFile->addFilesFromRegex($dir, $regexPattern, $localPath, \PhpZip\Constants\ZipCompressionMethod::STORED); // Без сжатия
+$zipFile->addFilesFromRegex($dir, $regexPattern, $localPath, \PhpZip\Constants\ZipCompressionMethod::DEFLATED); // Deflate сжатие
+$zipFile->addFilesFromRegex($dir, $regexPattern, $localPath, \PhpZip\Constants\ZipCompressionMethod::BZIP2); // BZIP2 сжатие
 ```
 <a name="Documentation-ZipFile-addFilesFromRegexRecursive"></a> **ZipFile::addFilesFromRegexRecursive** - добавляет файлы из директории в соответствии с [регулярным выражением](https://en.wikipedia.org/wiki/Regular_expression) с вложенными директориями.
 ```php
@@ -533,9 +518,9 @@ $localPath = "to/path/";
 $zipFile->addFilesFromRegexRecursive($dir, $regexPattern, $localPath);
 
 // можно указать метод сжатия
-$zipFile->addFilesFromRegexRecursive($dir, $regexPattern, $localPath, ZipFile::METHOD_STORED); // Без сжатия
-$zipFile->addFilesFromRegexRecursive($dir, $regexPattern, $localPath, ZipFile::METHOD_DEFLATED); // Deflate сжатие
-$zipFile->addFilesFromRegexRecursive($dir, $regexPattern, $localPath, ZipFile::METHOD_BZIP2); // BZIP2 сжатие
+$zipFile->addFilesFromRegexRecursive($dir, $regexPattern, $localPath, \PhpZip\Constants\ZipCompressionMethod::STORED); // Без сжатия
+$zipFile->addFilesFromRegexRecursive($dir, $regexPattern, $localPath, \PhpZip\Constants\ZipCompressionMethod::DEFLATED); // Deflate сжатие
+$zipFile->addFilesFromRegexRecursive($dir, $regexPattern, $localPath, \PhpZip\Constants\ZipCompressionMethod::BZIP2); // BZIP2 сжатие
 ```
 #### <a name="Documentation-Remove-Zip-Entries"></a> Удаление записей из архива
 <a name="Documentation-ZipFile-deleteFromName"></a> **ZipFile::deleteFromName** - удаляет запись по имени.
@@ -567,26 +552,26 @@ $zipFile->rename($oldName, $newName);
 
 > _Обратите внимание, что действие данного метода не распространяется на записи, добавленные после выполнения этого метода._
 
-По умолчанию используется уровень сжатия -1 (`\PhpZip\ZipFile::LEVEL_DEFAULT_COMPRESSION`) или уровень сжатия, определённый в архиве для Deflate сжатия.
+По умолчанию используется уровень сжатия 5 (`\PhpZip\Constants\ZipCompressionLevel::NORMAL`) или уровень сжатия, определённый в архиве для Deflate сжатия.
 
-Поддерживаются значения -1 (`\PhpZip\ZipFile::LEVEL_DEFAULT_COMPRESSION`) и диапазон от 1 (`\PhpZip\ZipFile::LEVEL_BEST_SPEED`) до 9 (`\PhpZip\ZipFile::LEVEL_BEST_COMPRESSION`). Чем выше число, тем лучше и дольше сжатие.
+Поддерживаются диапазон значений от 1 (`\PhpZip\Constants\ZipCompressionLevel::SUPER_FAST`) до 9 (`\PhpZip\Constants\ZipCompressionLevel::MAXIMUM`). Чем выше число, тем лучше и дольше сжатие.
 ```php
-$zipFile->setCompressionLevel(\PhpZip\ZipFile::LEVEL_BEST_COMPRESSION);
+$zipFile->setCompressionLevel(\PhpZip\Constants\ZipCompressionLevel::MAXIMUM);
 ```
 <a name="Documentation-ZipFile-setCompressionLevelEntry"></a> **ZipFile::setCompressionLevelEntry** - устанавливает уровень сжатия для определённой записи в архиве.
 
-Поддерживаются значения -1 (`\PhpZip\ZipFile::LEVEL_DEFAULT_COMPRESSION`) и диапазон от 1 (`\PhpZip\ZipFile::LEVEL_BEST_SPEED`) до 9 (`\PhpZip\ZipFile::LEVEL_BEST_COMPRESSION`). Чем выше число, тем лучше и дольше сжатие.
+Поддерживаются диапазон значений от 1 (`\PhpZip\Constants\ZipCompressionLevel::SUPER_FAST`) до 9 (`\PhpZip\Constants\ZipCompressionLevel::MAXIMUM`). Чем выше число, тем лучше и дольше сжатие.
 ```php
-$zipFile->setCompressionLevelEntry($entryName, \PhpZip\ZipFile::LEVEL_BEST_COMPRESSION);
+$zipFile->setCompressionLevelEntry($entryName, \PhpZip\Constants\ZipCompressionLevel::MAXIMUM);
 ```
 <a name="Documentation-ZipFile-setCompressionMethodEntry"></a> **ZipFile::setCompressionMethodEntry** - устанавливает метод сжатия для определённой записи в архиве.
 
 Доступны следующие методы сжатия:
-- `\PhpZip\ZipFile::METHOD_STORED` - без сжатия
-- `\PhpZip\ZipFile::METHOD_DEFLATED` - Deflate сжатие
-- `\PhpZip\ZipFile::METHOD_BZIP2` - Bzip2 сжатие при наличии расширения `ext-bz2`
+- `\PhpZip\Constants\ZipCompressionMethod::STORED` - без сжатия
+- `\PhpZip\Constants\ZipCompressionMethod::DEFLATED` - Deflate сжатие
+- `\PhpZip\Constants\ZipCompressionMethod::BZIP2` - Bzip2 сжатие при наличии расширения `ext-bz2`
 ```php
-$zipFile->setCompressionMethodEntry($entryName, ZipFile::METHOD_DEFLATED);
+$zipFile->setCompressionMethodEntry($entryName, \PhpZip\Constants\ZipCompressionMethod::DEFLATED);
 ```
 <a name="Documentation-ZipFile-setArchiveComment"></a> **ZipFile::setArchiveComment** - устанавливает комментарий к ZIP-архиву.
 ```php
@@ -652,10 +637,10 @@ $matcher->disableEncryption(); // отключает шифрование для
 #### <a name="Documentation-Password"></a> Работа с паролями
 
 Реализована поддержка методов шифрования:
-- `\PhpZip\ZipFile::ENCRYPTION_METHOD_TRADITIONAL` - Traditional PKWARE encryption
-- `\PhpZip\ZipFile::ENCRYPTION_METHOD_WINZIP_AES_256` - WinZip AES encryption 256 bit (рекомендуемое)
-- `\PhpZip\ZipFile::ENCRYPTION_METHOD_WINZIP_AES_192` - WinZip AES encryption 192 bit
-- `\PhpZip\ZipFile::ENCRYPTION_METHOD_WINZIP_AES_128` - WinZip AES encryption 128 bit
+- `\PhpZip\Constants\ZipEncryptionMethod::PKWARE` - Traditional PKWARE encryption
+- `\PhpZip\Constants\ZipEncryptionMethod::WINZIP_AES_256` - WinZip AES encryption 256 bit (рекомендуемое)
+- `\PhpZip\Constants\ZipEncryptionMethod::WINZIP_AES_192` - WinZip AES encryption 192 bit
+- `\PhpZip\Constants\ZipEncryptionMethod::WINZIP_AES_128` - WinZip AES encryption 128 bit
 
 <a name="Documentation-ZipFile-setReadPassword"></a> **ZipFile::setReadPassword** - устанавливает пароль на чтение открытого запароленного архива для всех зашифрованных записей.
 
@@ -675,7 +660,7 @@ $zipFile->setPassword($password);
 ```
 Можно установить метод шифрования:
 ```php
-$encryptionMethod = ZipFile::ENCRYPTION_METHOD_WINZIP_AES_256;
+$encryptionMethod = \PhpZip\Constants\ZipEncryptionMethod::WINZIP_AES_256;
 $zipFile->setPassword($password, $encryptionMethod);
 ```
 <a name="Documentation-ZipFile-setPasswordEntry"></a> **ZipFile::setPasswordEntry** - устанавливает новый пароль для конкретного файла.
@@ -684,7 +669,7 @@ $zipFile->setPasswordEntry($entryName, $password);
 ```
 Можно установить метод шифрования:
 ```php
-$encryptionMethod = ZipFile::ENCRYPTION_METHOD_WINZIP_AES_256;
+$encryptionMethod = \PhpZip\Constants\ZipEncryptionMethod::WINZIP_AES_256;
 $zipFile->setPasswordEntry($entryName, $password, $encryptionMethod);
 ```
 <a name="Documentation-ZipFile-disableEncryption"></a> **ZipFile::disableEncryption** - отключает шифрования всех записей, находящихся в архиве.
@@ -789,7 +774,8 @@ composer install --dev
 vendor/bin/phpunit -v -c phpunit.xml
 ```
 ### <a name="Changelog"></a> История изменений
-[Ссылка на Changelog](CHANGELOG.md)
+История изменений на [странице релизов](https://github.com/Ne-Lexa/php-zip/releases).
+
 ### <a name="Upgrade"></a> Обновление версий
 #### <a name="Upgrade-v2-to-v3"></a> Обновление с версии 2 до версии 3.0
 Обновите мажорную версию в файле `composer.json` до `^3.0`.
