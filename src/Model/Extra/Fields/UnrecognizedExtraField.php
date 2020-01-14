@@ -2,6 +2,7 @@
 
 namespace PhpZip\Model\Extra\Fields;
 
+use PhpZip\Exception\RuntimeException;
 use PhpZip\Model\Extra\ZipExtraField;
 use PhpZip\Model\ZipEntry;
 
@@ -56,7 +57,7 @@ class UnrecognizedExtraField implements ZipExtraField
      */
     public static function unpackLocalFileData($buffer, ZipEntry $entry = null)
     {
-        throw new \RuntimeException('Unsupport parse');
+        throw new RuntimeException('Unsupport parse');
     }
 
     /**
@@ -67,7 +68,7 @@ class UnrecognizedExtraField implements ZipExtraField
      */
     public static function unpackCentralDirData($buffer, ZipEntry $entry = null)
     {
-        throw new \RuntimeException('Unsupport parse');
+        throw new RuntimeException('Unsupport parse');
     }
 
     /**

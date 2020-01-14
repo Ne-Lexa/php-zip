@@ -366,7 +366,7 @@ class ZipReader
             /** @var UnicodePathExtraField|null $unicodePathExtraField */
             $unicodePathExtraField = $zipEntry->getExtraField(UnicodePathExtraField::HEADER_ID);
 
-            if ($unicodePathExtraField !== null) {
+            if ($unicodePathExtraField !== null && $unicodePathExtraField->getCrc32() === crc32($entryName)) {
                 $unicodePath = $unicodePathExtraField->getUnicodeValue();
 
                 if ($unicodePath !== null) {
@@ -543,25 +543,23 @@ class ZipReader
                 /** @var string|ZipExtraField|null $className */
                 $className = ZipExtraDriver::getClassNameOrNull($headerId);
 
-                if ($className !== null) {
-                    try {
-                        $extraField = $local ?
-                            \call_user_func([$className, 'unpackLocalFileData'], $bufferData, $zipEntry) :
-                            \call_user_func([$className, 'unpackCentralDirData'], $bufferData, $zipEntry);
-                    } catch (\Throwable $e) {
-                        throw new \RuntimeException(
-                            sprintf(
-                                'Error parse %s extra field 0x%04X',
-                                $local ? 'local' : 'central directory',
-                                $headerId
-                            )
-                        );
+                try {
+                    if ($className !== null) {
+                        try {
+                            $extraField = $local ?
+                                \call_user_func([$className, 'unpackLocalFileData'], $bufferData, $zipEntry) :
+                                \call_user_func([$className, 'unpackCentralDirData'], $bufferData, $zipEntry);
+                        } catch (\Throwable $e) {
+                            // skip errors while parsing invalid data
+                            continue;
+                        }
+                    } else {
+                        $extraField = new UnrecognizedExtraField($headerId, $bufferData);
                     }
-                } else {
-                    $extraField = new UnrecognizedExtraField($headerId, $bufferData);
+                    $collection->add($extraField);
+                } finally {
+                    $pos += $data['dataSize'];
                 }
-                $collection->add($extraField);
-                $pos += $data['dataSize'];
             }
         }
 

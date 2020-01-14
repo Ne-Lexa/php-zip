@@ -963,9 +963,12 @@ class ZipEntry
     {
         $dosTime = (int) $dosTime;
 
-        if ($dosTime < 0x00000000 || $dosTime > 0xffffffff) {
-            throw new InvalidArgumentException('DosTime out of range');
+        if (\PHP_INT_SIZE === 8) {
+            if ($dosTime < 0x00000000 || $dosTime > 0xffffffff) {
+                throw new InvalidArgumentException('DosTime out of range');
+            }
         }
+
         $this->dosTime = $dosTime;
 
         return $this;
@@ -1010,9 +1013,12 @@ class ZipEntry
     {
         $this->externalAttributes = (int) $externalAttributes;
 
-        if ($externalAttributes < 0x00000000 || $externalAttributes > 0xffffffff) {
-            throw new InvalidArgumentException('external attributes out of range: ' . $externalAttributes);
+        if (\PHP_INT_SIZE === 8) {
+            if ($externalAttributes < 0x00000000 || $externalAttributes > 0xffffffff) {
+                throw new InvalidArgumentException('external attributes out of range: ' . $externalAttributes);
+            }
         }
+
         $this->externalAttributes = $externalAttributes;
 
         return $this;
