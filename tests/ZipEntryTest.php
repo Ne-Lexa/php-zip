@@ -266,7 +266,7 @@ class ZipEntryTest extends TestCase
         $dosEntryName = DosCodePage::fromUTF8($entryName, $charset);
         static::assertSame(DosCodePage::toUTF8($dosEntryName, $charset), $entryName);
 
-        $unicodePathExtraField = UnicodePathExtraField::create($entryName);
+        $unicodePathExtraField = new UnicodePathExtraField(crc32($dosEntryName), $entryName);
 
         $zipEntry = new ZipEntry($dosEntryName, $charset);
         static::assertSame($zipEntry->getName(), $dosEntryName);
@@ -800,6 +800,12 @@ class ZipEntryTest extends TestCase
      */
     public function testInvalidDosTime($dosTime)
     {
+        if (\PHP_INT_SIZE === 4) {
+            static::markTestSkipped('only 64 bit test');
+
+            return;
+        }
+
         $this->setExpectedException(InvalidArgumentException::class, 'DosTime out of range');
 
         $zipEntry = new ZipEntry('entry');
@@ -951,6 +957,12 @@ class ZipEntryTest extends TestCase
      */
     public function testInvalidExternalAttributes($externalAttributes)
     {
+        if (\PHP_INT_SIZE === 4) {
+            static::markTestSkipped('only 64 bit test');
+
+            return;
+        }
+
         $this->setExpectedException(InvalidArgumentException::class, 'external attributes out of range');
 
         $zipEntry = new ZipEntry('entry');

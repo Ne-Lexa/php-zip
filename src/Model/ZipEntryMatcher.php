@@ -89,7 +89,10 @@ class ZipEntryMatcher implements \Countable
      */
     public function all()
     {
-        $this->matches = array_keys($this->zipContainer->getEntries());
+        $this->matches = array_map(
+            'strval',
+            array_keys($this->zipContainer->getEntries())
+        );
 
         return $this;
     }
@@ -192,10 +195,7 @@ class ZipEntryMatcher implements \Countable
      *
      * @see http://php.net/manual/en/countable.count.php
      *
-     * @return int The custom count as an integer.
-     *             </p>
-     *             <p>
-     *             The return value is cast to an integer.
+     * @return int the custom count as an integer
      *
      * @since 5.1.0
      */

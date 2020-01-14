@@ -359,6 +359,25 @@ class ExtendedTimestampExtraField implements ZipExtraField
     public function setModifyTime($unixTime)
     {
         $this->modifyTime = $unixTime;
+        $this->updateFlags();
+    }
+
+    private function updateFlags()
+    {
+        $flags = 0;
+
+        if ($this->modifyTime !== null) {
+            $flags |= self::MODIFY_TIME_BIT;
+        }
+
+        if ($this->accessTime !== null) {
+            $flags |= self::ACCESS_TIME_BIT;
+        }
+
+        if ($this->createTime !== null) {
+            $flags |= self::CREATE_TIME_BIT;
+        }
+        $this->flags = $flags;
     }
 
     /**
@@ -370,6 +389,7 @@ class ExtendedTimestampExtraField implements ZipExtraField
     public function setAccessTime($unixTime)
     {
         $this->accessTime = $unixTime;
+        $this->updateFlags();
     }
 
     /**
@@ -381,6 +401,7 @@ class ExtendedTimestampExtraField implements ZipExtraField
     public function setCreateTime($unixTime)
     {
         $this->createTime = $unixTime;
+        $this->updateFlags();
     }
 
     /**

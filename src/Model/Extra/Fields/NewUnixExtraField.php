@@ -116,25 +116,6 @@ class NewUnixExtraField implements ZipExtraField
     }
 
     /**
-     * Converts a signed byte into an unsigned integer representation
-     * (e.g., -1 becomes 255).
-     *
-     * @param int $b byte to convert to int
-     *
-     * @return int representation of the provided byte
-     *
-     * @since 1.5
-     */
-    public static function signedByteToUnsignedInt($b)
-    {
-        if ($b >= 0) {
-            return $b;
-        }
-
-        return 256 + $b;
-    }
-
-    /**
      * Populate data from this array as if it was in central directory data.
      *
      * @param string        $buffer the buffer to read data from
@@ -160,10 +141,10 @@ class NewUnixExtraField implements ZipExtraField
         return pack(
             'CCVCV',
             $this->version,
-            4, // GIDSize
-            $this->gid,
             4, // UIDSize
-            $this->uid
+            $this->uid,
+            4, // GIDSize
+            $this->gid
         );
     }
 
@@ -231,6 +212,14 @@ class NewUnixExtraField implements ZipExtraField
     public function setGid($gid)
     {
         $this->gid = $gid & 0xffffffff;
+    }
+
+    /**
+     * @return int
+     */
+    public function getVersion()
+    {
+        return $this->version;
     }
 
     /**

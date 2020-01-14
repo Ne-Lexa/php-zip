@@ -79,10 +79,10 @@ class AsiExtraField implements ZipExtraField
      */
     public function __construct($mode, $uid = self::USER_GID_PID, $gid = self::USER_GID_PID, $link = '')
     {
-        $this->mode = (int) $mode;
-        $this->uid = (int) $uid;
-        $this->gid = (int) $gid;
-        $this->link = (string) $link;
+        $this->mode = $mode;
+        $this->uid = $uid;
+        $this->gid = $gid;
+        $this->link = $link;
     }
 
     /**
@@ -121,7 +121,7 @@ class AsiExtraField implements ZipExtraField
         $link = '';
 
         if ($data['linkSize'] > 0) {
-            $link = substr($buffer, 8);
+            $link = substr($buffer, 10);
         }
 
         return new self($data['mode'], $data['uid'], $data['gid'], $link);
@@ -191,7 +191,7 @@ class AsiExtraField implements ZipExtraField
      */
     public function setLink($link)
     {
-        $this->link = $link;
+        $this->link = (string) $link;
         $this->mode = $this->getPermissionsMode($this->mode);
     }
 
@@ -214,11 +214,13 @@ class AsiExtraField implements ZipExtraField
      */
     protected function getPermissionsMode($mode)
     {
-        $type = UnixStat::UNX_IFMT;
+        $type = 0;
 
         if ($this->isLink()) {
             $type = UnixStat::UNX_IFLNK;
-        } elseif ($this->isDirectory()) {
+        } elseif (($mode & UnixStat::UNX_IFREG) !== 0) {
+            $type = UnixStat::UNX_IFREG;
+        } elseif (($mode & UnixStat::UNX_IFDIR) !== 0) {
             $type = UnixStat::UNX_IFDIR;
         }
 
@@ -264,7 +266,7 @@ class AsiExtraField implements ZipExtraField
      */
     public function setUserId($uid)
     {
-        $this->uid = $uid;
+        $this->uid = (int) $uid;
     }
 
     /**
@@ -280,7 +282,7 @@ class AsiExtraField implements ZipExtraField
      */
     public function setGroupId($gid)
     {
-        $this->gid = $gid;
+        $this->gid = (int) $gid;
     }
 
     /**
