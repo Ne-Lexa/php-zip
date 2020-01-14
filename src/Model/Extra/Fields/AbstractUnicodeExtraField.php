@@ -30,22 +30,20 @@ abstract class AbstractUnicodeExtraField implements ZipExtraField
     }
 
     /**
-     * @param string $unicodeValue
-     *
-     * @return static
-     */
-    public static function create($unicodeValue)
-    {
-        return new static(crc32($unicodeValue), $unicodeValue);
-    }
-
-    /**
      * @return int the CRC32 checksum of the filename or comment as
      *             encoded in the central directory of the zip file
      */
     public function getCrc32()
     {
         return $this->crc32;
+    }
+
+    /**
+     * @param int $crc32
+     */
+    public function setCrc32($crc32)
+    {
+        $this->crc32 = (int) $crc32;
     }
 
     /**
@@ -62,7 +60,6 @@ abstract class AbstractUnicodeExtraField implements ZipExtraField
     public function setUnicodeValue($unicodeValue)
     {
         $this->unicodeValue = $unicodeValue;
-        $this->crc32 = crc32($unicodeValue);
     }
 
     /**
@@ -78,19 +75,18 @@ abstract class AbstractUnicodeExtraField implements ZipExtraField
     public static function unpackLocalFileData($buffer, ZipEntry $entry = null)
     {
         if (\strlen($buffer) < 5) {
-            throw new ZipException('UniCode path extra data must have at least 5 bytes.');
+            throw new ZipException('Unicode path extra data must have at least 5 bytes.');
         }
 
-        $version = unpack('C', $buffer)[1];
+        $data = unpack('Cversion/Vcrc32', $buffer);
 
-        if ($version !== self::DEFAULT_VERSION) {
-            throw new ZipException(sprintf('Unsupported version [%d] for UniCode path extra data.', $version));
+        if ($data['version'] !== self::DEFAULT_VERSION) {
+            throw new ZipException(sprintf('Unsupported version [%d] for Unicode path extra data.', $data['version']));
         }
 
-        $crc32 = unpack('V', substr($buffer, 1))[1];
         $unicodeValue = substr($buffer, 5);
 
-        return new static($crc32, $unicodeValue);
+        return new static($data['crc32'], $unicodeValue);
     }
 
     /**

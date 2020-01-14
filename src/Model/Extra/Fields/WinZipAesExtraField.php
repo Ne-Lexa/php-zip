@@ -256,7 +256,7 @@ class WinZipAesExtraField implements ZipExtraField
         $vendorVersion = (int) $vendorVersion;
 
         if (!\in_array($vendorVersion, self::$allowVendorVersions, true)) {
-            throw new \InvalidArgumentException(
+            throw new InvalidArgumentException(
                 sprintf(
                     'Unsupport WinZip AES vendor version: %d',
                     $vendorVersion
@@ -294,7 +294,7 @@ class WinZipAesExtraField implements ZipExtraField
         $keyStrength = (int) $keyStrength;
 
         if (!isset(self::$encryptionStrengths[$keyStrength])) {
-            throw new \InvalidArgumentException(
+            throw new InvalidArgumentException(
                 sprintf(
                     'Key strength %d not support value. Allow values: %s',
                     $keyStrength,

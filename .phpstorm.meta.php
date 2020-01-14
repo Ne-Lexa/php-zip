@@ -107,4 +107,22 @@ namespace PHPSTORM_META {
         \PhpZip\Constants\GeneralPurposeBitFlag::UTF8
     );
     expectedArguments(\PhpZip\Model\ZipEntry::setGeneralPurposeBitFlags(), 0, argumentsSet('zip_gpbf'));
+
+    registerArgumentsSet(
+        "winzip_aes_vendor_version",
+        \PhpZip\Model\Extra\Fields\WinZipAesExtraField::VERSION_AE1,
+        \PhpZip\Model\Extra\Fields\WinZipAesExtraField::VERSION_AE2
+    );
+    registerArgumentsSet(
+        "winzip_aes_key_strength",
+        \PhpZip\Model\Extra\Fields\WinZipAesExtraField::KEY_STRENGTH_256BIT,
+        \PhpZip\Model\Extra\Fields\WinZipAesExtraField::KEY_STRENGTH_128BIT,
+        \PhpZip\Model\Extra\Fields\WinZipAesExtraField::KEY_STRENGTH_192BIT
+    );
+    expectedArguments(\PhpZip\Model\Extra\Fields\WinZipAesExtraField::__construct(), 0, argumentsSet('winzip_aes_vendor_version'));
+    expectedArguments(\PhpZip\Model\Extra\Fields\WinZipAesExtraField::__construct(), 1, argumentsSet('winzip_aes_key_strength'));
+    expectedArguments(\PhpZip\Model\Extra\Fields\WinZipAesExtraField::__construct(), 2, argumentsSet('compression_methods'));
+    expectedArguments(\PhpZip\Model\Extra\Fields\WinZipAesExtraField::setVendorVersion(), 0, argumentsSet('winzip_aes_vendor_version'));
+    expectedArguments(\PhpZip\Model\Extra\Fields\WinZipAesExtraField::setKeyStrength(), 0, argumentsSet('winzip_aes_key_strength'));
+    expectedArguments(\PhpZip\Model\Extra\Fields\WinZipAesExtraField::setCompressionMethod(), 0, argumentsSet('compression_methods'));
 }
