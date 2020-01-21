@@ -2418,4 +2418,21 @@ class ZipFileTest extends ZipTestCase
         static::assertSame($zipFile->getEntry($newEntryName)->getCompressionMethod(), ZipCompressionMethod::STORED);
         $zipFile->close();
     }
+
+    /**
+     * @throws ZipEntryNotFoundException
+     * @throws ZipException
+     */
+    public function testCloneZipContainerInZipWriter()
+    {
+        $zipFile = new ZipFile();
+        $zipFile['file 1'] = 'contents';
+        $zipEntryBeforeWrite = $zipFile->getEntry('file 1');
+        $zipFile->saveAsFile($this->outputFilename);
+        $zipAfterBeforeWrite = $zipFile->getEntry('file 1');
+
+        static::assertEquals($zipAfterBeforeWrite, $zipEntryBeforeWrite);
+
+        $zipFile->close();
+    }
 }

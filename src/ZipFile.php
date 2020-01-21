@@ -20,6 +20,7 @@ use PhpZip\IO\ZipReader;
 use PhpZip\IO\ZipWriter;
 use PhpZip\Model\Data\ZipFileData;
 use PhpZip\Model\Data\ZipNewData;
+use PhpZip\Model\ImmutableZipContainer;
 use PhpZip\Model\ZipContainer;
 use PhpZip\Model\ZipEntry;
 use PhpZip\Model\ZipEntryMatcher;
@@ -68,7 +69,7 @@ class ZipFile implements ZipFileInterface
      */
     public function __construct()
     {
-        $this->zipContainer = new ZipContainer();
+        $this->zipContainer = $this->createZipContainer(null);
     }
 
     /**
@@ -88,6 +89,16 @@ class ZipFile implements ZipFileInterface
     protected function createZipWriter()
     {
         return new ZipWriter($this->zipContainer);
+    }
+
+    /**
+     * @param ImmutableZipContainer|null $sourceContainer
+     *
+     * @return ZipContainer
+     */
+    protected function createZipContainer(ImmutableZipContainer $sourceContainer = null)
+    {
+        return new ZipContainer($sourceContainer);
     }
 
     /**
@@ -151,7 +162,7 @@ class ZipFile implements ZipFileInterface
     public function openFromStream($handle, array $options = [])
     {
         $this->reader = $this->createZipReader($handle, $options);
-        $this->zipContainer = new ZipContainer($this->reader->read());
+        $this->zipContainer = $this->createZipContainer($this->reader->read());
 
         return $this;
     }
@@ -1769,7 +1780,7 @@ class ZipFile implements ZipFileInterface
         if ($this->reader !== null) {
             $this->reader->close();
             $this->reader = null;
-            $this->zipContainer = new ZipContainer();
+            $this->zipContainer = $this->createZipContainer(null);
         }
     }
 

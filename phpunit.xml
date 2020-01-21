@@ -22,6 +22,12 @@
         </testsuite>
     </testsuites>
 
+    <groups>
+        <exclude>
+            <group>large</group>
+        </exclude>
+    </groups>
+
     <filter>
         <whitelist>
             <directory>src</directory>
