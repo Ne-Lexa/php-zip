@@ -1009,16 +1009,16 @@ class ZipFileTest extends ZipTestCase
             'test1.txt' => random_bytes(255),
             'test2.txt' => random_bytes(255),
             'test/test 2/test3.txt' => random_bytes(255),
-            'test empty/dir' => null,
+            'test empty/dir/' => null,
         ];
 
         $zipFile = new ZipFile();
 
-        foreach ($entries as $entryName => $value) {
-            if ($value === null) {
+        foreach ($entries as $entryName => $contents) {
+            if ($contents === null) {
                 $zipFile->addEmptyDir($entryName);
             } else {
-                $zipFile->addFromString($entryName, $value);
+                $zipFile->addFromString($entryName, $contents);
             }
         }
         $zipFile->saveAsFile($this->outputFilename);
@@ -1027,19 +1027,28 @@ class ZipFileTest extends ZipTestCase
         static::assertTrue(mkdir($this->outputDirname, 0755, true));
 
         $zipFile->openFile($this->outputFilename);
-        $zipFile->extractTo($this->outputDirname);
+        $zipFile->extractTo($this->outputDirname, null, [], $extractedEntries);
 
-        foreach ($entries as $entryName => $value) {
+        foreach ($entries as $entryName => $contents) {
             $fullExtractedFilename = $this->outputDirname . \DIRECTORY_SEPARATOR . $entryName;
 
-            if ($value === null) {
+            static::assertTrue(
+                isset($extractedEntries[$fullExtractedFilename]),
+                'No extract info for ' . $fullExtractedFilename
+            );
+
+            if ($contents === null) {
                 static::assertTrue(is_dir($fullExtractedFilename));
                 static::assertTrue(FilesUtil::isEmptyDir($fullExtractedFilename));
             } else {
                 static::assertTrue(is_file($fullExtractedFilename));
                 $contents = file_get_contents($fullExtractedFilename);
-                static::assertSame($contents, $value);
+                static::assertSame($contents, $contents);
             }
+
+            /** @var ZipEntry $entry */
+            $entry = $extractedEntries[$fullExtractedFilename];
+            static::assertSame($entry->getName(), $entryName);
         }
         $zipFile->close();
     }
@@ -2431,7 +2440,7 @@ class ZipFileTest extends ZipTestCase
         $zipFile->saveAsFile($this->outputFilename);
         $zipAfterBeforeWrite = $zipFile->getEntry('file 1');
 
-        static::assertEquals($zipAfterBeforeWrite, $zipEntryBeforeWrite);
+        static::assertSame($zipAfterBeforeWrite, $zipEntryBeforeWrite);
 
         $zipFile->close();
     }

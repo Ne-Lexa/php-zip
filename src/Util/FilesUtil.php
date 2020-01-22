@@ -43,9 +43,10 @@ final class FilesUtil
             \RecursiveIteratorIterator::CHILD_FIRST
         );
 
+        /** @var \SplFileInfo $fileInfo */
         foreach ($files as $fileInfo) {
             $function = ($fileInfo->isDir() ? 'rmdir' : 'unlink');
-            $function($fileInfo->getRealPath());
+            $function($fileInfo->getPathname());
         }
         rmdir($dir);
     }
@@ -303,36 +304,19 @@ final class FilesUtil
     }
 
     /**
-     * @param string $linkPath
      * @param string $target
+     * @param string $path
+     * @param bool   $allowSymlink
      *
      * @return bool
      */
-    public static function symlink($target, $linkPath)
+    public static function symlink($target, $path, $allowSymlink)
     {
-        if (\DIRECTORY_SEPARATOR === '\\') {
-            $linkPath = str_replace('/', '\\', $linkPath);
-            $target = str_replace('/', '\\', $target);
-            $abs = null;
-
-            if (!self::isAbsolutePath($target)) {
-                $abs = realpath(\dirname($linkPath) . \DIRECTORY_SEPARATOR . $target);
-
-                if (\is_string($abs)) {
-                    $target = $abs;
-                }
-            }
+        if (\DIRECTORY_SEPARATOR === '\\' || !$allowSymlink) {
+            return file_put_contents($path, $target) !== false;
         }
 
-        if (!symlink($target, $linkPath)) {
-            if (\DIRECTORY_SEPARATOR === '\\' && is_file($target)) {
-                return copy($target, $linkPath);
-            }
-
-            return false;
-        }
-
-        return true;
+        return symlink($target, $path);
     }
 
     /**
