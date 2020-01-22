@@ -2,6 +2,7 @@
 
 namespace PhpZip\Tests;
 
+use PhpZip\Constants\ZipCompressionMethod;
 use PhpZip\Exception\ZipException;
 use PhpZip\ZipFile;
 
@@ -32,7 +33,7 @@ class Zip64Test extends ZipTestCase
 
         $zipFile = new ZipFile();
         for ($i = 0; $i < $countFiles; $i++) {
-            $zipFile[$i . '.txt'] = (string) $i;
+            $zipFile->addFromString($i . '.txt', (string) $i, ZipCompressionMethod::STORED);
         }
         $zipFile->saveAsFile($this->outputFilename);
         $zipFile->close();

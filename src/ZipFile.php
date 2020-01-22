@@ -1797,8 +1797,9 @@ class ZipFile implements ZipFileInterface
         if ($this->reader !== null) {
             $this->reader->close();
             $this->reader = null;
-            $this->zipContainer = $this->createZipContainer(null);
         }
+        $this->zipContainer = $this->createZipContainer(null);
+        gc_collect_cycles();
     }
 
     /**
