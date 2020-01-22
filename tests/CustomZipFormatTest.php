@@ -4,12 +4,16 @@ namespace PhpZip\Tests;
 
 use PhpZip\Exception\ZipEntryNotFoundException;
 use PhpZip\Exception\ZipException;
+use PhpZip\Model\Extra\Fields\NewUnixExtraField;
+use PhpZip\Model\Extra\Fields\NtfsExtraField;
+use PhpZip\Tests\Internal\CustomZip\ZipFileCustomWriter;
+use PhpZip\Tests\Internal\CustomZip\ZipFileWithBeforeSave;
 use PhpZip\Tests\Internal\Epub\EpubFile;
+use PhpZip\ZipFile;
 
 /**
  * Checks the ability to create own file-type class, reader, writer and container.
- *
- * @see http://www.epubtest.org/test-books source epub files
+ **.
  *
  * @internal
  *
@@ -19,6 +23,8 @@ final class CustomZipFormatTest extends ZipTestCase
 {
     /**
      * @throws ZipException
+     *
+     * @see http://www.epubtest.org/test-books source epub files
      */
     public function testEpub()
     {
@@ -56,5 +62,65 @@ final class CustomZipFormatTest extends ZipTestCase
         // file appended in EpubWriter before write
         self::assertTrue($epubFile->hasEntry('mimetype'));
         $epubFile->close();
+    }
+
+    /**
+     * @throws \Exception
+     */
+    public function testBeforeSaveInZipWriter()
+    {
+        $zipFile = new ZipFileCustomWriter();
+        for ($i = 0; $i < 10; $i++) {
+            $zipFile['file ' . $i] = 'contents file ' . $i;
+        }
+        $this->existsExtraFields($zipFile, false);
+        $zipFile->saveAsFile($this->outputFilename);
+        $this->existsExtraFields($zipFile, false);
+        $zipFile->close();
+
+        self::assertCorrectZipArchive($this->outputFilename);
+
+        $zipFile->openFile($this->outputFilename);
+        $this->existsExtraFields($zipFile, true);
+        $zipFile->close();
+    }
+
+    /**
+     * @throws \Exception
+     */
+    public function testBeforeSaveInZipFile()
+    {
+        $zipFile = new ZipFileWithBeforeSave();
+        for ($i = 0; $i < 10; $i++) {
+            $zipFile['file ' . $i] = 'contents file ' . $i;
+        }
+        $this->existsExtraFields($zipFile, false);
+        $zipFile->saveAsFile($this->outputFilename);
+        $this->existsExtraFields($zipFile, true);
+        $zipFile->close();
+
+        self::assertCorrectZipArchive($this->outputFilename);
+
+        $zipFile->openFile($this->outputFilename);
+        $this->existsExtraFields($zipFile, true);
+        $zipFile->close();
+    }
+
+    /**
+     * @param ZipFile $zipFile
+     * @param bool    $exists
+     */
+    private function existsExtraFields(ZipFile $zipFile, $exists)
+    {
+        foreach ($zipFile->getEntries() as $entry) {
+            $localExtras = $entry->getLocalExtraFields();
+            $cdExtras = $entry->getCdExtraFields();
+
+            self::assertSame(isset($localExtras[NtfsExtraField::HEADER_ID]), $exists);
+            self::assertSame(isset($cdExtras[NtfsExtraField::HEADER_ID]), $exists);
+
+            self::assertSame(isset($localExtras[NewUnixExtraField::HEADER_ID]), $exists);
+            self::assertSame(isset($cdExtras[NewUnixExtraField::HEADER_ID]), $exists);
+        }
     }
 }

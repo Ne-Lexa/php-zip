@@ -2435,4 +2435,18 @@ class ZipFileTest extends ZipTestCase
 
         $zipFile->close();
     }
+
+    /**
+     * @throws ZipException
+     */
+    public function testMultiSave()
+    {
+        $zipFile = new ZipFile();
+        $zipFile['file 1'] = 'contents';
+        for ($i = 0; $i < 10; $i++) {
+            $zipFile->saveAsFile($this->outputFilename);
+            self::assertCorrectZipArchive($this->outputFilename);
+        }
+        $zipFile->close();
+    }
 }
