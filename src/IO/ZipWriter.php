@@ -39,7 +39,9 @@ class ZipWriter
      */
     public function __construct(ZipContainer $container)
     {
-        $this->zipContainer = $container;
+        // we clone the container so that the changes made to
+        // it do not affect the data in the ZipFile class
+        $this->zipContainer = clone $container;
     }
 
     /**

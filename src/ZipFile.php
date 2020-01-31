@@ -6,6 +6,7 @@
 
 namespace PhpZip;
 
+use PhpZip\Constants\UnixStat;
 use PhpZip\Constants\ZipCompressionLevel;
 use PhpZip\Constants\ZipCompressionMethod;
 use PhpZip\Constants\ZipEncryptionMethod;
@@ -20,6 +21,7 @@ use PhpZip\IO\ZipReader;
 use PhpZip\IO\ZipWriter;
 use PhpZip\Model\Data\ZipFileData;
 use PhpZip\Model\Data\ZipNewData;
+use PhpZip\Model\ImmutableZipContainer;
 use PhpZip\Model\ZipContainer;
 use PhpZip\Model\ZipEntry;
 use PhpZip\Model\ZipEntryMatcher;
@@ -68,7 +70,7 @@ class ZipFile implements ZipFileInterface
      */
     public function __construct()
     {
-        $this->zipContainer = new ZipContainer();
+        $this->zipContainer = $this->createZipContainer(null);
     }
 
     /**
@@ -88,6 +90,16 @@ class ZipFile implements ZipFileInterface
     protected function createZipWriter()
     {
         return new ZipWriter($this->zipContainer);
+    }
+
+    /**
+     * @param ImmutableZipContainer|null $sourceContainer
+     *
+     * @return ZipContainer
+     */
+    protected function createZipContainer(ImmutableZipContainer $sourceContainer = null)
+    {
+        return new ZipContainer($sourceContainer);
     }
 
     /**
@@ -151,7 +163,7 @@ class ZipFile implements ZipFileInterface
     public function openFromStream($handle, array $options = [])
     {
         $this->reader = $this->createZipReader($handle, $options);
-        $this->zipContainer = new ZipContainer($this->reader->read());
+        $this->zipContainer = $this->createZipContainer($this->reader->read());
 
         return $this;
     }
@@ -363,15 +375,20 @@ class ZipFile implements ZipFileInterface
      *
      * Extract the complete archive or the given files to the specified destination.
      *
-     * @param string            $destDir location where to extract the files
-     * @param array|string|null $entries The entries to extract. It accepts either
-     *                                   a single entry name or an array of names.
+     * @param string            $destDir          location where to extract the files
+     * @param array|string|null $entries          entries to extract
+     * @param array             $options          extract options
+     * @param array             $extractedEntries if the extractedEntries argument
+     *                                            is present, then the  specified
+     *                                            array will be filled with
+     *                                            information about the
+     *                                            extracted entries
      *
      * @throws ZipException
      *
      * @return ZipFile
      */
-    public function extractTo($destDir, $entries = null)
+    public function extractTo($destDir, $entries = null, array $options = [], &$extractedEntries = [])
     {
         if (!file_exists($destDir)) {
             throw new ZipException(sprintf('Destination %s not found', $destDir));
@@ -385,7 +402,14 @@ class ZipFile implements ZipFileInterface
             throw new ZipException('Destination is not writable directory');
         }
 
-        $extractedEntries = [];
+        if ($extractedEntries === null) {
+            $extractedEntries = [];
+        }
+
+        $defaultOptions = [
+            ZipOptions::EXTRACT_SYMLINKS => false,
+        ];
+        $options += $defaultOptions;
 
         $zipEntries = $this->zipContainer->getEntries();
 
@@ -486,9 +510,8 @@ class ZipFile implements ZipFileInterface
                 unlink($file);
 
                 throw $e;
-            } finally {
-                fclose($handle);
             }
+            fclose($handle);
 
             if ($unixMode === 0) {
                 $unixMode = 0644;
@@ -503,8 +526,10 @@ class ZipFile implements ZipFileInterface
             }
         }
 
+        $allowSymlink = (bool) $options[ZipOptions::EXTRACT_SYMLINKS];
+
         foreach ($symlinks as $linkPath => $target) {
-            if (!FilesUtil::symlink($target, $linkPath)) {
+            if (!FilesUtil::symlink($target, $linkPath, $allowSymlink)) {
                 unset($extractedEntries[$linkPath]);
             }
         }
@@ -515,7 +540,7 @@ class ZipFile implements ZipFileInterface
             touch($dir, $lastMod);
         }
 
-//        ksort($extractedEntries);
+        ksort($extractedEntries);
 
         return $this;
     }
@@ -652,9 +677,24 @@ class ZipFile implements ZipFileInterface
         $entryName = $file->isDir() ? rtrim($entryName, '/\\') . '/' : $entryName;
 
         $zipEntry = new ZipEntry($entryName);
-        $zipData = null;
+        $zipEntry->setCreatedOS(ZipPlatform::OS_UNIX);
+        $zipEntry->setExtractedOS(ZipPlatform::OS_UNIX);
 
-        if ($file->isFile()) {
+        $zipData = null;
+        $filePerms = $file->getPerms();
+
+        if ($file->isLink()) {
+            $linkTarget = $file->getLinkTarget();
+            $lengthLinkTarget = \strlen($linkTarget);
+
+            $zipEntry->setCompressionMethod(ZipCompressionMethod::STORED);
+            $zipEntry->setUncompressedSize($lengthLinkTarget);
+            $zipEntry->setCompressedSize($lengthLinkTarget);
+            $zipEntry->setCrc(crc32($linkTarget));
+            $filePerms |= UnixStat::UNX_IFLNK;
+
+            $zipData = new ZipNewData($zipEntry, $linkTarget);
+        } elseif ($file->isFile()) {
             if (isset($options[ZipOptions::COMPRESSION_METHOD])) {
                 $compressionMethod = $options[ZipOptions::COMPRESSION_METHOD];
             } elseif ($file->getSize() < 512) {
@@ -674,21 +714,9 @@ class ZipFile implements ZipFileInterface
             $zipEntry->setUncompressedSize(0);
             $zipEntry->setCompressedSize(0);
             $zipEntry->setCrc(0);
-        } elseif ($file->isLink()) {
-            $linkTarget = $file->getLinkTarget();
-            $lengthLinkTarget = \strlen($linkTarget);
-
-            $zipEntry->setCompressionMethod(ZipCompressionMethod::STORED);
-            $zipEntry->setUncompressedSize($lengthLinkTarget);
-            $zipEntry->setCompressedSize($lengthLinkTarget);
-            $zipEntry->setCrc(crc32($linkTarget));
-
-            $zipData = new ZipNewData($zipEntry, $linkTarget);
         }
 
-        $zipEntry->setCreatedOS(ZipPlatform::OS_UNIX);
-        $zipEntry->setExtractedOS(ZipPlatform::OS_UNIX);
-        $zipEntry->setUnixMode($file->getPerms());
+        $zipEntry->setUnixMode($filePerms);
 
         $timestamp = null;
 
@@ -1769,8 +1797,9 @@ class ZipFile implements ZipFileInterface
         if ($this->reader !== null) {
             $this->reader->close();
             $this->reader = null;
-            $this->zipContainer = new ZipContainer();
         }
+        $this->zipContainer = $this->createZipContainer(null);
+        gc_collect_cycles();
     }
 
     /**

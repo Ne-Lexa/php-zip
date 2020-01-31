@@ -12,7 +12,12 @@ use PhpZip\Exception\ZipException;
  */
 class ZipContainer extends ImmutableZipContainer
 {
-    /** @var ImmutableZipContainer|null */
+    /**
+     * @var ImmutableZipContainer|null The source container contains zip entries from
+     *                                 an open zip archive. The source container makes
+     *                                 it possible to undo changes in the archive.
+     *                                 When cloning, this container is not cloned.
+     */
     private $sourceContainer;
 
     /**
