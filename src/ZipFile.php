@@ -142,7 +142,9 @@ class ZipFile implements ZipFileInterface
         }
 
         if (!($handle = fopen('php://temp', 'r+b'))) {
+            // @codeCoverageIgnoreStart
             throw new ZipException("Can't open temp stream.");
+            // @codeCoverageIgnoreEnd
         }
         fwrite($handle, $data);
         rewind($handle);
@@ -459,7 +461,9 @@ class ZipFile implements ZipFileInterface
                 }
 
                 if (!mkdir($dir, $dirMode, true) && !is_dir($dir)) {
+                    // @codeCoverageIgnoreStart
                     throw new \RuntimeException(sprintf('Directory "%s" was not created', $dir));
+                    // @codeCoverageIgnoreEnd
                 }
                 chmod($dir, $dirMode);
             }
@@ -495,6 +499,7 @@ class ZipFile implements ZipFileInterface
 
             /** @noinspection PhpUsageOfSilenceOperatorInspection */
             if (!($handle = @fopen($file, 'w+b'))) {
+                // @codeCoverageIgnoreStart
                 throw new ZipException(
                     sprintf(
                         'Cannot extract zip entry %s. File %s cannot open for write.',
@@ -502,6 +507,7 @@ class ZipFile implements ZipFileInterface
                         $file
                     )
                 );
+                // @codeCoverageIgnoreEnd
             }
 
             try {

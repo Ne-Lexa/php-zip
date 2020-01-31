@@ -2458,4 +2458,22 @@ class ZipFileTest extends ZipTestCase
         }
         $zipFile->close();
     }
+
+    public function testNoData()
+    {
+        $this->setExpectedException(ZipException::class, 'No data for zip entry file');
+
+        $entryName = 'file';
+
+        $zipFile = new ZipFile();
+
+        try {
+            $zipFile[$entryName] = '';
+            $zipEntry = $zipFile->getEntry($entryName);
+            $zipEntry->setData(null);
+            $zipFile->getEntryContents($entryName);
+        } finally {
+            $zipFile->close();
+        }
+    }
 }
