@@ -1571,9 +1571,10 @@ class ZipEntryTest extends TestCase
     public function testClone()
     {
         $newUnixExtra = new NewUnixExtraField();
-        $zipData = new ZipFileData(new \SplFileInfo(__FILE__));
 
         $zipEntry = new ZipEntry('entry');
+        $zipData = new ZipFileData($zipEntry, new \SplFileInfo(__FILE__));
+
         $zipEntry->addExtraField($newUnixExtra);
         $zipEntry->setData($zipData);
 

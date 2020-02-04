@@ -4,6 +4,7 @@ namespace PhpZip\Model\Data;
 
 use PhpZip\Exception\ZipException;
 use PhpZip\Model\ZipData;
+use PhpZip\Model\ZipEntry;
 
 /**
  * Class ZipFileData.
@@ -16,11 +17,12 @@ class ZipFileData implements ZipData
     /**
      * ZipStringData constructor.
      *
+     * @param ZipEntry     $zipEntry
      * @param \SplFileInfo $fileInfo
      *
      * @throws ZipException
      */
-    public function __construct(\SplFileInfo $fileInfo)
+    public function __construct(ZipEntry $zipEntry, \SplFileInfo $fileInfo)
     {
         if (!$fileInfo->isFile()) {
             throw new ZipException('$fileInfo is not a file.');
@@ -31,6 +33,7 @@ class ZipFileData implements ZipData
         }
 
         $this->file = $fileInfo;
+        $zipEntry->setUncompressedSize($fileInfo->getSize());
     }
 
     /**
