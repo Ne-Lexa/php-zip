@@ -3,6 +3,7 @@
 `PhpZip` is a php-library for extended work with ZIP-archives.
 
 [![Build Status](https://travis-ci.org/Ne-Lexa/php-zip.svg?branch=master)](https://travis-ci.org/Ne-Lexa/php-zip)
+[![Code Coverage](https://scrutinizer-ci.com/g/Ne-Lexa/php-zip/badges/coverage.png?b=master)](https://scrutinizer-ci.com/g/Ne-Lexa/php-zip/?branch=master)
 [![Latest Stable Version](https://poser.pugx.org/nelexa/zip/v/stable)](https://packagist.org/packages/nelexa/zip)
 [![Total Downloads](https://poser.pugx.org/nelexa/zip/downloads)](https://packagist.org/packages/nelexa/zip)
 [![Minimum PHP Version](http://img.shields.io/badge/php-%3E%3D%205.5-8892BF.svg)](https://php.net/)

@@ -665,10 +665,9 @@ class ZipFile implements ZipFileInterface
                     ZipCompressionMethod::DEFLATED;
             }
 
-            $zipEntry->setUncompressedSize($file->getSize());
             $zipEntry->setCompressionMethod($compressionMethod);
 
-            $zipData = new ZipFileData($file);
+            $zipData = new ZipFileData($zipEntry, $file);
         } elseif ($file->isDir()) {
             $zipEntry->setCompressionMethod(ZipCompressionMethod::STORED);
             $zipEntry->setUncompressedSize(0);
