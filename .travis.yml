@@ -39,7 +39,7 @@ matrix:
 
     - php: 7.4
       os: linux
-      dist: bionic
+      dist: xenial
       env: COVERAGE=true ZIPALIGN_INSTALL=true PHPUNIT_FLAGS="-v -c phpunit.xml --testsuite only_fast_tests --coverage-clover=coverage.clover"
 
 before_install:

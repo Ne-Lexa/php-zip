@@ -10,6 +10,7 @@ use PhpZip\Exception\InvalidArgumentException;
 use PhpZip\Exception\ZipEntryNotFoundException;
 use PhpZip\Exception\ZipException;
 use PhpZip\Exception\ZipUnsupportMethodException;
+use PhpZip\Model\Data\ZipFileData;
 use PhpZip\Model\ZipEntry;
 use PhpZip\Model\ZipInfo;
 use PhpZip\Util\FilesUtil;
@@ -2416,6 +2417,36 @@ class ZipFileTest extends ZipTestCase
 
         $zipFile->openFile($this->outputFilename);
         static::assertSame($zipFile->getEntry($newEntryName)->getCompressionMethod(), ZipCompressionMethod::STORED);
+        $zipFile->close();
+    }
+
+    /**
+     * @throws ZipEntryNotFoundException
+     * @throws ZipException
+     */
+    public function testReplaceEntryContentsByFile()
+    {
+        $entryName = basename(__FILE__);
+
+        $zipFile = new ZipFile();
+        $zipFile[$entryName] = 'contents';
+        $zipFile->saveAsFile($this->outputFilename);
+        $zipFile->close();
+
+        $zipFile->openFile($this->outputFilename);
+        $entry = $zipFile->getEntry($entryName);
+        $data = new ZipFileData($entry, new \SplFileInfo(__FILE__));
+        $entry->setData($data);
+        $zipFile->saveAsFile($this->outputFilename);
+        $zipFile->close();
+
+        self::assertCorrectZipArchive($this->outputFilename);
+
+        $zipFile->openFile($this->outputFilename);
+        static::assertSame(
+            $zipFile->getEntryContents($entryName),
+            file_get_contents(__FILE__)
+        );
         $zipFile->close();
     }
 }
