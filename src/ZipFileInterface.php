@@ -292,15 +292,20 @@ interface ZipFileInterface extends \Countable, \ArrayAccess, \Iterator
      *
      * Extract the complete archive or the given files to the specified destination.
      *
-     * @param string            $destDir location where to extract the files
-     * @param array|string|null $entries The entries to extract. It accepts either
-     *                                   a single entry name or an array of names.
+     * @param string            $destDir          location where to extract the files
+     * @param array|string|null $entries          entries to extract
+     * @param array             $options          extract options
+     * @param array             $extractedEntries if the extractedEntries argument
+     *                                            is present, then the  specified
+     *                                            array will be filled with
+     *                                            information about the
+     *                                            extracted entries
      *
      * @throws ZipException
      *
      * @return ZipFile
      */
-    public function extractTo($destDir, $entries = null);
+    public function extractTo($destDir, $entries = null, array $options = [], &$extractedEntries = []);
 
     /**
      * Add entry from the string.

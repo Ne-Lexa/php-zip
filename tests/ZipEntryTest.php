@@ -305,6 +305,55 @@ class ZipEntryTest extends TestCase
     }
 
     /**
+     * @throws \Exception
+     */
+    public function testZipNewDataGuardClone()
+    {
+        $resource = fopen('php://temp', 'r+b');
+        static::assertNotFalse($resource);
+        fwrite($resource, random_bytes(1024));
+        rewind($resource);
+
+        $zipEntry = new ZipEntry('entry');
+        $zipEntry2 = new ZipEntry('entry2');
+
+        $zipData = new ZipNewData($zipEntry, $resource);
+        $zipData2 = new ZipNewData($zipEntry2, $resource);
+        $cloneData = clone $zipData;
+        $cloneData2 = clone $cloneData;
+
+        static::assertSame($zipData->getDataAsStream(), $resource);
+        static::assertSame($zipData2->getDataAsStream(), $resource);
+        static::assertSame($cloneData->getDataAsStream(), $resource);
+        static::assertSame($cloneData2->getDataAsStream(), $resource);
+
+        $validResource = \is_resource($resource);
+        static::assertTrue($validResource);
+
+        unset($cloneData);
+        $validResource = \is_resource($resource);
+        static::assertTrue($validResource);
+
+        unset($zipData);
+        $validResource = \is_resource($resource);
+        static::assertTrue($validResource);
+
+        unset($zipData2);
+        $validResource = \is_resource($resource);
+        static::assertTrue($validResource);
+
+        $reflectionClass = new \ReflectionClass($cloneData2);
+        static::assertSame(
+            $reflectionClass->getStaticProperties()['guardClonedStream'][(int) $resource],
+            0
+        );
+
+        unset($cloneData2);
+        $validResource = \is_resource($resource);
+        static::assertFalse($validResource);
+    }
+
+    /**
      * @dataProvider providePlatform
      *
      * @param int $zipOS
