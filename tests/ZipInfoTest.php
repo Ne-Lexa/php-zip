@@ -112,7 +112,5 @@ final class ZipInfoTest extends ZipTestCase
         self::assertSame($zipInfo->getCompressionLevel(), $zipEntry->getCompressionLevel());
         self::assertSame($zipInfo->getCompressionMethod(), $zipEntry->getCompressionMethod());
         self::assertNotEmpty($zipInfo->toArray());
-
-        self::assertSame((string) $zipInfo, 'PhpZip\Model\ZipInfo {Name="META-INF/container.xml", Size="249 bytes", Compressed size="169 bytes", Modified time="2019-04-08T14:59:08+00:00", Comment="", Method name="Deflated", Attributes="------", Platform="MS-DOS", Version=20}');
     }
 }
