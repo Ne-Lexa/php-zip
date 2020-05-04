@@ -1943,23 +1943,16 @@ class ZipFileTest extends ZipTestCase
      */
     public function testRewriteString()
     {
+        $this->setExpectedException(ZipException::class, 'Overwrite is only supported for open local files');
+
         $zipFile = new ZipFile();
         $zipFile['file'] = 'content';
-        $zipFile['file2'] = 'content2';
         $zipFile->saveAsFile($this->outputFilename);
         $zipFile->close();
 
         $zipFile->openFromString(file_get_contents($this->outputFilename));
-        static::assertSame(\count($zipFile), 2);
-        static::assertTrue(isset($zipFile['file']));
-        static::assertTrue(isset($zipFile['file2']));
-        $zipFile['file3'] = 'content3';
-        $zipFile = $zipFile->rewrite();
-        static::assertSame(\count($zipFile), 3);
-        static::assertTrue(isset($zipFile['file']));
-        static::assertTrue(isset($zipFile['file2']));
-        static::assertTrue(isset($zipFile['file3']));
-        $zipFile->close();
+        $zipFile['file2'] = 'content 2';
+        $zipFile->rewrite();
     }
 
     /**
