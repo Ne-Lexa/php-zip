@@ -82,7 +82,7 @@ namespace PHPSTORM_META {
         \PhpZip\Constants\DosCodePage::CP_NORDIC,
         \PhpZip\Constants\DosCodePage::CP_CYRILLIC_RUSSIAN,
         \PhpZip\Constants\DosCodePage::CP_GREEK2,
-        \PhpZip\Constants\DosCodePage::CP_THAI,
+        \PhpZip\Constants\DosCodePage::CP_THAI
     );
     expectedArguments(\PhpZip\Model\ZipEntry::setCharset(), 0, argumentsSet('dos_charset'));
     expectedArguments(\PhpZip\Constants\DosCodePage::toUTF8(), 1, argumentsSet('dos_charset'));
@@ -92,7 +92,7 @@ namespace PHPSTORM_META {
         "zip_os",
         \PhpZip\Constants\ZipPlatform::OS_UNIX,
         \PhpZip\Constants\ZipPlatform::OS_DOS,
-        \PhpZip\Constants\ZipPlatform::OS_MAC_OSX,
+        \PhpZip\Constants\ZipPlatform::OS_MAC_OSX
     );
     expectedArguments(\PhpZip\Model\ZipEntry::setCreatedOS(), 0, argumentsSet('zip_os'));
     expectedArguments(\PhpZip\Model\ZipEntry::setExtractedOS(), 0, argumentsSet('zip_os'));
