@@ -1611,12 +1611,27 @@ class ZipFile implements ZipFileInterface
         }
         $this->saveAsStream($handle);
 
+        $reopen = false;
+
+        if ($this->reader !== null) {
+            $meta = $this->reader->getStreamMetaData();
+
+            if ($meta['wrapper_type'] === 'plainfile' && isset($meta['uri']) && $meta['uri'] === $filename) {
+                $this->reader->close();
+                $reopen = true;
+            }
+        }
+
         if (!@rename($tempFilename, $filename)) {
             if (is_file($tempFilename)) {
                 unlink($tempFilename);
             }
 
             throw new ZipException('Can not move ' . $tempFilename . ' to ' . $filename);
+        }
+
+        if ($reopen) {
+            return $this->openFile($filename);
         }
 
         return $this;
@@ -1822,24 +1837,11 @@ class ZipFile implements ZipFileInterface
 
         $meta = $this->reader->getStreamMetaData();
 
-        if ($meta['wrapper_type'] === 'plainfile' && isset($meta['uri'])) {
-            $this->saveAsFile($meta['uri']);
-            $this->close();
-
-            if (!($handle = @fopen($meta['uri'], 'rb'))) {
-                throw new ZipException("File {$meta['uri']} can't open.");
-            }
-        } else {
-            $handle = @fopen('php://temp', 'r+b');
-
-            if (!$handle) {
-                throw new ZipException('php://temp cannot open for write.');
-            }
-            $this->writeZipToStream($handle);
-            $this->close();
+        if ($meta['wrapper_type'] !== 'plainfile' || !isset($meta['uri'])) {
+            throw new ZipException('Overwrite is only supported for open local files.');
         }
 
-        return $this->openFromStream($handle);
+        return $this->saveAsFile($meta['uri']);
     }
 
     /**
