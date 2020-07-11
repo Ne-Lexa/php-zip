@@ -77,7 +77,8 @@ class ZipPasswordTest extends ZipFileSetTestCase
         $zipFile->saveAsFile($this->outputFilename);
         $zipFile->close();
 
-        static::assertCorrectZipArchive($this->outputFilename, $password);
+        /** @see https://sourceforge.net/p/p7zip/discussion/383044/thread/c859a2f0/ WinZip 99-character limit */
+        static::assertCorrectZipArchive($this->outputFilename, substr($password, 0, 99));
 
         // check from WinZip AES encryption
         $zipFile->openFile($this->outputFilename);
@@ -137,7 +138,7 @@ class ZipPasswordTest extends ZipFileSetTestCase
             );
         }
 
-        $password = base64_encode(random_bytes(50));
+        $password = md5(random_bytes(50));
 
         $zip = new ZipFile();
         $zip->addDirRecursive($this->outputDirname);

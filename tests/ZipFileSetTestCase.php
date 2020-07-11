@@ -75,7 +75,7 @@ abstract class ZipFileSetTestCase extends ZipTestCase
             $zipEntryName = $localPath . $file;
 
             if (isset($actualResultFiles[$file])) {
-                static::assertTrue(isset($zipFile[$zipEntryName]));
+                static::assertTrue(isset($zipFile[$zipEntryName]), 'Not found entry name ' . $zipEntryName);
                 static::assertSame(
                     $zipFile[$zipEntryName],
                     $content,

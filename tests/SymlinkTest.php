@@ -12,22 +12,8 @@ use Symfony\Component\Finder\Finder;
  *
  * @small
  */
-final class SymlinkTest extends ZipFileTest
+final class SymlinkTest extends ZipTestCase
 {
-    /**
-     * This method is called before the first test of this test class is run.
-     */
-    public static function setUpBeforeClass()
-    {
-        parent::setUpBeforeClass();
-
-        if (\DIRECTORY_SEPARATOR === '\\') {
-            self::markTestSkipped('only linux test');
-
-            return;
-        }
-    }
-
     /**
      * @dataProvider provideAllowSymlink
      *
@@ -37,6 +23,10 @@ final class SymlinkTest extends ZipFileTest
      */
     public function testSymlink($allowSymlink)
     {
+        if (self::skipTestForWindows()) {
+            return;
+        }
+
         if (!is_dir($this->outputDirname)) {
             self::assertTrue(mkdir($this->outputDirname, 0755, true));
         }

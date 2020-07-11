@@ -48,7 +48,7 @@ final class FilesUtil
             $function = ($fileInfo->isDir() ? 'rmdir' : 'unlink');
             $function($fileInfo->getPathname());
         }
-        rmdir($dir);
+        @rmdir($dir);
     }
 
     /**
@@ -198,10 +198,10 @@ final class FilesUtil
             return $files;
         }
 
-        foreach (glob(\dirname($globPattern) . '/*', \GLOB_ONLYDIR | \GLOB_NOSORT) as $dir) {
+        foreach (glob(\dirname($globPattern) . \DIRECTORY_SEPARATOR . '*', \GLOB_ONLYDIR | \GLOB_NOSORT) as $dir) {
             // Unpacking the argument via ... is supported starting from php 5.6 only
             /** @noinspection SlowArrayOperationsInLoopInspection */
-            $files = array_merge($files, self::globFileSearch($dir . '/' . basename($globPattern), $flags, $recursive));
+            $files = array_merge($files, self::globFileSearch($dir . \DIRECTORY_SEPARATOR . basename($globPattern), $flags, $recursive));
         }
 
         return $files;
@@ -273,7 +273,7 @@ final class FilesUtil
     public static function normalizeZipPath($path)
     {
         return implode(
-            '/',
+            \DIRECTORY_SEPARATOR,
             array_filter(
                 explode('/', (string) $path),
                 static function ($part) {

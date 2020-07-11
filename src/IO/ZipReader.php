@@ -354,7 +354,9 @@ class ZipReader
         fseek($this->inStream, $cdOffset);
 
         if (!($cdStream = fopen('php://temp', 'w+b'))) {
-            throw new ZipException('Temp resource can not open from write');
+            // @codeCoverageIgnoreStart
+            throw new ZipException('A temporary resource cannot be opened for writing.');
+            // @codeCoverageIgnoreEnd
         }
         stream_copy_to_stream($this->inStream, $cdStream, $endCD->getCdSize());
         rewind($cdStream);

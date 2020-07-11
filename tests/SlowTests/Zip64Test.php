@@ -76,7 +76,7 @@ class Zip64Test extends ZipTestCase
             self::assertCorrectZipArchive($this->outputFilename);
 
             if (!is_dir($this->outputDirname)) {
-                mkdir($this->outputDirname, 0755, true);
+                static::assertTrue(mkdir($this->outputDirname, 0755, true));
             }
 
             $zipFile->openFile($this->outputFilename);

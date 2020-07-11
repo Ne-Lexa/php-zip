@@ -1,7 +1,7 @@
 <?php
 
 /**
- * PHP Code Style Fixer (config created for version 2.16.1 (Yellow Bird)).
+ * PHP Code Style Fixer (config created for version 2.16.4 (Yellow Bird)).
  *
  * Use one of the following console commands to just see the
  * changes that will be made.
@@ -119,7 +119,7 @@ $rules = [
      *
      * Risky!
      * Risky as new docblocks might mean more, e.g. a Doctrine entity
-     * might have a new column in database
+     * might have a new column in database.
      */
     'comment_to_phpdoc' => [
         'ignored_tags' => [
@@ -238,6 +238,7 @@ $rules = [
             'iconv',
             'mime_content_type',
             'rename',
+            'rmdir',
             'unlink',
         ],
     ],
@@ -283,7 +284,7 @@ $rules = [
      * - Explicit syntax allows word concatenation inside strings, e.g.
      * `"${var}IsAVar"`, implicit doesn't
      * - Explicit syntax is easier to detect for IDE/editors and
-     * therefore has colors/hightlight with higher contrast, which is
+     * therefore has colors/highlight with higher contrast, which is
      * easier to read
      * Backtick operator is skipped because it is harder to handle; you
      * can use `backtick_to_shell_exec` fixer to normalize backticks to
@@ -327,7 +328,7 @@ $rules = [
      * want to override a method, use the Template method pattern.
      *
      * Risky!
-     * Risky when overriding `public` methods of `abstract` classes
+     * Risky when overriding `public` methods of `abstract` classes.
      */
     'final_public_method_for_abstract_class' => false,
 
@@ -725,8 +726,8 @@ $rules = [
     'no_superfluous_elseif' => true,
 
     /*
-     * Removes `@param` and `@return` tags that don't provide any useful
-     * information.
+     * Removes `@param`, `@return` and `@var` tags that don't provide
+     * any useful information.
      */
     'no_superfluous_phpdoc_tags' => false,
 
@@ -751,7 +752,13 @@ $rules = [
      */
     'no_unneeded_curly_braces' => true,
 
-    // A final class must not have final methods.
+    /*
+     * A `final` class must not have `final` methods and `private`
+     * methods must not be `final`.
+     *
+     * Risky!
+     * Risky when child class overrides a `private` method.
+     */
     'no_unneeded_final_method' => true,
 
     /*
@@ -1140,7 +1147,7 @@ $rules = [
      * adjusts accordingly the function signature. Requires PHP >= 7.0.
      *
      * Risky!
-     * [1] This rule is EXPERIMENTAL and is not covered with backward
+     * This rule is EXPERIMENTAL and [1] is not covered with backward
      * compatibility promise. [2] `@param` annotation is mandatory for
      * the fixer to make changes, signatures of methods without it (no
      * docblock, inheritdocs) will not be fixed. [3] Manual actions are
@@ -1153,7 +1160,7 @@ $rules = [
      * adjusts accordingly the function signature. Requires PHP >= 7.0.
      *
      * Risky!
-     * [1] This rule is EXPERIMENTAL and is not covered with backward
+     * This rule is EXPERIMENTAL and [1] is not covered with backward
      * compatibility promise. [2] `@return` annotation is mandatory for
      * the fixer to make changes, signatures of methods without it (no
      * docblock, inheritdocs) will not be fixed. [3] Manual actions are
@@ -1190,8 +1197,8 @@ $rules = [
     'phpdoc_var_annotation_correct_order' => true,
 
     /*
-     * `@var` and `@type` annotations should not contain the variable
-     * name.
+     * `@var` and `@type` annotations of classy properties should not
+     * contain the name.
      */
     'phpdoc_var_without_name' => false,
 
@@ -1366,7 +1373,7 @@ $rules = [
      * `static`.
      *
      * Risky!
-     * Risky when using "->bindTo" on lambdas without referencing to
+     * Risky when using `->bindTo` on lambdas without referencing to
      * `$this`.
      */
     'static_lambda' => true,
@@ -1464,12 +1471,14 @@ $rules = [
 
 if (\PHP_SAPI === 'cli' && !class_exists(\PhpCsFixer\Config::class)) {
     $binFixer = __DIR__ . '/vendor/bin/php-cs-fixer';
+
     if (!is_file($binFixer)) {
         $binFixer = 'php-cs-fixer';
     }
-    $dryRun = !\in_array('--force', $_SERVER['argv'], true);
+    $dryRun = !in_array('--force', $_SERVER['argv'], true);
 
-    $command = escapeshellarg($binFixer) . ' fix --config ' . escapeshellarg(__FILE__) . ' --diff-format udiff --ansi';
+    $command = escapeshellarg($binFixer) . ' fix --config ' . escapeshellarg(__FILE__) . ' --diff-format udiff --ansi -vv';
+
     if ($dryRun) {
         $command .= ' --dry-run';
     }
