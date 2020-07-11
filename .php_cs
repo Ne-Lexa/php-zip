@@ -1,7 +1,7 @@
 <?php
 
 /**
- * PHP Code Style Fixer (config created for version 2.16.3 (Yellow Bird)).
+ * PHP Code Style Fixer (config created for version 2.16.4 (Yellow Bird)).
  *
  * Use one of the following console commands to just see the
  * changes that will be made.
@@ -238,6 +238,7 @@ $rules = [
             'iconv',
             'mime_content_type',
             'rename',
+            'rmdir',
             'unlink',
         ],
     ],
@@ -1146,7 +1147,7 @@ $rules = [
      * adjusts accordingly the function signature. Requires PHP >= 7.0.
      *
      * Risky!
-     * [1] This rule is EXPERIMENTAL and is not covered with backward
+     * This rule is EXPERIMENTAL and [1] is not covered with backward
      * compatibility promise. [2] `@param` annotation is mandatory for
      * the fixer to make changes, signatures of methods without it (no
      * docblock, inheritdocs) will not be fixed. [3] Manual actions are
@@ -1159,7 +1160,7 @@ $rules = [
      * adjusts accordingly the function signature. Requires PHP >= 7.0.
      *
      * Risky!
-     * [1] This rule is EXPERIMENTAL and is not covered with backward
+     * This rule is EXPERIMENTAL and [1] is not covered with backward
      * compatibility promise. [2] `@return` annotation is mandatory for
      * the fixer to make changes, signatures of methods without it (no
      * docblock, inheritdocs) will not be fixed. [3] Manual actions are

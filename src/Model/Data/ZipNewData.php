@@ -39,7 +39,9 @@ class ZipNewData implements ZipData
             $zipEntry->setUncompressedSize(\strlen($data));
 
             if (!($handle = fopen('php://temp', 'w+b'))) {
-                throw new \RuntimeException('Temp resource can not open from write.');
+                // @codeCoverageIgnoreStart
+                throw new \RuntimeException('A temporary resource cannot be opened for writing.');
+                // @codeCoverageIgnoreEnd
             }
             fwrite($handle, $data);
             rewind($handle);
@@ -61,7 +63,7 @@ class ZipNewData implements ZipData
     public function getDataAsStream()
     {
         if (!\is_resource($this->stream)) {
-            throw new \LogicException(sprintf('Resource was closed (entry=%s).', $this->zipEntry->getName()));
+            throw new \LogicException(sprintf('Resource has been closed (entry=%s).', $this->zipEntry->getName()));
         }
 
         return $this->stream;

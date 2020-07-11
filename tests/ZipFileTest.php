@@ -34,7 +34,7 @@ class ZipFileTest extends ZipTestCase
         $this->setExpectedException(ZipException::class, 'does not exist');
 
         $zipFile = new ZipFile();
-        $zipFile->openFile(uniqid('', true));
+        $zipFile->openFile(uniqid('', false));
     }
 
     /**
@@ -42,11 +42,15 @@ class ZipFileTest extends ZipTestCase
      */
     public function testOpenFileCantOpen()
     {
-        $this->setExpectedException(ZipException::class, 'can\'t open');
+        if (static::skipTestForWindows()) {
+            return;
+        }
 
         if (static::skipTestForRootUser()) {
             return;
         }
+
+        $this->setExpectedException(ZipException::class, 'can\'t open');
 
         static::assertNotFalse(file_put_contents($this->outputFilename, 'content'));
         static::assertTrue(chmod($this->outputFilename, 0222));
@@ -1031,7 +1035,12 @@ class ZipFileTest extends ZipTestCase
         $zipFile->extractTo($this->outputDirname, null, [], $extractedEntries);
 
         foreach ($entries as $entryName => $contents) {
-            $fullExtractedFilename = $this->outputDirname . \DIRECTORY_SEPARATOR . $entryName;
+            $name = $entryName;
+
+            if (\DIRECTORY_SEPARATOR === '\\') {
+                $name = str_replace('/', '\\', $name);
+            }
+            $fullExtractedFilename = $this->outputDirname . \DIRECTORY_SEPARATOR . $name;
 
             static::assertTrue(
                 isset($extractedEntries[$fullExtractedFilename]),
@@ -1393,13 +1402,17 @@ class ZipFileTest extends ZipTestCase
     /**
      * @throws ZipException
      */
-    public function testAddFileCantOpen()
+    public function testAddFileCannotOpen()
     {
-        $this->setExpectedException(InvalidArgumentException::class, 'is not readable');
+        if (static::skipTestForWindows()) {
+            return;
+        }
 
         if (static::skipTestForRootUser()) {
             return;
         }
+
+        $this->setExpectedException(InvalidArgumentException::class, 'is not readable');
 
         static::assertNotFalse(file_put_contents($this->outputFilename, ''));
         static::assertTrue(chmod($this->outputFilename, 0244));
@@ -1438,7 +1451,7 @@ class ZipFileTest extends ZipTestCase
         $this->setExpectedException(InvalidArgumentException::class, 'does not exist');
 
         $zipFile = new ZipFile();
-        $zipFile->addDir(uniqid('', true));
+        $zipFile->addDir(uniqid('', false));
     }
 
     /**
@@ -1471,7 +1484,7 @@ class ZipFileTest extends ZipTestCase
         $this->setExpectedException(InvalidArgumentException::class, 'does not exist');
 
         $zipFile = new ZipFile();
-        $zipFile->addDirRecursive(uniqid('', true));
+        $zipFile->addDirRecursive(uniqid('', false));
     }
 
     /**
@@ -1711,7 +1724,9 @@ class ZipFileTest extends ZipTestCase
      */
     public function testSaveAsFileNotWritable()
     {
-        $this->setExpectedException(InvalidArgumentException::class, 'can not open from write');
+        if (static::skipTestForWindows()) {
+            return;
+        }
 
         if (static::skipTestForRootUser()) {
             return;
@@ -1721,6 +1736,8 @@ class ZipFileTest extends ZipTestCase
         static::assertTrue(chmod($this->outputDirname, 0444));
 
         $this->outputFilename = $this->outputDirname . \DIRECTORY_SEPARATOR . basename($this->outputFilename);
+
+        $this->setExpectedExceptionRegExp(InvalidArgumentException::class, '~Cannot open ".*?" for writing.~');
 
         $zipFile = new ZipFile();
         $zipFile->saveAsFile($this->outputFilename);
@@ -1877,7 +1894,7 @@ class ZipFileTest extends ZipTestCase
      */
     public function testAddEmptyDirNullName()
     {
-        $this->setExpectedException(InvalidArgumentException::class, 'Dir name is null');
+        $this->setExpectedException(InvalidArgumentException::class, 'Entry name is null');
 
         $zipFile = new ZipFile();
         $zipFile->addEmptyDir(null);
@@ -1888,7 +1905,7 @@ class ZipFileTest extends ZipTestCase
      */
     public function testAddEmptyDirEmptyName()
     {
-        $this->setExpectedException(InvalidArgumentException::class, 'Empty dir name');
+        $this->setExpectedException(InvalidArgumentException::class, 'Empty entry name');
 
         $zipFile = new ZipFile();
         $zipFile->addEmptyDir('');
@@ -1947,12 +1964,21 @@ class ZipFileTest extends ZipTestCase
 
         $zipFile = new ZipFile();
         $zipFile['file'] = 'content';
+        $zipFile['file2'] = 'content2';
         $zipFile->saveAsFile($this->outputFilename);
         $zipFile->close();
 
         $zipFile->openFromString(file_get_contents($this->outputFilename));
-        $zipFile['file2'] = 'content 2';
-        $zipFile->rewrite();
+        static::assertSame(\count($zipFile), 2);
+        static::assertTrue(isset($zipFile['file']));
+        static::assertTrue(isset($zipFile['file2']));
+        $zipFile['file3'] = 'content3';
+        $zipFile = $zipFile->rewrite();
+        static::assertSame(\count($zipFile), 3);
+        static::assertTrue(isset($zipFile['file']));
+        static::assertTrue(isset($zipFile['file2']));
+        static::assertTrue(isset($zipFile['file3']));
+        $zipFile->close();
     }
 
     /**
@@ -1964,6 +1990,87 @@ class ZipFileTest extends ZipTestCase
 
         $zipFile = new ZipFile();
         $zipFile->rewrite();
+    }
+
+    /**
+     * Checks the ability to overwrite an open zip file with a relative path.
+     *
+     * @throws ZipException
+     */
+    public function testRewriteRelativeFile()
+    {
+        $zipFile = new ZipFile();
+        $zipFile['entry.txt'] = 'test';
+        $zipFile->saveAsFile($this->outputFilename);
+        $zipFile->close();
+
+        $outputDirname = \dirname($this->outputFilename);
+        static::assertTrue(chdir($outputDirname));
+
+        $relativeFilename = basename($this->outputFilename);
+
+        $zipFile->openFile($this->outputFilename);
+        $zipFile['entry2.txt'] = 'test';
+        $zipFile->saveAsFile($relativeFilename);
+        $zipFile->close();
+
+        self::assertCorrectZipArchive($this->outputFilename);
+    }
+
+    /**
+     * Checks the ability to overwrite an open zip file with a relative path.
+     *
+     * @throws ZipException
+     */
+    public function testRewriteDifferentWinDirectorySeparator()
+    {
+        if (\DIRECTORY_SEPARATOR !== '\\') {
+            static::markTestSkipped('Windows test only');
+
+            return;
+        }
+
+        $zipFile = new ZipFile();
+        $zipFile['entry.txt'] = 'test';
+        $zipFile->saveAsFile($this->outputFilename);
+        $zipFile->close();
+
+        $alternativeOutputFilename = str_replace('\\', '/', $this->outputFilename);
+        self::assertCorrectZipArchive($alternativeOutputFilename);
+
+        $zipFile->openFile($this->outputFilename);
+        $zipFile['entry2.txt'] = 'test';
+        $zipFile->saveAsFile($alternativeOutputFilename);
+        $zipFile->close();
+
+        self::assertCorrectZipArchive($alternativeOutputFilename);
+
+        $zipFile->openFile($this->outputFilename);
+        static::assertCount(2, $zipFile);
+        $zipFile->close();
+    }
+
+    /**
+     * @throws ZipException
+     */
+    public function testRewriteRelativeFile2()
+    {
+        $this->outputFilename = basename($this->outputFilename);
+
+        $zipFile = new ZipFile();
+        $zipFile['entry.txt'] = 'test';
+        $zipFile->saveAsFile($this->outputFilename);
+        $zipFile->close();
+
+        $absoluteOutputFilename = getcwd() . \DIRECTORY_SEPARATOR . $this->outputFilename;
+        self::assertCorrectZipArchive($absoluteOutputFilename);
+
+        $zipFile->openFile($this->outputFilename);
+        $zipFile['entry2.txt'] = 'test';
+        $zipFile->saveAsFile($absoluteOutputFilename);
+        $zipFile->close();
+
+        self::assertCorrectZipArchive($absoluteOutputFilename);
     }
 
     /**

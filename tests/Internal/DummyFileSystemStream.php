@@ -40,7 +40,7 @@ class DummyFileSystemStream
     public function stream_open($path, $mode, $options, &$opened_path)
     {
         $parsedUrl = parse_url($path);
-        $uri = str_replace('//', '/', $parsedUrl['path']);
+        $uri = substr($parsedUrl['path'], 1);
         $this->fp = @fopen($uri, $mode);
 
         return $this->fp !== false;

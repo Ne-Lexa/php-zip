@@ -24,14 +24,14 @@ abstract class ZipTestCase extends TestCase
      */
     protected function setUp()
     {
-        $id = uniqid('phpzip', true);
-        $tempDir = sys_get_temp_dir() . '/phpunit-phpzip';
+        $id = uniqid('phpzip', false);
+        $tempDir = sys_get_temp_dir() . \DIRECTORY_SEPARATOR . 'phpunit-phpzip';
 
         if (!is_dir($tempDir) && !mkdir($tempDir, 0755, true) && !is_dir($tempDir)) {
-            throw new \RuntimeException('Dir ' . $tempDir . " can't created");
+            throw new \RuntimeException(sprintf('Directory "%s" was not created', $tempDir));
         }
-        $this->outputFilename = $tempDir . '/' . $id . '.zip';
-        $this->outputDirname = $tempDir . '/' . $id;
+        $this->outputFilename = $tempDir . \DIRECTORY_SEPARATOR . $id . '.zip';
+        $this->outputDirname = $tempDir . \DIRECTORY_SEPARATOR . $id;
     }
 
     /**
@@ -58,64 +58,91 @@ abstract class ZipTestCase extends TestCase
      */
     public static function assertCorrectZipArchive($filename, $password = null)
     {
-        if (self::existsProgram('unzip')) {
-            $command = 'unzip';
-
-            if ($password !== null) {
-                $command .= ' -P ' . escapeshellarg($password);
-            }
-            $command .= ' -t ' . escapeshellarg($filename);
-            $command .= ' 2>&1';
-            exec($command, $output, $returnCode);
-
-            $output = implode(\PHP_EOL, $output);
-
-            if ($password !== null && $returnCode === 81) {
-                if (self::existsProgram('7z')) {
-                    /**
-                     * WinZip 99-character limit.
-                     *
-                     * @see https://sourceforge.net/p/p7zip/discussion/383044/thread/c859a2f0/
-                     */
-                    $password = substr($password, 0, 99);
-
-                    $command = '7z t -p' . escapeshellarg($password) . ' ' . escapeshellarg($filename);
-                    exec($command, $output, $returnCode);
-                    /**
-                     * @var array $output
-                     */
-                    $output = implode(\PHP_EOL, $output);
-
-                    static::assertSame($returnCode, 0);
-                    static::assertNotContains(' Errors', $output);
-                    static::assertContains(' Ok', $output);
-                } else {
-                    fwrite(\STDERR, 'Program unzip cannot support this function.' . \PHP_EOL);
-                    fwrite(\STDERR, 'Please install 7z. For Ubuntu-like: sudo apt-get install p7zip-full' . \PHP_EOL);
-                }
-            } else {
-                static::assertSame($returnCode, 0, $output);
-                static::assertNotContains('incorrect password', $output);
-                static::assertContains(' OK', $output);
-                static::assertContains('No errors', $output);
-            }
+        if (self::existsProgram('7z')) {
+            self::assertCorrectZipArchiveFrom7z($filename, $password);
+        } elseif (self::existsProgram('unzip')) {
+            self::assertCorrectZipArchiveFromUnzip($filename, $password);
+        } else {
+            fwrite(\STDERR, 'Skipped testing the zip archive for errors using third-party utilities.' . \PHP_EOL);
+            fwrite(\STDERR, 'To fix this, install 7-zip or unzip.' . \PHP_EOL);
+            fwrite(\STDERR, \PHP_EOL);
+            fwrite(\STDERR, 'Install on Ubuntu: sudo apt-get install p7zip-full unzip' . \PHP_EOL);
+            fwrite(\STDERR, \PHP_EOL);
+            fwrite(\STDERR, 'Install on Windows:' . \PHP_EOL);
+            fwrite(\STDERR, ' * 7-zip - https://www.7-zip.org/download.html' . \PHP_EOL);
+            fwrite(\STDERR, ' * unzip - http://gnuwin32.sourceforge.net/packages/unzip.htm' . \PHP_EOL);
+            fwrite(\STDERR, \PHP_EOL);
         }
     }
 
     /**
+     * @param string      $filename
+     * @param string|null $password
+     */
+    private static function assertCorrectZipArchiveFrom7z($filename, $password = null)
+    {
+        $command = '7z t';
+
+        if ($password !== null) {
+            $command .= ' -p' . escapeshellarg($password);
+        }
+        $command .= ' ' . escapeshellarg($filename) . ' 2>&1';
+
+        exec($command, $output, $returnCode);
+        $output = implode(\PHP_EOL, $output);
+
+        static::assertSame($returnCode, 0);
+        static::assertNotContains(' Errors', $output);
+        static::assertContains(' Ok', $output);
+    }
+
+    /**
+     * @param string      $filename
+     * @param string|null $password
+     */
+    private static function assertCorrectZipArchiveFromUnzip($filename, $password = null)
+    {
+        $command = 'unzip';
+
+        if ($password !== null) {
+            $command .= ' -P ' . escapeshellarg($password);
+        }
+        $command .= ' -t ' . escapeshellarg($filename) . ' 2>&1';
+
+        exec($command, $output, $returnCode);
+        $output = implode(\PHP_EOL, $output);
+
+        if ($password !== null && $returnCode === 81) {
+            fwrite(\STDERR, 'Program unzip cannot support this function.' . \PHP_EOL);
+            fwrite(\STDERR, 'You have to install 7-zip to complete this test.' . \PHP_EOL);
+            fwrite(\STDERR, 'Install 7-Zip on Ubuntu: sudo apt-get install p7zip-full' . \PHP_EOL);
+            fwrite(\STDERR, 'Install 7-Zip on Windows: https://www.7-zip.org/download.html' . \PHP_EOL);
+
+            return;
+        }
+
+        static::assertSame($returnCode, 0, $output);
+        static::assertNotContains('incorrect password', $output);
+        static::assertContains(' OK', $output);
+        static::assertContains('No errors', $output);
+    }
+
+    /**
      * @param string $program
+     * @param array  $successCodes
      *
      * @return bool
      */
-    protected static function existsProgram($program)
+    protected static function existsProgram($program, array $successCodes = [0])
     {
-        if (\DIRECTORY_SEPARATOR !== '\\') {
-            exec('which ' . escapeshellarg($program), $output, $returnCode);
+        $command = \DIRECTORY_SEPARATOR === '\\' ?
+            escapeshellarg($program) :
+            'which ' . escapeshellarg($program);
+        $command .= ' 2>&1';
 
-            return $returnCode === 0;
-        }
-        // false for Windows
-        return false;
+        exec($command, $output, $returnCode);
+
+        return \in_array($returnCode, $successCodes, true);
     }
 
     /**
@@ -144,7 +171,7 @@ abstract class ZipTestCase extends TestCase
      */
     public static function assertVerifyZipAlign($filename, $showErrors = false)
     {
-        if (self::existsProgram('zipalign')) {
+        if (self::existsProgram('zipalign', [0, 2])) {
             exec('zipalign -c -v 4 ' . escapeshellarg($filename), $output, $returnCode);
 
             if ($showErrors && $returnCode !== 0) {
@@ -155,6 +182,14 @@ abstract class ZipTestCase extends TestCase
         }
 
         fwrite(\STDERR, "Cannot find the program 'zipalign' for the test" . \PHP_EOL);
+        fwrite(\STDERR, 'To fix this, install zipalign.' . \PHP_EOL);
+        fwrite(\STDERR, \PHP_EOL);
+        fwrite(\STDERR, 'Install on Ubuntu: sudo apt-get install zipalign' . \PHP_EOL);
+        fwrite(\STDERR, \PHP_EOL);
+        fwrite(\STDERR, 'Install on Windows:' . \PHP_EOL);
+        fwrite(\STDERR, ' 1. Install Android Studio' . \PHP_EOL);
+        fwrite(\STDERR, ' 2. Install Android Sdk' . \PHP_EOL);
+        fwrite(\STDERR, ' 3. Add zipalign path to \$Path' . \PHP_EOL);
 
         return null;
     }
@@ -167,6 +202,20 @@ abstract class ZipTestCase extends TestCase
         /** @noinspection PhpComposerExtensionStubsInspection */
         if (\extension_loaded('posix') && posix_getuid() === 0) {
             static::markTestSkipped('Skip the test for a user with root privileges');
+
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * @return bool
+     */
+    public static function skipTestForWindows()
+    {
+        if (\DIRECTORY_SEPARATOR === '\\') {
+            static::markTestSkipped('Skip on Windows');
 
             return true;
         }
