@@ -41,6 +41,11 @@ matrix:
       os: linux
       dist: xenial
       env: COVERAGE=true ZIPALIGN_INSTALL=true PHPUNIT_FLAGS="-v -c phpunit.xml --coverage-clover=coverage.clover"
+      
+    - php: 8.0
+      os: linux
+      dist: xenial
+      env: COVERAGE=true ZIPALIGN_INSTALL=true PHPUNIT_FLAGS="-v -c phpunit.xml --coverage-clover=coverage.clover"
 
 before_install:
   - if [[ $COVERAGE != true ]]; then phpenv config-rm xdebug.ini || true; fi
