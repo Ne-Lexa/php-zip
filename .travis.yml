@@ -40,9 +40,9 @@ matrix:
     - php: 7.4
       os: linux
       dist: xenial
-      env: COVERAGE=true ZIPALIGN_INSTALL=true PHPUNIT_FLAGS="-v -c phpunit.xml --coverage-clover=coverage.clover"
+      env: ZIPALIGN_INSTALL=true
       
-    - php: 8.0
+    - php: 8.0snapshot
       os: linux
       dist: xenial
       env: COVERAGE=true ZIPALIGN_INSTALL=true PHPUNIT_FLAGS="-v -c phpunit.xml --coverage-clover=coverage.clover"
