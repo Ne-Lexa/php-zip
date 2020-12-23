@@ -2,6 +2,7 @@
 
 namespace PhpZip\Util;
 
+use PhpZip\Constants\ZipCompressionMethod;
 use PhpZip\Util\Iterator\IgnoreFilesFilterIterator;
 use PhpZip\Util\Iterator\IgnoreFilesRecursiveFilterIterator;
 
@@ -317,6 +318,22 @@ final class FilesUtil
         }
 
         return symlink($target, $path);
+    }
+
+    /**
+     * @param bool $deflateCompatible
+     *
+     * @return int
+     */
+    public static function getDefaultCompressionMethod($deflateCompatible)
+    {
+      if (!$deflateCompatible) {
+          return ZipCompressionMethod::STORED;
+      }
+      if (!extension_loaded('zlib')) {
+          return ZipCompressionMethod::STORED;
+      }
+      return ZipCompressionMethod::DEFLATED;
     }
 
     /**

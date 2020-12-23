@@ -576,9 +576,7 @@ class ZipFile implements ZipFileInterface
                 $compressionMethod = ZipCompressionMethod::STORED;
             } else {
                 $mimeType = FilesUtil::getMimeTypeFromString($contents);
-                $compressionMethod = FilesUtil::isBadCompressionMimeType($mimeType) ?
-                    ZipCompressionMethod::STORED :
-                    ZipCompressionMethod::DEFLATED;
+                $compressionMethod = FilesUtil::getDefaultCompressionMethod(!FilesUtil::isBadCompressionMimeType($mimeType));
             }
         }
 
@@ -714,9 +712,7 @@ class ZipFile implements ZipFileInterface
             } elseif ($file->getSize() < 512) {
                 $compressionMethod = ZipCompressionMethod::STORED;
             } else {
-                $compressionMethod = FilesUtil::isBadCompressionFile($file->getPathname()) ?
-                    ZipCompressionMethod::STORED :
-                    ZipCompressionMethod::DEFLATED;
+                $compressionMethod = FilesUtil::getDefaultCompressionMethod(!FilesUtil::isBadCompressionFile($file->getPathname()));
             }
 
             $zipEntry->setCompressionMethod($compressionMethod);
@@ -838,9 +834,7 @@ class ZipFile implements ZipFileInterface
                     $bufferContents = stream_get_contents($stream, min(1024, $length));
                     rewind($stream);
                     $mimeType = FilesUtil::getMimeTypeFromString($bufferContents);
-                    $compressionMethod = FilesUtil::isBadCompressionMimeType($mimeType) ?
-                        ZipCompressionMethod::STORED :
-                        ZipCompressionMethod::DEFLATED;
+                    $compressionMethod = FilesUtil::getDefaultCompressionMethod(!FilesUtil::isBadCompressionMimeType($mimeType));
                 }
                 $zipEntry->setUncompressedSize($length);
             }
@@ -848,7 +842,7 @@ class ZipFile implements ZipFileInterface
             $unixMode = 0100644;
 
             if ($compressionMethod === null || $compressionMethod === ZipEntry::UNKNOWN) {
-                $compressionMethod = ZipCompressionMethod::DEFLATED;
+                $compressionMethod = FilesUtil::getDefaultCompressionMethod(true);
             }
         }
 
