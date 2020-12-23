@@ -22,12 +22,12 @@
     ],
     "require": {
         "php": "^5.5.9 || ^7.0",
-        "ext-zlib": "*",
         "psr/http-message": "^1.0",
         "paragonie/random_compat": "*",
         "symfony/finder": "^3.0|^4.0|^5.0"
     },
     "require-dev": {
+        "ext-zlib": "*",
         "ext-bz2": "*",
         "ext-openssl": "*",
         "ext-fileinfo": "*",
