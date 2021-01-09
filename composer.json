@@ -21,11 +21,11 @@
         }
     ],
     "require": {
-        "php": "^5.5.9 || ^7.0",
+        "php": "^7.2 || ^8.0",
         "ext-zlib": "*",
         "psr/http-message": "^1.0",
         "paragonie/random_compat": "*",
-        "symfony/finder": "^3.0|^4.0|^5.0"
+        "symfony/finder": "^3.0 || ^4.0 || ^5.0"
     },
     "require-dev": {
         "ext-bz2": "*",
@@ -33,8 +33,8 @@
         "ext-fileinfo": "*",
         "ext-xml": "*",
         "guzzlehttp/psr7": "^1.6",
-        "phpunit/phpunit": "^4.8|^5.7",
-        "symfony/var-dumper": "^3.0|^4.0|^5.0"
+        "phpunit/phpunit": "^8 || ^9",
+        "symfony/var-dumper": "^5.0"
     },
     "autoload": {
         "psr-4": {
@@ -55,6 +55,7 @@
     "minimum-stability": "stable",
     "scripts": {
         "php:fix": "php .php_cs --force",
-        "php:fix:debug": "php .php_cs"
+        "test": "phpunit --configuration phpunit.xml --do-not-cache-result --colors=always",
+        "test:coverage": "phpunit --configuration phpunit.xml --do-not-cache-result --colors=always --coverage-clover build/logs/clover.xml --coverage-html build/coverage"
     }
 }

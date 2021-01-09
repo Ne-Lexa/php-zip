@@ -30,7 +30,7 @@ abstract class ZipFileSetTestCase extends ZipTestCase
     /**
      * Before test.
      */
-    protected function setUp()
+    protected function setUp(): void
     {
         parent::setUp();
         $this->fillDirectory();

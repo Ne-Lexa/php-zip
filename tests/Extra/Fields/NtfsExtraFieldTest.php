@@ -14,7 +14,7 @@ use PhpZip\Model\Extra\Fields\NtfsExtraField;
  */
 final class NtfsExtraFieldTest extends TestCase
 {
-    protected function setUp()
+    protected function setUp(): void
     {
         if (\PHP_INT_SIZE === 4) {
             self::markTestSkipped('only 64 bit test');

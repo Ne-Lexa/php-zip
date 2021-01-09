@@ -32,7 +32,7 @@ final class JarMarkerExtraFieldTest extends TestCase
      */
     public function testInvalidUnpackLocalData()
     {
-        $this->setExpectedException(
+        $this->expectException(
             ZipException::class,
             "JarMarker doesn't expect any data"
         );
@@ -45,7 +45,7 @@ final class JarMarkerExtraFieldTest extends TestCase
      */
     public function testInvalidUnpackCdData()
     {
-        $this->setExpectedException(
+        $this->expectException(
             ZipException::class,
             "JarMarker doesn't expect any data"
         );

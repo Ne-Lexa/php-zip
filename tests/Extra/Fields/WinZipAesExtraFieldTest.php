@@ -157,7 +157,7 @@ final class WinZipAesExtraFieldTest extends TestCase
      */
     public function testConstructUnsupportVendorVersion()
     {
-        $this->setExpectedException(InvalidArgumentException::class, 'Unsupport WinZip AES vendor version: 3');
+        $this->expectException(InvalidArgumentException::class, 'Unsupport WinZip AES vendor version: 3');
 
         new WinZipAesExtraField(
             3,
@@ -171,7 +171,7 @@ final class WinZipAesExtraFieldTest extends TestCase
      */
     public function testSetterUnsupportVendorVersion()
     {
-        $this->setExpectedException(InvalidArgumentException::class, 'Unsupport WinZip AES vendor version: 3');
+        $this->expectException(InvalidArgumentException::class, 'Unsupport WinZip AES vendor version: 3');
 
         $extraField = new WinZipAesExtraField(
             WinZipAesExtraField::VERSION_AE1,
@@ -186,7 +186,7 @@ final class WinZipAesExtraFieldTest extends TestCase
      */
     public function testConstructUnsupportCompressionMethod()
     {
-        $this->setExpectedException(ZipUnsupportMethodException::class, 'Compression method 3 (Reduced compression factor 2) is not supported.');
+        $this->expectException(ZipUnsupportMethodException::class, 'Compression method 3 (Reduced compression factor 2) is not supported.');
 
         new WinZipAesExtraField(
             WinZipAesExtraField::VERSION_AE1,
@@ -200,7 +200,7 @@ final class WinZipAesExtraFieldTest extends TestCase
      */
     public function testSetterUnsupportCompressionMethod()
     {
-        $this->setExpectedException(ZipUnsupportMethodException::class, 'Compression method 3 (Reduced compression factor 2) is not supported.');
+        $this->expectException(ZipUnsupportMethodException::class, 'Compression method 3 (Reduced compression factor 2) is not supported.');
 
         $extraField = new WinZipAesExtraField(
             WinZipAesExtraField::VERSION_AE1,
@@ -215,7 +215,7 @@ final class WinZipAesExtraFieldTest extends TestCase
      */
     public function testConstructUnsupportKeyStrength()
     {
-        $this->setExpectedException(InvalidArgumentException::class, 'Key strength 16 not support value. Allow values: 1, 2, 3');
+        $this->expectException(InvalidArgumentException::class, 'Key strength 16 not support value. Allow values: 1, 2, 3');
 
         new WinZipAesExtraField(
             WinZipAesExtraField::VERSION_AE1,
@@ -229,7 +229,7 @@ final class WinZipAesExtraFieldTest extends TestCase
      */
     public function testSetterUnsupportKeyStrength()
     {
-        $this->setExpectedException(InvalidArgumentException::class, 'Key strength 16 not support value. Allow values: 1, 2, 3');
+        $this->expectException(InvalidArgumentException::class, 'Key strength 16 not support value. Allow values: 1, 2, 3');
 
         new WinZipAesExtraField(
             WinZipAesExtraField::VERSION_AE1,

@@ -3,3 +3,5 @@
 /.idea
 /composer.lock
 /*.cache
+build/
+.phpunit.result.cache

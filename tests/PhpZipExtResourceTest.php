@@ -109,7 +109,7 @@ class PhpZipExtResourceTest extends ZipTestCase
      */
     public function testBug49072()
     {
-        $this->setExpectedException(Crc32Exception::class, 'file1');
+        $this->expectException(Crc32Exception::class, 'file1');
 
         $filename = __DIR__ . '/resources/pecl/bug49072.zip';
 
@@ -128,12 +128,12 @@ class PhpZipExtResourceTest extends ZipTestCase
     public function testBug70752()
     {
         if (\PHP_INT_SIZE === 4) { // php 32 bit
-            $this->setExpectedException(
+            $this->expectException(
                 RuntimeException::class,
                 'Traditional PKWARE Encryption is not supported in 32-bit PHP.'
             );
         } else { // php 64 bit
-            $this->setExpectedException(
+            $this->expectException(
                 ZipAuthenticationException::class,
                 'Invalid password'
             );
@@ -151,7 +151,7 @@ class PhpZipExtResourceTest extends ZipTestCase
             $zipFile->extractTo($this->outputDirname);
             static::markTestIncomplete('failed test');
         } catch (ZipException $exception) {
-            static::assertFileNotExists($this->outputDirname . '/bug70752.txt');
+            static::assertFileDoesNotExist($this->outputDirname . '/bug70752.txt');
 
             throw $exception;
         } finally {
@@ -168,7 +168,7 @@ class PhpZipExtResourceTest extends ZipTestCase
      */
     public function testPecl12414()
     {
-        $this->setExpectedException(ZipException::class, 'Corrupt zip file. Cannot read zip entry.');
+        $this->expectException(ZipException::class, 'Corrupt zip file. Cannot read zip entry.');
 
         $filename = __DIR__ . '/resources/pecl/pecl12414.zip';
 
