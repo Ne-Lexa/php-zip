@@ -688,7 +688,7 @@ class ZipFile implements ZipFileInterface
         }
 
         $entryName = $this->normalizeEntryName($entryName);
-        $entryName = $file->isDir() ? rtrim($entryName, '/\\') . '/' : $entryName;
+        $entryName = $file->isDir() && !$file->isLink() ? rtrim($entryName, '/\\') . '/' : $entryName;
 
         $zipEntry = new ZipEntry($entryName);
         $zipEntry->setCreatedOS(ZipPlatform::OS_UNIX);
@@ -706,6 +706,7 @@ class ZipFile implements ZipFileInterface
             $zipEntry->setCompressedSize($lengthLinkTarget);
             $zipEntry->setCrc(crc32($linkTarget));
             $filePerms |= UnixStat::UNX_IFLNK;
+            $filePerms &= ~UnixStat::UNX_IFDIR;
 
             $zipData = new ZipNewData($zipEntry, $linkTarget);
         } elseif ($file->isFile()) {
