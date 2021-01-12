@@ -14,6 +14,8 @@ use Symfony\Component\Finder\Finder;
  */
 final class SymlinkTest extends ZipTestCase
 {
+
+
     /**
      * @dataProvider provideAllowSymlink
      *
@@ -61,6 +63,66 @@ final class SymlinkTest extends ZipTestCase
         if ($allowSymlink) {
             self::assertTrue($splFileInfo->isLink());
             self::assertSame($splFileInfo->getLinkTarget(), $symlinkTarget);
+        } else {
+            self::assertFalse($splFileInfo->isLink());
+            self::assertStringEqualsFile($symlinkPath, $symlinkTarget);
+        }
+    }
+
+    /**
+     * @dataProvider provideAllowSymlink
+     *
+     * @param bool $allowSymlink
+     *
+     * @throws \Exception
+     */
+    public function testSymlinkedDirectory($allowSymlink)
+    {
+        if (self::skipTestForWindows()) {
+            return;
+        }
+
+        if (!is_dir($this->outputDirname)) {
+            self::assertTrue(mkdir($this->outputDirname, 0755, true));
+        }
+
+        $dirToBeLinked = $this->outputDirname . '/dir-to-be-linked';
+        self::assertTrue(mkdir($dirToBeLinked, 0755, true));
+
+        $contentsFile = random_bytes(100);
+        $filePath = $dirToBeLinked . '/file.bin';
+        self::assertNotFalse(file_put_contents($filePath, $contentsFile));
+        $symlinkPath = $this->outputDirname . '/symlink.dir';
+        $symlinkTarget = basename($dirToBeLinked);
+        self::assertTrue(symlink($symlinkTarget, $symlinkPath));
+
+        $finder = (new Finder())->in($this->outputDirname);
+        $zipFile = new ZipFile();
+        $zipFile->addFromFinder($finder);
+        $zipFile->saveAsFile($this->outputFilename);
+        $zipFile->close();
+
+        self::assertCorrectZipArchive($this->outputFilename);
+
+        FilesUtil::removeDir($this->outputDirname);
+        self::assertFalse(is_dir($this->outputDirname));
+        self::assertTrue(mkdir($this->outputDirname, 0755, true));
+
+        $zipFile->openFile($this->outputFilename);
+        $zipFile->extractTo($this->outputDirname, null, [
+            ZipOptions::EXTRACT_SYMLINKS => $allowSymlink,
+        ]);
+        $zipFile->close();
+
+        $splFileInfo = new \SplFileInfo($symlinkPath);
+
+        if ($allowSymlink) {
+            self::assertTrue($splFileInfo->isLink());
+            self::assertSame($splFileInfo->getLinkTarget(), $symlinkTarget);
+            $linkedFilename = $symlinkPath."/".basename($filePath);
+            self::assertFileExists($linkedFilename);
+            $linkedFileContents = file_get_contents($linkedFilename);
+            self::assertEquals($contentsFile, $linkedFileContents);
         } else {
             self::assertFalse($splFileInfo->isLink());
             self::assertStringEqualsFile($symlinkPath, $symlinkTarget);

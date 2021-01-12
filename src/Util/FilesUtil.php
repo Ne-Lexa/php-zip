@@ -45,7 +45,7 @@ final class FilesUtil
 
         /** @var \SplFileInfo $fileInfo */
         foreach ($files as $fileInfo) {
-            $function = ($fileInfo->isDir() ? 'rmdir' : 'unlink');
+            $function = ($fileInfo->isDir() && !$fileInfo->isLink() ? 'rmdir' : 'unlink');
             $function($fileInfo->getPathname());
         }
         @rmdir($dir);

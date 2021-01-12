@@ -1447,7 +1447,7 @@ class ZipEntry
             return $mode;
         }
 
-        return $this->isDirectory ? 040755 : 0100644;
+        return $this->isDirectory && !$this->isUnixSymlink() ? 040755 : 0100644;
     }
 
     /**
