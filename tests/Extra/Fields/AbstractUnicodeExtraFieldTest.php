@@ -76,7 +76,7 @@ abstract class AbstractUnicodeExtraFieldTest extends TestCase
      */
     public function testUnicodeErrorParse()
     {
-        $this->setExpectedException(
+        $this->expectException(
             ZipException::class,
             'Unicode path extra data must have at least 5 bytes.'
         );
@@ -90,7 +90,7 @@ abstract class AbstractUnicodeExtraFieldTest extends TestCase
      */
     public function testUnknownVersionParse()
     {
-        $this->setExpectedException(
+        $this->expectException(
             ZipException::class,
             'Unsupported version [2] for Unicode path extra data.'
         );

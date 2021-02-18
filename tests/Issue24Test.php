@@ -21,7 +21,7 @@ class Issue24Test extends ZipTestCase
      *
      * @noinspection PhpMissingParentCallCommonInspection
      */
-    public static function setUpBeforeClass()
+    public static function setUpBeforeClass(): void
     {
         stream_wrapper_register(self::PROTO_DUMMYFS, DummyFileSystemStream::class);
     }

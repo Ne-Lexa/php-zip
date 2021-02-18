@@ -22,7 +22,7 @@ abstract class ZipTestCase extends TestCase
      *
      * @noinspection PhpMissingParentCallCommonInspection
      */
-    protected function setUp()
+    protected function setUp(): void
     {
         $id = uniqid('phpzip', false);
         $tempDir = sys_get_temp_dir() . \DIRECTORY_SEPARATOR . 'phpunit-phpzip';
@@ -37,7 +37,7 @@ abstract class ZipTestCase extends TestCase
     /**
      * After test.
      */
-    protected function tearDown()
+    protected function tearDown(): void
     {
         parent::tearDown();
 

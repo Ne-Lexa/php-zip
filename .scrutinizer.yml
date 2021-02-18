@@ -1,0 +1,43 @@
+filter:
+  paths: ["src/*"]
+  excluded_paths: ["vendor/*", "tests/*"]
+
+checks:
+  php:
+    code_rating: true
+    duplication: true
+
+tools:
+  external_code_coverage: false
+
+build:
+  environment:
+    php:
+      version: 7.4
+      pecl_extensions:
+        - zip
+    mysql: false
+    node: false
+    postgresql: false
+    mongodb: false
+    elasticsearch: false
+    redis: false
+    memcached: false
+    neo4j: false
+    rabbitmq: false
+  nodes:
+    analysis:
+      tests:
+        override:
+          - php-scrutinizer-run
+  dependencies:
+    before:
+      - composer self-update
+      - composer update --no-interaction --prefer-dist --no-progress
+  tests:
+    before:
+      -
+        command: composer test:coverage
+        coverage:
+          file: 'build/logs/clover.xml'
+          format: 'clover'

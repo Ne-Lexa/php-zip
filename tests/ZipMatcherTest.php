@@ -24,7 +24,7 @@ class ZipMatcherTest extends TestCase
         $matcher = $zipFile->matcher();
         static::assertInstanceOf(ZipEntryMatcher::class, $matcher);
 
-        static::assertInternalType('array', $matcher->getMatches());
+        static::assertIsArray($matcher->getMatches());
         static::assertCount(0, $matcher);
 
         $matcher->add(1)->add(10)->add(20);

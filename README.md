@@ -2,7 +2,7 @@
 ========
 `PhpZip` is a php-library for extended work with ZIP-archives.
 
-[![Build Status](https://travis-ci.org/Ne-Lexa/php-zip.svg?branch=master)](https://travis-ci.org/Ne-Lexa/php-zip)
+[![Build Status](https://github.com/Ne-Lexa/php-zip/workflows/build/badge.svg)](https://github.com/Ne-Lexa/php-zip/actions)
 [![Code Coverage](https://scrutinizer-ci.com/g/Ne-Lexa/php-zip/badges/coverage.png?b=master)](https://scrutinizer-ci.com/g/Ne-Lexa/php-zip/?branch=master)
 [![Latest Stable Version](https://poser.pugx.org/nelexa/zip/v/stable)](https://packagist.org/packages/nelexa/zip)
 [![Total Downloads](https://poser.pugx.org/nelexa/zip/downloads)](https://packagist.org/packages/nelexa/zip)
@@ -66,7 +66,7 @@ Table of contents
   + Set the encryption method for all or individual entries in the archive.
 
 ### <a name="Requirements"></a> Requirements
-- `PHP` >= 5.5 (preferably 64-bit).
+- `PHP` >= 7.2 or `PHP` >= 8.0 (preferably 64-bit).
 - Optional php-extension `bzip2` for BZIP2 compression.
 - Optional php-extension `openssl` or `mcrypt` for `WinZip Aes Encryption` support.
 

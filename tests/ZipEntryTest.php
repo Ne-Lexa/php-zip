@@ -89,7 +89,7 @@ class ZipEntryTest extends TestCase
      */
     public function testEmptyName($entryName, $exceptionMessage)
     {
-        $this->setExpectedException(InvalidArgumentException::class, $exceptionMessage);
+        $this->expectException(InvalidArgumentException::class, $exceptionMessage);
 
         new ZipEntry($entryName);
     }
@@ -174,7 +174,7 @@ class ZipEntryTest extends TestCase
      */
     public function testOutOfRangeCompressionMethod($compressionMethod)
     {
-        $this->setExpectedException(InvalidArgumentException::class, 'method out of range: ' . $compressionMethod);
+        $this->expectException(InvalidArgumentException::class, 'method out of range: ' . $compressionMethod);
 
         $zipEntry = new ZipEntry('entry');
         $zipEntry->setCompressionMethod($compressionMethod);
@@ -201,7 +201,7 @@ class ZipEntryTest extends TestCase
      */
     public function testUnsupportCompressionMethod($compressionMethod, $exceptionMessage)
     {
-        $this->setExpectedException(ZipUnsupportMethodException::class, $exceptionMessage);
+        $this->expectException(ZipUnsupportMethodException::class, $exceptionMessage);
 
         $zipEntry = new ZipEntry('entry');
         $zipEntry->setCompressionMethod($compressionMethod);
@@ -253,7 +253,7 @@ class ZipEntryTest extends TestCase
 
     public function testEmptyCharset()
     {
-        $this->setExpectedException(InvalidArgumentException::class, 'Empty charset');
+        $this->expectException(InvalidArgumentException::class, 'Empty charset');
 
         $zipEntry = new ZipEntry('entry');
         $zipEntry->setCharset('');
@@ -398,7 +398,7 @@ class ZipEntryTest extends TestCase
      */
     public function testInvalidCreatedOs($zipOS)
     {
-        $this->setExpectedException(InvalidArgumentException::class, 'Platform out of range');
+        $this->expectException(InvalidArgumentException::class, 'Platform out of range');
 
         $zipEntry = new ZipEntry('entry');
         $zipEntry->setCreatedOS($zipOS);
@@ -422,7 +422,7 @@ class ZipEntryTest extends TestCase
      */
     public function testInvalidExtractedOs($zipOS)
     {
-        $this->setExpectedException(InvalidArgumentException::class, 'Platform out of range');
+        $this->expectException(InvalidArgumentException::class, 'Platform out of range');
 
         $zipEntry = new ZipEntry('entry');
         $zipEntry->setExtractedOS($zipOS);
@@ -545,7 +545,7 @@ class ZipEntryTest extends TestCase
 
     public function testInvalidCompressedSize()
     {
-        $this->setExpectedException(InvalidArgumentException::class, 'Compressed size < -1');
+        $this->expectException(InvalidArgumentException::class, 'Compressed size < -1');
 
         $zipEntry = new ZipEntry('entry');
         $zipEntry->setCompressedSize(-2);
@@ -553,7 +553,7 @@ class ZipEntryTest extends TestCase
 
     public function testInvalidUncompressedSize()
     {
-        $this->setExpectedException(InvalidArgumentException::class, 'Uncompressed size < -1');
+        $this->expectException(InvalidArgumentException::class, 'Uncompressed size < -1');
 
         $zipEntry = new ZipEntry('entry');
         $zipEntry->setUncompressedSize(-2);
@@ -568,7 +568,7 @@ class ZipEntryTest extends TestCase
         $zipEntry->setLocalHeaderOffset($localHeaderOffset);
         static::assertSame($zipEntry->getLocalHeaderOffset(), $localHeaderOffset);
 
-        $this->setExpectedException(InvalidArgumentException::class, 'Negative $localHeaderOffset');
+        $this->expectException(InvalidArgumentException::class, 'Negative $localHeaderOffset');
         $zipEntry->setLocalHeaderOffset(-1);
     }
 
@@ -652,7 +652,7 @@ class ZipEntryTest extends TestCase
      */
     public function testInvalidGPBF($gpbf)
     {
-        $this->setExpectedException(InvalidArgumentException::class, 'general purpose bit flags out of range');
+        $this->expectException(InvalidArgumentException::class, 'general purpose bit flags out of range');
 
         $zipEntry = new ZipEntry('entry');
         $zipEntry->setGeneralPurposeBitFlags($gpbf);
@@ -791,7 +791,7 @@ class ZipEntryTest extends TestCase
      */
     public function testInvalidCompressionLevel($compressionLevel)
     {
-        $this->setExpectedException(
+        $this->expectException(
             InvalidArgumentException::class,
             'Invalid compression level. Minimum level ' . ZipCompressionLevel::LEVEL_MIN .
             '. Maximum level ' . ZipCompressionLevel::LEVEL_MAX
@@ -855,7 +855,7 @@ class ZipEntryTest extends TestCase
             return;
         }
 
-        $this->setExpectedException(InvalidArgumentException::class, 'DosTime out of range');
+        $this->expectException(InvalidArgumentException::class, 'DosTime out of range');
 
         $zipEntry = new ZipEntry('entry');
         $zipEntry->setDosTime($dosTime);
@@ -1012,7 +1012,7 @@ class ZipEntryTest extends TestCase
             return;
         }
 
-        $this->setExpectedException(InvalidArgumentException::class, 'external attributes out of range');
+        $this->expectException(InvalidArgumentException::class, 'external attributes out of range');
 
         $zipEntry = new ZipEntry('entry');
         $zipEntry->setExternalAttributes($externalAttributes);
@@ -1045,7 +1045,7 @@ class ZipEntryTest extends TestCase
      */
     public function testInvalidInternalAttributes($internalAttributes)
     {
-        $this->setExpectedException(InvalidArgumentException::class, 'internal attributes out of range');
+        $this->expectException(InvalidArgumentException::class, 'internal attributes out of range');
 
         $zipEntry = new ZipEntry('entry');
         $zipEntry->setInternalAttributes($internalAttributes);
@@ -1140,7 +1140,7 @@ class ZipEntryTest extends TestCase
      */
     public function testLongComment()
     {
-        $this->setExpectedException(InvalidArgumentException::class, 'Comment too long');
+        $this->expectException(InvalidArgumentException::class, 'Comment too long');
 
         $longComment = random_bytes(0xffff + 1);
         $zipEntry = new ZipEntry('entry');
@@ -1305,7 +1305,7 @@ class ZipEntryTest extends TestCase
      */
     public function testInvalidEncryptionMethod($encryptionMethod)
     {
-        $this->setExpectedException(
+        $this->expectException(
             InvalidArgumentException::class,
             'Encryption method ' . $encryptionMethod . ' is not supported.'
         );
