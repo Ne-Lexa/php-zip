@@ -1,0 +1,147 @@
+# https://docs.github.com/en/actions
+
+name: "Integrate"
+
+on:
+  pull_request:
+    branches:
+      - "develop"
+  push:
+    branches:
+      - "develop"
+      - "master"
+
+env:
+  PHP_EXTENSIONS: "bz2, dom, fileinfo, filter, json, libxml, mbstring, openssl, tokenizer, xml, xmlwriter, zlib"
+
+jobs:
+  coding-standards:
+    name: "Coding Standards"
+
+    runs-on: "ubuntu-latest"
+
+    strategy:
+      matrix:
+        php-version:
+          - "7.4"
+
+        dependencies:
+          - "highest"
+
+    steps:
+      - name: "Checkout"
+        uses: "actions/checkout@v2.3.4"
+
+      - name: "Install PHP with extensions"
+        uses: "shivammathur/setup-php@2.9.0"
+        with:
+          coverage: "none"
+          extensions: "${{ env.PHP_EXTENSIONS }}"
+          php-version: "${{ matrix.php-version }}"
+          tools: "php-cs-fixer"
+
+      - name: "Validate composer.json"
+        run: "composer validate"
+
+      - name: "Install ${{ matrix.dependencies }} dependencies with composer"
+        uses: "ramsey/composer-install@1.1.0"
+        with:
+          dependency-versions: "${{ matrix.dependencies }}"
+
+      - name: "Cache cache file for friendsofphp/php-cs-fixer"
+        uses: "actions/cache@v2.1.4"
+        with:
+          path: ".php_cs.cache"
+          key: "php-${{ matrix.php-version }}-php-cs-fixer-${{ github.sha }}"
+          restore-keys: "php-${{ matrix.php-version }}-php-cs-fixer-"
+
+      - name: "Run friendsofphp/php-cs-fixer"
+        run: "composer php:fix:debug"
+
+  tests:
+    name: "Tests"
+
+    runs-on: "ubuntu-latest"
+
+    strategy:
+      matrix:
+        php-version:
+          - "5.5"
+          - "5.6"
+          - "7.0"
+          - "7.1"
+          - "7.2"
+          - "7.3"
+          - "7.4"
+
+        dependencies:
+          - "highest"
+
+    steps:
+      - name: "Install p7zip-full, unzip and zipalign with apt-fast"
+        run: "sudo apt-fast install -y p7zip-full unzip zipalign"
+
+      - name: "Checkout"
+        uses: "actions/checkout@v2.3.4"
+
+      - name: "Install PHP with extensions"
+        uses: "shivammathur/setup-php@2.9.0"
+        with:
+          coverage: "none"
+          extensions: "${{ env.PHP_EXTENSIONS }}"
+          php-version: "${{ matrix.php-version }}"
+
+      - name: "Set up problem matchers for phpunit/phpunit"
+        run: "echo \"::add-matcher::${{ runner.tool_cache }}/phpunit.json\""
+
+      - name: "Install ${{ matrix.dependencies }} dependencies with composer"
+        uses: "ramsey/composer-install@1.1.0"
+        with:
+          dependency-versions: "${{ matrix.dependencies }}"
+
+      - name: "Run unit tests with phpunit/phpunit"
+        run: "vendor/bin/phpunit --configuration=phpunit.xml"
+
+  code-coverage:
+    name: "Code Coverage"
+
+    runs-on: "ubuntu-latest"
+
+    strategy:
+      matrix:
+        php-version:
+          - "7.4"
+
+        dependencies:
+          - "highest"
+
+    steps:
+      - name: "Install p7zip-full, unzip and zipalign with apt-fast"
+        run: "sudo apt-fast install -y p7zip-full unzip zipalign"
+
+      - name: "Checkout"
+        uses: "actions/checkout@v2.3.4"
+
+      - name: "Install PHP with extensions"
+        uses: "shivammathur/setup-php@2.9.0"
+        with:
+          coverage: "xdebug"
+          extensions: "${{ env.PHP_EXTENSIONS }}"
+          php-version: "${{ matrix.php-version }}"
+
+      - name: "Set up problem matchers for phpunit/phpunit"
+        run: "echo \"::add-matcher::${{ runner.tool_cache }}/phpunit.json\""
+
+      - name: "Install ${{ matrix.dependencies }} dependencies with composer"
+        uses: "ramsey/composer-install@1.1.0"
+        with:
+          dependency-versions: "${{ matrix.dependencies }}"
+
+      - name: "Collect code coverage with Xdebug and phpunit/phpunit"
+        run: "vendor/bin/phpunit --configuration=phpunit.xml --coverage-clover=coverage.clover"
+
+      - name: "Fetch ocular.phar from scrutinizer-ci.com"
+        run: "wget https://scrutinizer-ci.com/ocular.phar"
+
+      - name: "Send code coverage report to scrutinizer-ci.com"
+        run: "php ocular.phar code-coverage:upload --format=php-clover coverage.clover"
