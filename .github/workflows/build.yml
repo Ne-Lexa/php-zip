@@ -9,8 +9,9 @@ jobs:
         name:    PHP ${{ matrix.php }} Test on ${{ matrix.os }}
 
         env:
-            extensions: bz2, dom, iconv, fileinfo, openssl, xml, zlib
-            key:        cache-v1
+            extensions:       bz2, dom, iconv, fileinfo, openssl, xml, zlib
+            key:              cache-v1
+            PHPUNIT_COVERAGE: 0
 
         strategy:
             matrix:
@@ -49,6 +50,11 @@ jobs:
                 run:  echo "COMPOSER_CACHE_DIR=$(composer config cache-dir)" >> $GITHUB_ENV
 
             -
+                name: Set coverage args
+                if:   matrix.os == 'ubuntu-latest' && matrix.php == '8.0'
+                run:  echo "PHPUNIT_COVERAGE=1" >> $GITHUB_ENV
+
+            -
                 name: Determine composer cache directory on Windows
                 if:   matrix.os == 'windows-latest'
                 run:  echo "COMPOSER_CACHE_DIR=~\AppData\Local\Composer" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
@@ -83,4 +89,18 @@ jobs:
 
             -
                 name: Run tests with phpunit
-                run:  vendor/bin/phpunit --colors=always
+                if:   env.PHPUNIT_COVERAGE == 0
+                run:  vendor/bin/phpunit -v
+
+            -
+                name: Run tests with phpunit and coverage
+                if:   env.PHPUNIT_COVERAGE == 1
+                run:  vendor/bin/phpunit -v --coverage-clover=coverage.clover
+
+            -
+                name: Upload code coverage scrutinizer
+                if:   env.PHPUNIT_COVERAGE == 1
+                run: |
+                     wget https://scrutinizer-ci.com/ocular.phar
+                     php ocular.phar code-coverage:upload --format=php-clover coverage.clover
+
