@@ -783,6 +783,10 @@ Then install updates using `Composer`:
 ```bash
 composer update nelexa/zip
 ```
+Update your code to work with the new version:
+**BC**
+- removed deprecated classes and methods.
+- removed `zipalign` functional. This functionality will be placed in a separate package `nelexa/apkfile`.
 
 #### <a name="Upgrade-v2-to-v3"></a> Upgrade version 2 to version 3.0
 Update the major version in the file `composer.json` to `^3.0`.
@@ -792,9 +796,6 @@ Update the major version in the file `composer.json` to `^3.0`.
         "nelexa/zip": "^3.0"
     }
 }
-Update your code to work with the new version:
-**BC**
-- removed `zipalign` functional. This functionality will be placed in a separate package `nelexa/apkfile`.
 ```
 Then install updates using `Composer`:
 ```bash
