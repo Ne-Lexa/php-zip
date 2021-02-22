@@ -1,6 +1,13 @@
 <?php
 
-/** @noinspection PhpComposerExtensionStubsInspection */
+declare(strict_types=1);
+
+/*
+ * This file is part of the nelexa/zip package.
+ * (c) Ne-Lexa <https://github.com/Ne-Lexa/php-zip>
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
 
 namespace PhpZip\Tests\Internal\Epub;
 
@@ -13,29 +20,21 @@ use PhpZip\Exception\ZipException;
  */
 class EpubInfo
 {
-    /** @var string|null */
-    private $title;
+    private ?string $title;
 
-    /** @var string|null */
-    private $creator;
+    private ?string $creator;
 
-    /** @var string|null */
-    private $language;
+    private ?string $language;
 
-    /** @var string|null */
-    private $publisher;
+    private ?string $publisher;
 
-    /** @var string|null */
-    private $description;
+    private ?string $description;
 
-    /** @var string|null */
-    private $rights;
+    private ?string $rights;
 
-    /** @var string|null */
-    private $date;
+    private ?string $date;
 
-    /** @var string|null */
-    private $subject;
+    private ?string $subject;
 
     /**
      * EpubInfo constructor.
@@ -76,74 +75,47 @@ class EpubInfo
         $this->subject = empty($subject) ? null : $subject;
     }
 
-    /**
-     * @return string|null
-     */
-    public function getTitle()
+    public function getTitle(): ?string
     {
         return $this->title;
     }
 
-    /**
-     * @return string|null
-     */
-    public function getCreator()
+    public function getCreator(): ?string
     {
         return $this->creator;
     }
 
-    /**
-     * @return string|null
-     */
-    public function getLanguage()
+    public function getLanguage(): ?string
     {
         return $this->language;
     }
 
-    /**
-     * @return string|null
-     */
-    public function getPublisher()
+    public function getPublisher(): ?string
     {
         return $this->publisher;
     }
 
-    /**
-     * @return string|null
-     */
-    public function getDescription()
+    public function getDescription(): ?string
     {
         return $this->description;
     }
 
-    /**
-     * @return string|null
-     */
-    public function getRights()
+    public function getRights(): ?string
     {
         return $this->rights;
     }
 
-    /**
-     * @return string|null
-     */
-    public function getDate()
+    public function getDate(): ?string
     {
         return $this->date;
     }
 
-    /**
-     * @return string|null
-     */
-    public function getSubject()
+    public function getSubject(): ?string
     {
         return $this->subject;
     }
 
-    /**
-     * @return array
-     */
-    public function toArray()
+    public function toArray(): array
     {
         return [
             'title' => $this->title,

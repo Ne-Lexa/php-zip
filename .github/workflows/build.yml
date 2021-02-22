@@ -1,48 +1,86 @@
 name: build
 
-on: [ push, pull_request ]
+on:
+    - push
+    - pull_request
 
 jobs:
-  run:
-    runs-on: ${{ matrix.operating-system }}
-    strategy:
-      matrix:
-        operating-system: [ubuntu-latest]
-        php-versions: ['7.2', '7.3', '7.4', '8.0']
-    name: PHP ${{ matrix.php-versions }} Test on ${{ matrix.operating-system }}
+    tests:
+        name:    PHP ${{ matrix.php }} Test on ${{ matrix.os }}
 
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v1
-
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: ${{ matrix.php-versions }}
-          extensions: mbstring, intl, zip
-          coverage: none
-
-      - name: Check PHP Version
-        run: php -v
-
-      - name: Check Composer Version
-        run: composer -V
-
-      - name: Check PHP Extensions
-        run: php -m
-
-      - name: Validate composer.json and composer.lock
-        run: composer validate
-
-      - name: Install dependencies for PHP 7
-        if: matrix.php-versions < '8.0'
-        run: composer update --prefer-dist --no-progress
-
-      - name: Install dependencies for PHP 8
-        if: matrix.php-versions >= '8.0'
-        run: composer update --prefer-dist --no-progress --ignore-platform-req=php
-
-      - name: Run test suite
-        run: composer check
         env:
-          PHP_CS_FIXER_IGNORE_ENV: 1
+            extensions: bz2, dom, iconv, fileinfo, openssl, xml, zlib
+            key:        cache-v1
+
+        strategy:
+            matrix:
+                os:
+                    - ubuntu-latest
+                    - windows-latest
+                php:
+                    - '7.4'
+                    - '8.0'
+
+        runs-on: ${{ matrix.os }}
+
+        steps:
+            -
+                name: Checkout
+                uses: actions/checkout@v1
+
+            -
+                name: Install linux dependencies
+                run:  sudo apt-get install unzip p7zip-full
+
+            -
+                name: Install PHP with extensions
+                uses: shivammathur/setup-php@v2
+                with:
+                    php-version: ${{ matrix.php }}
+                    extensions:  ${{ env.extensions }}
+                    coverage:    pcov
+                    ini-values:  date.timezone='UTC'
+                    tools:       composer:v2
+
+            -
+                name: Determine composer cache directory on Linux
+                if:   matrix.os == 'ubuntu-latest'
+                run:  echo "COMPOSER_CACHE_DIR=$(composer config cache-dir)" >> $GITHUB_ENV
+
+            -
+                name: Determine composer cache directory on Windows
+                if:   matrix.os == 'windows-latest'
+                run:  echo "COMPOSER_CACHE_DIR=~\AppData\Local\Composer" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+            -
+                name: Cache dependencies installed with composer
+                uses: actions/cache@v2
+                with:
+                    path:         ${{ env.COMPOSER_CACHE_DIR }}
+                    key:          php${{ matrix.php }}-composer-${{ hashFiles('**/composer.json') }}
+                    restore-keys: |
+                                  php${{ matrix.php }}-composer-
+
+            -
+                name: Check PHP Version
+                run:  php -v
+
+            -
+                name: Check Composer Version
+                run:  composer -V
+
+            -
+                name: Check PHP Extensions
+                run:  php -m
+
+            -
+                name: Validate composer.json and composer.lock
+                run:  composer validate
+
+            -
+                name: Install dependencies with composer
+                run:  composer update --prefer-dist --no-interaction --no-progress --optimize-autoloader --ansi
+
+            -
+                name: Run tests with phpunit
+                run:  vendor/bin/phpunit --colors=always

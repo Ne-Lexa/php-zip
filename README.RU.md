@@ -28,7 +28,6 @@
   + [Удаление записей из архива](#Documentation-Remove-Zip-Entries)
   + [Работа с записями и с архивом](#Documentation-Entries)
   + [Работа с паролями](#Documentation-Password)
-  + [zipalign - выравнивание архива для оптимизации Android пакетов (APK)](#Documentation-ZipAlign-Usage)
   + [Отмена изменений](#Documentation-Unchanged)
   + [Сохранение файла или вывод в браузер](#Documentation-Save-Or-Output-Entries)
   + [Закрытие архива](#Documentation-Close-Zip-Archive)
@@ -50,8 +49,7 @@
   + Deflate сжатие.
   + BZIP2 сжатие при наличии расширения `php-bz2`.
 - Поддержка `ZIP64` (размер файла более 4 GB или количество записей в архиве более 65535).
-- Встроенная поддержка выравнивания архива для оптимизации Android пакетов (APK) [`zipalign`](https://developer.android.com/studio/command-line/zipalign.html).
-- Работа с паролями для PHP 5.5
+- Работа с паролями
   > **Внимание!**
   >
   > Для 32-bit систем, в данный момент не поддерживается метод шифрование `Traditional PKWARE Encryption (ZipCrypto)`. 
@@ -66,9 +64,9 @@
   + Установка метода шифрования для всех или для отдельных записей в архиве.
 
 ### <a name="Requirements"></a> Требования
-- `PHP` >= 5.5 (предпочтительно 64-bit).
+- `PHP` 7.4 или ^8.0 (предпочтительно 64-bit).
 - Опционально php-расширение `bzip2` для поддержки BZIP2 компрессии.
-- Опционально php-расширение `openssl` или `mcrypt` для `WinZip Aes Encryption` шифрования.
+- Опционально php-расширение `openssl` для `WinZip Aes Encryption` шифрования.
 
 ### <a name="Installation"></a> Установка
 `composer require nelexa/zip`
@@ -110,10 +108,10 @@ finally{
 
 ### <a name="Documentation"></a> Документация
 #### <a name="Documentation-Overview"></a> Обзор методов класса `\PhpZip\ZipFile`
-- [ZipFile::__construct](#Documentation-ZipFile-__construct) - инициализацирует ZIP-архив.
+- [ZipFile::__construct](#Documentation-ZipFile-__construct) - инициализирует ZIP-архив.
 - [ZipFile::addAll](#Documentation-ZipFile-addAll) - добавляет все записи из массива.
 - [ZipFile::addDir](#Documentation-ZipFile-addDir) - добавляет файлы из директории по указанному пути без вложенных директорий.
-- [ZipFile::addDirRecursive](#Documentation-ZipFile-addDirRecursive) - добавляет файлы из директории по указанному пути c вложенными директориями.
+- [ZipFile::addDirRecursive](#Documentation-ZipFile-addDirRecursive) - добавляет файлы из директории по указанному пути с вложенными директориями.
 - [ZipFile::addEmptyDir](#Documentation-ZipFile-addEmptyDir) - добавляет в ZIP-архив новую директорию.
 - [ZipFile::addFile](#Documentation-ZipFile-addFile) - добавляет в ZIP-архив файл по указанному пути.
 - [ZipFile::addSplFile](#Documentation-ZipFile-addSplFile) - добавляет объект `\SplFileInfo` в zip-архив.
@@ -122,7 +120,7 @@ finally{
 - [ZipFile::addFilesFromGlob](#Documentation-ZipFile-addFilesFromGlob) - добавляет файлы из директории в соответствии с glob шаблоном без вложенных директорий.
 - [ZipFile::addFilesFromGlobRecursive](#Documentation-ZipFile-addFilesFromGlobRecursive) - добавляет файлы из директории в соответствии с glob шаблоном c вложенными директориями.
 - [ZipFile::addFilesFromRegex](#Documentation-ZipFile-addFilesFromRegex) - добавляет файлы из директории в соответствии с регулярным выражением без вложенных директорий.
-- [ZipFile::addFilesFromRegexRecursive](#Documentation-ZipFile-addFilesFromRegexRecursive) - добавляет файлы из директории в соответствии с регулярным выражением c вложенными директориями.
+- [ZipFile::addFilesFromRegexRecursive](#Documentation-ZipFile-addFilesFromRegexRecursive) - добавляет файлы из директории в соответствии с регулярным выражением с вложенными директориями.
 - [ZipFile::addFromStream](#Documentation-ZipFile-addFromStream) - добавляет в ZIP-архив запись из потока.
 - [ZipFile::addFromString](#Documentation-ZipFile-addFromString) - добавляет файл в ZIP-архив, используя его содержимое в виде строки.
 - [ZipFile::close](#Documentation-ZipFile-close) - закрывает ZIP-архив.
@@ -134,11 +132,9 @@ finally{
 - [ZipFile::disableEncryption](#Documentation-ZipFile-disableEncryption) - отключает шифрования всех записей, находящихся в архиве.
 - [ZipFile::disableEncryptionEntry](#Documentation-ZipFile-disableEncryptionEntry) - отключает шифрование записи по её имени.
 - [ZipFile::extractTo](#Documentation-ZipFile-extractTo) - извлекает содержимое архива в заданную директорию.
-- [ZipFile::getAllInfo](#Documentation-ZipFile-getAllInfo) - возвращает подробную информацию обо всех записях в архиве.
 - [ZipFile::getArchiveComment](#Documentation-ZipFile-getArchiveComment) - возвращает комментарий ZIP-архива.
 - [ZipFile::getEntryComment](#Documentation-ZipFile-getEntryComment) - возвращает комментарий к записи, используя её имя.
 - [ZipFile::getEntryContent](#Documentation-ZipFile-getEntryContent) - возвращает содержимое записи.
-- [ZipFile::getEntryInfo](#Documentation-ZipFile-getEntryInfo) - возвращает подробную информацию о записи в архиве.
 - [ZipFile::getListFiles](#Documentation-ZipFile-getListFiles) - возвращает список файлов архива.
 - [ZipFile::hasEntry](#Documentation-ZipFile-hasEntry) - проверяет, присутствует ли запись в архиве.
 - [ZipFile::isDirectory](#Documentation-ZipFile-isDirectory) - проверяет, является ли запись в архиве директорией.
@@ -160,15 +156,11 @@ finally{
 - [ZipFile::setEntryComment](#Documentation-ZipFile-setEntryComment) - устанавливает комментарий к записи, используя её имя.
 - [ZipFile::setReadPassword](#Documentation-ZipFile-setReadPassword) - устанавливает пароль на чтение открытого запароленного архива для всех зашифрованных записей.
 - [ZipFile::setReadPasswordEntry](#Documentation-ZipFile-setReadPasswordEntry) - устанавливает пароль на чтение конкретной зашифрованной записи открытого запароленного архива.
-- ~~ZipFile::withNewPassword~~ - устаревший метод (**deprecated**) используйте метод [ZipFile::setPassword](#Documentation-ZipFile-setPassword).
 - [ZipFile::setPassword](#Documentation-ZipFile-setPassword) - устанавливает новый пароль для всех файлов, находящихся в архиве.
 - [ZipFile::setPasswordEntry](#Documentation-ZipFile-setPasswordEntry) - устанавливает новый пароль для конкретного файла.
-- [ZipFile::setZipAlign](#Documentation-ZipFile-setZipAlign) - устанавливает выравнивание архива для оптимизации APK файлов (Android packages).
 - [ZipFile::unchangeAll](#Documentation-ZipFile-unchangeAll) - отменяет все изменения, сделанные в архиве.
 - [ZipFile::unchangeArchiveComment](#Documentation-ZipFile-unchangeArchiveComment) - отменяет изменения в комментарии к архиву.
 - [ZipFile::unchangeEntry](#Documentation-ZipFile-unchangeEntry) - отменяет изменения для конкретной записи архива.
-- ~~ZipFile::withoutPassword~~ - устаревший метод (**deprecated**) используйте метод [ZipFile::disableEncryption](#Documentation-ZipFile-disableEncryption).
-- ~~ZipFile::withReadPassword~~ - устаревший метод (**deprecated**) используйте метод [ZipFile::setReadPassword](#Documentation-ZipFile-setReadPassword).
 
 #### <a name="Documentation-Open-Zip-Archive"></a> Создание/Открытие ZIP-архива
 <a name="Documentation-ZipFile-__construct"></a>**ZipFile::__construct** - Инициализацирует ZIP-архив.
@@ -289,15 +281,6 @@ $commentArchive = $zipFile->getArchiveComment();
 ```php
 $commentEntry = $zipFile->getEntryComment($entryName);
 ```
-<a name="Documentation-ZipFile-getEntryInfo"></a> **ZipFile::getEntryInfo** - возвращает подробную информацию о записи в архиве.
-```php
-$zipFile = new \PhpZip\ZipFile();
-$zipInfo = $zipFile->getEntryInfo('file.txt');
-```
-<a name="Documentation-ZipFile-getAllInfo"></a> **ZipFile::getAllInfo** - возвращает подробную информацию обо всех записях в архиве.
-```php
-$zipAllInfo = $zipFile->getAllInfo();
-```
 #### <a name="Documentation-Add-Zip-Entries"></a> Добавление записей в архив
 
 Все методы добавления записей в ZIP-архив позволяют указать метод сжатия содержимого.
@@ -395,7 +378,7 @@ $zipFile[$path] = null;
 $entries = [
     'file.txt' => 'file contents', // запись из строки данных
     'empty dir/' => null, // пустой каталог
-    'path/to/file.jpg' => fopen('..../filename', 'r'), // запись из потока
+    'path/to/file.jpg' => fopen('..../filename', 'rb'), // запись из потока
     'path/to/file.dat' => new \SplFileInfo('..../filename'), // запись из файла
 ];
 
@@ -683,18 +666,6 @@ $zipFile->disableEncryption();
 ```php
 $zipFile->disableEncryptionEntry($entryName);
 ```
-#### <a name="Documentation-ZipAlign-Usage"></a> zipalign
-<a name="Documentation-ZipFile-setZipAlign"></a> **ZipFile::setZipAlign** - устанавливает выравнивание архива для оптимизации APK файлов (Android packages).
-
-Метод добавляет паддинги незашифрованным и не сжатым записям, для оптимизации расхода памяти в системе Android. Рекомендуется использовать для `APK` файлов. Файл может незначительно увеличиться.
-
-Этот метод является альтернативой вызова команды `zipalign -f -v 4 filename.zip`.
-
-Подробнее можно ознакомиться по [ссылке](https://developer.android.com/studio/command-line/zipalign.html).
-```php
-// вызовите до сохранения или вывода архива
-$zipFile->setZipAlign(4);
-```
 #### <a name="Documentation-Unchanged"></a> Отмена изменений
 <a name="Documentation-ZipFile-unchangeAll"></a> **ZipFile::unchangeAll** - отменяет все изменения, сделанные в архиве.
 ```php
@@ -731,7 +702,7 @@ $zipFile->outputAsAttachment($outputFilename);
 ```
 Можно установить MIME-тип:
 ```php
-$mimeType = 'application/zip'
+$mimeType = 'application/zip';
 $zipFile->outputAsAttachment($outputFilename, $mimeType);
 ```
 <a name="Documentation-ZipFile-outputAsResponse"></a> **ZipFile::outputAsResponse** - выводит ZIP-архив, как Response [PSR-7](http://www.php-fig.org/psr/psr-7/).
@@ -743,7 +714,7 @@ $zipFile->outputAsResponse($response, $outputFilename);
 ```
 Можно установить MIME-тип:
 ```php
-$mimeType = 'application/zip'
+$mimeType = 'application/zip';
 $zipFile->outputAsResponse($response, $outputFilename, $mimeType);
 ```
 Пример для Slim Framework:

@@ -1,5 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
+/*
+ * This file is part of the nelexa/zip package.
+ * (c) Ne-Lexa <https://github.com/Ne-Lexa/php-zip>
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace PhpZip\Tests\Extra\Fields;
 
 use PHPUnit\Framework\TestCase;
@@ -25,25 +34,25 @@ final class Zip64ExtraFieldTest extends TestCase
     /**
      * @dataProvider provideExtraField
      *
-     * @param int|null    $uncompressedSize
-     * @param int|null    $compressedSize
-     * @param int|null    $localHeaderOffset
-     * @param int|null    $diskStart
-     * @param string|null $localBinaryData
-     * @param string|null $cdBinaryData
+     * @noinspection PhpTooManyParametersInspection
+     *
+     * @param ?int    $uncompressedSize
+     * @param ?int    $compressedSize
+     * @param ?int    $localHeaderOffset
+     * @param ?int    $diskStart
+     * @param ?string $localBinaryData
+     * @param ?string $cdBinaryData
      *
      * @throws ZipException
-     *
-     * @noinspection PhpTooManyParametersInspection
      */
     public function testExtraField(
-        $uncompressedSize,
-        $compressedSize,
-        $localHeaderOffset,
-        $diskStart,
-        $localBinaryData,
-        $cdBinaryData
-    ) {
+        ?int $uncompressedSize,
+        ?int $compressedSize,
+        ?int $localHeaderOffset,
+        ?int $diskStart,
+        ?string $localBinaryData,
+        ?string $cdBinaryData
+    ): void {
         $extraField = new Zip64ExtraField(
             $uncompressedSize,
             $compressedSize,
@@ -72,10 +81,7 @@ final class Zip64ExtraFieldTest extends TestCase
         }
     }
 
-    /**
-     * @return array
-     */
-    public function provideExtraField()
+    public function provideExtraField(): array
     {
         return [
             [
@@ -105,7 +111,7 @@ final class Zip64ExtraFieldTest extends TestCase
         ];
     }
 
-    public function testSetter()
+    public function testSetter(): void
     {
         $extraField = new Zip64ExtraField();
         self::assertNull($extraField->getUncompressedSize());

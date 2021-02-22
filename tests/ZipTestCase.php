@@ -1,5 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
+/*
+ * This file is part of the nelexa/zip package.
+ * (c) Ne-Lexa <https://github.com/Ne-Lexa/php-zip>
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace PhpZip\Tests;
 
 use PHPUnit\Framework\TestCase;
@@ -11,11 +20,9 @@ use PhpZip\Util\FilesUtil;
  */
 abstract class ZipTestCase extends TestCase
 {
-    /** @var string */
-    protected $outputFilename;
+    protected string $outputFilename;
 
-    /** @var string */
-    protected $outputDirname;
+    protected string $outputDirname;
 
     /**
      * Before test.
@@ -53,10 +60,9 @@ abstract class ZipTestCase extends TestCase
     /**
      * Assert correct zip archive.
      *
-     * @param string      $filename
-     * @param string|null $password
+     * @param ?string $password
      */
-    public static function assertCorrectZipArchive($filename, $password = null)
+    public static function assertCorrectZipArchive(string $filename, ?string $password = null): void
     {
         if (self::existsProgram('7z')) {
             self::assertCorrectZipArchiveFrom7z($filename, $password);
@@ -75,11 +81,7 @@ abstract class ZipTestCase extends TestCase
         }
     }
 
-    /**
-     * @param string      $filename
-     * @param string|null $password
-     */
-    private static function assertCorrectZipArchiveFrom7z($filename, $password = null)
+    private static function assertCorrectZipArchiveFrom7z(string $filename, ?string $password = null): void
     {
         $command = '7z t';
 
@@ -88,19 +90,15 @@ abstract class ZipTestCase extends TestCase
         }
         $command .= ' ' . escapeshellarg($filename) . ' 2>&1';
 
-        exec($command, $output, $returnCode);
-        $output = implode(\PHP_EOL, $output);
+        exec($command, $outputLines, $returnCode);
+        $output = implode(\PHP_EOL, $outputLines);
 
         static::assertSame($returnCode, 0);
-        static::assertNotContains(' Errors', $output);
-        static::assertContains(' Ok', $output);
+        static::assertStringNotContainsString(' Errors', $output);
+        static::assertStringContainsString(' Ok', $output);
     }
 
-    /**
-     * @param string      $filename
-     * @param string|null $password
-     */
-    private static function assertCorrectZipArchiveFromUnzip($filename, $password = null)
+    private static function assertCorrectZipArchiveFromUnzip(string $filename, ?string $password = null): void
     {
         $command = 'unzip';
 
@@ -109,8 +107,8 @@ abstract class ZipTestCase extends TestCase
         }
         $command .= ' -t ' . escapeshellarg($filename) . ' 2>&1';
 
-        exec($command, $output, $returnCode);
-        $output = implode(\PHP_EOL, $output);
+        exec($command, $outputLines, $returnCode);
+        $output = implode(\PHP_EOL, $outputLines);
 
         if ($password !== null && $returnCode === 81) {
             fwrite(\STDERR, 'Program unzip cannot support this function.' . \PHP_EOL);
@@ -122,22 +120,16 @@ abstract class ZipTestCase extends TestCase
         }
 
         static::assertSame($returnCode, 0, $output);
-        static::assertNotContains('incorrect password', $output);
-        static::assertContains(' OK', $output);
-        static::assertContains('No errors', $output);
+        static::assertStringNotContainsString('incorrect password', $output);
+        static::assertStringContainsString(' OK', $output);
+        static::assertStringContainsString('No errors', $output);
     }
 
-    /**
-     * @param string $program
-     * @param array  $successCodes
-     *
-     * @return bool
-     */
-    protected static function existsProgram($program, array $successCodes = [0])
+    protected static function existsProgram(string $program, array $successCodes = [0]): bool
     {
-        $command = \DIRECTORY_SEPARATOR === '\\' ?
-            escapeshellarg($program) :
-            'which ' . escapeshellarg($program);
+        $command = \DIRECTORY_SEPARATOR === '\\'
+            ? escapeshellarg($program)
+            : 'command -v ' . escapeshellarg($program);
         $command .= ' 2>&1';
 
         exec($command, $output, $returnCode);
@@ -150,76 +142,31 @@ abstract class ZipTestCase extends TestCase
      *
      * @param $filename
      */
-    public static function assertCorrectEmptyZip($filename)
+    public static function assertCorrectEmptyZip($filename): void
     {
         if (self::existsProgram('zipinfo')) {
-            exec('zipinfo ' . escapeshellarg($filename), $output, $returnCode);
+            exec('zipinfo ' . escapeshellarg($filename), $outputLines, $returnCode);
 
-            $output = implode(\PHP_EOL, $output);
+            $output = implode(\PHP_EOL, $outputLines);
 
-            static::assertContains('Empty zipfile', $output);
+            static::assertStringContainsString('Empty zipfile', $output);
         }
         $actualEmptyZipData = pack('VVVVVv', ZipConstants::END_CD, 0, 0, 0, 0, 0);
         static::assertStringEqualsFile($filename, $actualEmptyZipData);
     }
 
-    /**
-     * @param string $filename
-     * @param bool   $showErrors
-     *
-     * @return bool|null If null returned, then the zipalign program is not installed
-     */
-    public static function assertVerifyZipAlign($filename, $showErrors = false)
-    {
-        if (self::existsProgram('zipalign', [0, 2])) {
-            exec('zipalign -c -v 4 ' . escapeshellarg($filename), $output, $returnCode);
-
-            if ($showErrors && $returnCode !== 0) {
-                fwrite(\STDERR, implode(\PHP_EOL, $output));
-            }
-
-            return $returnCode === 0;
-        }
-
-        fwrite(\STDERR, "Cannot find the program 'zipalign' for the test" . \PHP_EOL);
-        fwrite(\STDERR, 'To fix this, install zipalign.' . \PHP_EOL);
-        fwrite(\STDERR, \PHP_EOL);
-        fwrite(\STDERR, 'Install on Ubuntu: sudo apt-get install zipalign' . \PHP_EOL);
-        fwrite(\STDERR, \PHP_EOL);
-        fwrite(\STDERR, 'Install on Windows:' . \PHP_EOL);
-        fwrite(\STDERR, ' 1. Install Android Studio' . \PHP_EOL);
-        fwrite(\STDERR, ' 2. Install Android Sdk' . \PHP_EOL);
-        fwrite(\STDERR, ' 3. Add zipalign path to \$Path' . \PHP_EOL);
-
-        return null;
-    }
-
-    /**
-     * @return bool
-     */
-    public static function skipTestForRootUser()
+    public static function skipTestForRootUser(): void
     {
         /** @noinspection PhpComposerExtensionStubsInspection */
         if (\extension_loaded('posix') && posix_getuid() === 0) {
             static::markTestSkipped('Skip the test for a user with root privileges');
-
-            return true;
         }
-
-        return false;
     }
 
-    /**
-     * @return bool
-     */
-    public static function skipTestForWindows()
+    public static function skipTestForWindows(): void
     {
         if (\DIRECTORY_SEPARATOR === '\\') {
             static::markTestSkipped('Skip on Windows');
-
-            return true;
         }
-
-        return false;
     }
 }

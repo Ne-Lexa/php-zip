@@ -1,5 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
+/*
+ * This file is part of the nelexa/zip package.
+ * (c) Ne-Lexa <https://github.com/Ne-Lexa/php-zip>
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace PhpZip\Tests;
 
 use GuzzleHttp\Psr7\Response;
@@ -12,10 +21,8 @@ use PhpZip\Exception\ZipException;
 use PhpZip\Exception\ZipUnsupportMethodException;
 use PhpZip\Model\Data\ZipFileData;
 use PhpZip\Model\ZipEntry;
-use PhpZip\Model\ZipInfo;
 use PhpZip\Util\FilesUtil;
 use PhpZip\ZipFile;
-use Psr\Http\Message\ResponseInterface;
 
 /**
  * ZipFile test.
@@ -29,9 +36,10 @@ class ZipFileTest extends ZipTestCase
     /**
      * @throws ZipException
      */
-    public function testOpenFileCantExists()
+    public function testOpenFileCantExists(): void
     {
-        $this->expectException(ZipException::class, 'does not exist');
+        $this->expectException(ZipException::class);
+        $this->expectExceptionMessage('does not exist');
 
         $zipFile = new ZipFile();
         $zipFile->openFile(uniqid('', false));
@@ -40,17 +48,13 @@ class ZipFileTest extends ZipTestCase
     /**
      * @throws ZipException
      */
-    public function testOpenFileCantOpen()
+    public function testOpenFileCantOpen(): void
     {
-        if (static::skipTestForWindows()) {
-            return;
-        }
+        static::skipTestForWindows();
+        static::skipTestForRootUser();
 
-        if (static::skipTestForRootUser()) {
-            return;
-        }
-
-        $this->expectException(ZipException::class, 'can\'t open');
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Permission denied');
 
         static::assertNotFalse(file_put_contents($this->outputFilename, 'content'));
         static::assertTrue(chmod($this->outputFilename, 0222));
@@ -62,9 +66,10 @@ class ZipFileTest extends ZipTestCase
     /**
      * @throws ZipException
      */
-    public function testOpenFileEmptyFile()
+    public function testOpenFileEmptyFile(): void
     {
-        $this->expectException(ZipException::class, 'Corrupt zip file');
+        $this->expectException(ZipException::class);
+        $this->expectExceptionMessage('Corrupt zip file');
 
         static::assertNotFalse(touch($this->outputFilename));
         $zipFile = new ZipFile();
@@ -75,12 +80,10 @@ class ZipFileTest extends ZipTestCase
      * @throws ZipException
      * @throws \Exception
      */
-    public function testOpenFileInvalidZip()
+    public function testOpenFileInvalidZip(): void
     {
-        $this->expectException(
-            ZipException::class,
-            'Invalid zip file. The end of the central directory could not be found.'
-        );
+        $this->expectException(ZipException::class);
+        $this->expectExceptionMessage('Invalid zip file. The end of the central directory could not be found.');
 
         static::assertNotFalse(file_put_contents($this->outputFilename, random_bytes(255)));
         $zipFile = new ZipFile();
@@ -90,20 +93,10 @@ class ZipFileTest extends ZipTestCase
     /**
      * @throws ZipException
      */
-    public function testOpenFromStringNullString()
+    public function testOpenFromStringEmptyString(): void
     {
-        $this->expectException(InvalidArgumentException::class, 'Empty string passed');
-
-        $zipFile = new ZipFile();
-        $zipFile->openFromString(null);
-    }
-
-    /**
-     * @throws ZipException
-     */
-    public function testOpenFromStringEmptyString()
-    {
-        $this->expectException(InvalidArgumentException::class, 'Empty string passed');
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Empty string passed');
 
         $zipFile = new ZipFile();
         $zipFile->openFromString('');
@@ -113,12 +106,10 @@ class ZipFileTest extends ZipTestCase
      * @throws ZipException
      * @throws \Exception
      */
-    public function testOpenFromStringInvalidZip()
+    public function testOpenFromStringInvalidZip(): void
     {
-        $this->expectException(
-            ZipException::class,
-            'Invalid zip file. The end of the central directory could not be found.'
-        );
+        $this->expectException(ZipException::class);
+        $this->expectExceptionMessage('Invalid zip file. The end of the central directory could not be found.');
 
         $zipFile = new ZipFile();
         $zipFile->openFromString(random_bytes(255));
@@ -127,7 +118,7 @@ class ZipFileTest extends ZipTestCase
     /**
      * @throws ZipException
      */
-    public function testOpenFromString()
+    public function testOpenFromString(): void
     {
         $zipFile = new ZipFile();
         $zipFile->addFromString('file', 'content');
@@ -147,9 +138,10 @@ class ZipFileTest extends ZipTestCase
     /**
      * @throws ZipException
      */
-    public function testOpenFromStreamNullStream()
+    public function testOpenFromStreamNullStream(): void
     {
-        $this->expectException(InvalidArgumentException::class, 'Stream must be a resource');
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Stream must be a resource');
 
         $zipFile = new ZipFile();
         $zipFile->openFromStream(null);
@@ -158,9 +150,10 @@ class ZipFileTest extends ZipTestCase
     /**
      * @throws ZipException
      */
-    public function testOpenFromStreamInvalidResourceType()
+    public function testOpenFromStreamInvalidResourceType(): void
     {
-        $this->expectException(InvalidArgumentException::class, 'Stream must be a resource');
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Stream must be a resource');
 
         $zipFile = new ZipFile();
         /** @noinspection PhpParamsInspection */
@@ -170,27 +163,10 @@ class ZipFileTest extends ZipTestCase
     /**
      * @throws ZipException
      */
-    public function testOpenFromStreamInvalidResourceType2()
+    public function testOpenFromStreamInvalidResourceType3(): void
     {
-        $this->expectException(InvalidArgumentException::class, 'Invalid resource type');
-
-        $zipFile = new ZipFile();
-
-        if (!\extension_loaded('gd')) {
-            static::markTestSkipped('not extension gd');
-
-            return;
-        }
-        /** @noinspection PhpComposerExtensionStubsInspection */
-        $zipFile->openFromStream(imagecreate(1, 1));
-    }
-
-    /**
-     * @throws ZipException
-     */
-    public function testOpenFromStreamInvalidResourceType3()
-    {
-        $this->expectException(InvalidArgumentException::class, 'Directory stream not supported');
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Directory stream not supported');
 
         $zipFile = new ZipFile();
         $zipFile->openFromStream(opendir(__DIR__));
@@ -201,15 +177,14 @@ class ZipFileTest extends ZipTestCase
      * @noinspection PhpUsageOfSilenceOperatorInspection
      * @noinspection NestedPositiveIfStatementsInspection
      */
-    public function testOpenFromStreamNoSeekable()
+    public function testOpenFromStreamNoSeekable(): void
     {
-        $this->expectException(InvalidArgumentException::class, 'The stream wrapper type "http" is not supported');
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('The stream wrapper type "http" is not supported');
 
         if (!$fp = @fopen('http://localhost', 'rb')) {
             if (!$fp = @fopen('http://example.org', 'rb')) {
                 static::markTestSkipped('not connected to localhost or remote host');
-
-                return;
             }
         }
 
@@ -220,9 +195,10 @@ class ZipFileTest extends ZipTestCase
     /**
      * @throws ZipException
      */
-    public function testOpenFromStreamEmptyContents()
+    public function testOpenFromStreamEmptyContents(): void
     {
-        $this->expectException(ZipException::class, 'Corrupt zip file');
+        $this->expectException(ZipException::class);
+        $this->expectExceptionMessage('Corrupt zip file');
 
         $fp = fopen($this->outputFilename, 'w+b');
         $zipFile = new ZipFile();
@@ -233,12 +209,10 @@ class ZipFileTest extends ZipTestCase
      * @throws ZipException
      * @throws \Exception
      */
-    public function testOpenFromStreamInvalidZip()
+    public function testOpenFromStreamInvalidZip(): void
     {
-        $this->expectException(
-            ZipException::class,
-            'Invalid zip file. The end of the central directory could not be found.'
-        );
+        $this->expectException(ZipException::class);
+        $this->expectExceptionMessage('Invalid zip file. The end of the central directory could not be found.');
 
         $fp = fopen($this->outputFilename, 'w+b');
         fwrite($fp, random_bytes(255));
@@ -249,7 +223,7 @@ class ZipFileTest extends ZipTestCase
     /**
      * @throws ZipException
      */
-    public function testOpenFromStream()
+    public function testOpenFromStream(): void
     {
         $zipFile = new ZipFile();
         $zipFile
@@ -271,7 +245,7 @@ class ZipFileTest extends ZipTestCase
      *
      * @throws ZipException
      */
-    public function testEmptyArchive()
+    public function testEmptyArchive(): void
     {
         $zipFile = new ZipFile();
         $zipFile
@@ -299,7 +273,7 @@ class ZipFileTest extends ZipTestCase
      *
      * @see ZipOutputFile::create()
      */
-    public function testNoModifiedArchive()
+    public function testNoModifiedArchive(): void
     {
         static::assertTrue(mkdir($this->outputDirname, 0755, true));
 
@@ -347,7 +321,7 @@ class ZipFileTest extends ZipTestCase
      * @see ZipFile::getEntryContents()
      * @see ZipOutputFile::addFromString()
      */
-    public function testCreateArchiveAndAddFiles()
+    public function testCreateArchiveAndAddFiles(): void
     {
         $outputFromString = file_get_contents(__FILE__);
         $outputFromString2 = file_get_contents(\dirname(__DIR__) . \DIRECTORY_SEPARATOR . 'README.md');
@@ -415,7 +389,7 @@ class ZipFileTest extends ZipTestCase
     /**
      * @throws ZipException
      */
-    public function testEmptyContent()
+    public function testEmptyContent(): void
     {
         $zipFile = new ZipFile();
         $zipFile['file'] = '';
@@ -432,19 +406,17 @@ class ZipFileTest extends ZipTestCase
      *
      * @throws ZipException
      */
-    public function testCompressionMethodFromImageMimeType()
+    public function testCompressionMethodFromImageMimeType(): void
     {
         if (!\function_exists('mime_content_type')) {
             static::markTestSkipped('Function mime_content_type not exists');
-
-            return;
         }
         $outputFilename = $this->outputFilename;
         $this->outputFilename .= '.gif';
         static::assertNotFalse(
             file_put_contents(
                 $this->outputFilename,
-                base64_decode('R0lGODlhAQABAJAAAP8AAAAAACH5BAUQAAAALAAAAAABAAEAAAICBAEAOw==')
+                base64_decode('R0lGODlhAQABAJAAAP8AAAAAACH5BAUQAAAALAAAAAABAAEAAAICBAEAOw==', true)
             )
         );
         $basename = basename($this->outputFilename);
@@ -456,8 +428,8 @@ class ZipFileTest extends ZipTestCase
         $this->outputFilename = $outputFilename;
 
         $zipFile->openFile($this->outputFilename);
-        $info = $zipFile->getEntryInfo($basename);
-        static::assertSame($info->getMethodName(), 'Stored');
+        $zipEntry = $zipFile->getEntry($basename);
+        static::assertSame($zipEntry->getCompressionMethod(), ZipCompressionMethod::STORED);
         $zipFile->close();
     }
 
@@ -466,7 +438,7 @@ class ZipFileTest extends ZipTestCase
      *
      * @throws ZipException
      */
-    public function testRename()
+    public function testRename(): void
     {
         $oldName = basename(__FILE__);
         $newName = 'tests/' . $oldName;
@@ -506,31 +478,10 @@ class ZipFileTest extends ZipTestCase
     /**
      * @throws ZipException
      */
-    public function testRenameEntryNull()
+    public function testRenameEntryToExistsNewEntry(): void
     {
-        $this->expectException(InvalidArgumentException::class, 'name is null');
-
-        $zipFile = new ZipFile();
-        $zipFile->rename(null, 'new-file');
-    }
-
-    /**
-     * @throws ZipException
-     */
-    public function testRenameEntryNull2()
-    {
-        $this->expectException(InvalidArgumentException::class, 'name is null');
-
-        $zipFile = new ZipFile();
-        $zipFile->rename('old-file', null);
-    }
-
-    /**
-     * @throws ZipException
-     */
-    public function testRenameEntryToExistsNewEntry()
-    {
-        $this->expectException(InvalidArgumentException::class, 'is exists');
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('is exists');
 
         $zipFile = new ZipFile();
         $zipFile['file'] = 'content';
@@ -546,7 +497,7 @@ class ZipFileTest extends ZipTestCase
     /**
      * @throws ZipException
      */
-    public function testRenameEntryNotFound()
+    public function testRenameEntryNotFound(): void
     {
         $this->expectException(ZipEntryNotFoundException::class);
 
@@ -566,7 +517,7 @@ class ZipFileTest extends ZipTestCase
      *
      * @throws ZipException
      */
-    public function testDeleteFromName()
+    public function testDeleteFromName(): void
     {
         $inputDir = \dirname(__DIR__) . \DIRECTORY_SEPARATOR;
         $deleteEntryName = 'composer.json';
@@ -594,7 +545,7 @@ class ZipFileTest extends ZipTestCase
      * @throws ZipEntryNotFoundException
      * @throws ZipException
      */
-    public function testDeleteNewEntry()
+    public function testDeleteNewEntry(): void
     {
         $zipFile = new ZipFile();
         $zipFile['entry1'] = '';
@@ -613,7 +564,7 @@ class ZipFileTest extends ZipTestCase
     /**
      * @throws ZipEntryNotFoundException
      */
-    public function testDeleteFromNameNotFoundEntry()
+    public function testDeleteFromNameNotFoundEntry(): void
     {
         $this->expectException(ZipEntryNotFoundException::class);
 
@@ -621,7 +572,7 @@ class ZipFileTest extends ZipTestCase
         $zipFile->deleteFromName('entry');
     }
 
-    public function testCatchNotFoundEntry()
+    public function testCatchNotFoundEntry(): void
     {
         $entryName = 'entry';
         $zipFile = new ZipFile();
@@ -638,12 +589,12 @@ class ZipFileTest extends ZipTestCase
      *
      * @throws ZipException
      */
-    public function testDeleteFromGlob()
+    public function testDeleteFromGlob(): void
     {
         $inputDir = \dirname(__DIR__);
 
         $zipFile = new ZipFile();
-        $zipFile->addFilesFromGlobRecursive($inputDir, '**.{xml,json,md}', '/');
+        $zipFile->addFilesFromGlobRecursive($inputDir, '**.{xml,json,md}');
         static::assertTrue(isset($zipFile['composer.json']));
         static::assertTrue(isset($zipFile['phpunit.xml']));
         $zipFile->saveAsFile($this->outputFilename);
@@ -672,17 +623,10 @@ class ZipFileTest extends ZipTestCase
         $zipFile->close();
     }
 
-    public function testDeleteFromGlobFailNull()
+    public function testDeleteFromGlobFailEmpty(): void
     {
-        $this->expectException(InvalidArgumentException::class, 'The glob pattern is not specified');
-
-        $zipFile = new ZipFile();
-        $zipFile->deleteFromGlob(null);
-    }
-
-    public function testDeleteFromGlobFailEmpty()
-    {
-        $this->expectException(InvalidArgumentException::class, 'The glob pattern is not specified');
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('The glob pattern is not specified');
 
         $zipFile = new ZipFile();
         $zipFile->deleteFromGlob('');
@@ -693,7 +637,7 @@ class ZipFileTest extends ZipTestCase
      *
      * @throws ZipException
      */
-    public function testDeleteFromRegex()
+    public function testDeleteFromRegex(): void
     {
         $inputDir = \dirname(__DIR__);
 
@@ -720,17 +664,10 @@ class ZipFileTest extends ZipTestCase
         $zipFile->close();
     }
 
-    public function testDeleteFromRegexFailNull()
+    public function testDeleteFromRegexFailEmpty(): void
     {
-        $this->expectException(InvalidArgumentException::class, 'The regex pattern is not specified');
-
-        $zipFile = new ZipFile();
-        $zipFile->deleteFromRegex(null);
-    }
-
-    public function testDeleteFromRegexFailEmpty()
-    {
-        $this->expectException(InvalidArgumentException::class, 'The regex pattern is not specified');
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('The regex pattern is not specified');
 
         $zipFile = new ZipFile();
         $zipFile->deleteFromRegex('');
@@ -741,7 +678,7 @@ class ZipFileTest extends ZipTestCase
      *
      * @throws ZipException
      */
-    public function testDeleteAll()
+    public function testDeleteAll(): void
     {
         $zipFile = new ZipFile();
         $zipFile->addDirRecursive(\dirname(__DIR__) . \DIRECTORY_SEPARATOR . 'src');
@@ -769,7 +706,7 @@ class ZipFileTest extends ZipTestCase
      *
      * @throws ZipException
      */
-    public function testArchiveComment()
+    public function testArchiveComment(): void
     {
         $comment = 'This zip file comment' . \PHP_EOL
             . 'Αυτό το σχόλιο αρχείο zip' . \PHP_EOL
@@ -789,7 +726,7 @@ class ZipFileTest extends ZipTestCase
 
         $zipFile->openFile($this->outputFilename);
         static::assertSame($zipFile->getArchiveComment(), $comment);
-        $zipFile->setArchiveComment(null); // remove archive comment
+        $zipFile->setArchiveComment(/* null */); // remove archive comment
         $zipFile->saveAsFile($this->outputFilename);
         $zipFile->close();
 
@@ -804,13 +741,13 @@ class ZipFileTest extends ZipTestCase
     /**
      * Test very long archive comment.
      */
-    public function testVeryLongArchiveComment()
+    public function testVeryLongArchiveComment(): void
     {
         $this->expectException(InvalidArgumentException::class);
 
-        $comment = 'Very long comment' . \PHP_EOL .
-            'Очень длинный комментарий' . \PHP_EOL;
-        $comment = str_repeat($comment, ceil(0xffff / \strlen($comment)) + \strlen($comment) + 1);
+        $comment = 'Very long comment' . \PHP_EOL
+            . 'Очень длинный комментарий' . \PHP_EOL;
+        $comment = str_repeat($comment, (int) ceil(0xffff / \strlen($comment)) + \strlen($comment) + 1);
 
         $zipFile = new ZipFile();
         $zipFile->setArchiveComment($comment);
@@ -822,7 +759,7 @@ class ZipFileTest extends ZipTestCase
      * @throws ZipException
      * @throws \Exception
      */
-    public function testEntryComment()
+    public function testEntryComment(): void
     {
         $entries = [
             '文件1.txt' => [
@@ -873,7 +810,7 @@ class ZipFileTest extends ZipTestCase
             static::assertSame($zipFile->getEntryComment($entryName), (string) $entriesItem['comment']);
         }
         // modify comment
-        $entries['file5.txt']['comment'] = mt_rand(1, 100000000);
+        $entries['file5.txt']['comment'] = random_bytes(256);
         $zipFile->setEntryComment('file5.txt', $entries['file5.txt']['comment']);
         $zipFile->saveAsFile($this->outputFilename);
         $zipFile->close();
@@ -896,13 +833,14 @@ class ZipFileTest extends ZipTestCase
      *
      * @throws ZipException
      */
-    public function testVeryLongEntryComment()
+    public function testVeryLongEntryComment(): void
     {
-        $this->expectException(InvalidArgumentException::class, 'Comment too long');
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Comment too long');
 
-        $comment = 'Very long comment' . \PHP_EOL .
-            'Очень длинный комментарий' . \PHP_EOL;
-        $comment = str_repeat($comment, ceil(0xffff / \strlen($comment)) + \strlen($comment) + 1);
+        $comment = 'Very long comment' . \PHP_EOL
+            . 'Очень длинный комментарий' . \PHP_EOL;
+        $comment = str_repeat($comment, (int) ceil(0xffff / \strlen($comment)) + \strlen($comment) + 1);
 
         $zipFile = new ZipFile();
         $zipFile->addFile(__FILE__, 'test');
@@ -912,7 +850,7 @@ class ZipFileTest extends ZipTestCase
     /**
      * @throws ZipException
      */
-    public function testSetEntryCommentNotFoundEntry()
+    public function testSetEntryCommentNotFoundEntry(): void
     {
         $this->expectException(ZipEntryNotFoundException::class);
 
@@ -926,32 +864,30 @@ class ZipFileTest extends ZipTestCase
      * @throws ZipException
      * @throws \Exception
      */
-    public function testCompressionMethod()
+    public function testCompressionMethod(): void
     {
         $entries = [
-            '1' => [
+            1 => [
                 'data' => random_bytes(255),
                 'method' => ZipCompressionMethod::STORED,
-                'expected' => 'Stored',
             ],
-            '2' => [
+            2 => [
                 'data' => random_bytes(255),
                 'method' => ZipCompressionMethod::DEFLATED,
-                'expected' => 'Deflated',
             ],
         ];
 
         if (\extension_loaded('bz2')) {
-            $entries['3'] = [
+            $entries[3] = [
                 'data' => random_bytes(255),
                 'method' => ZipCompressionMethod::BZIP2,
-                'expected' => 'BZIP2',
             ];
         }
 
         $zipFile = new ZipFile();
 
         foreach ($entries as $entryName => $item) {
+            $entryName = (string) $entryName;
             $zipFile->addFromString($entryName, $item['data'], $item['method']);
         }
         $zipFile->saveAsFile($this->outputFilename);
@@ -961,38 +897,29 @@ class ZipFileTest extends ZipTestCase
 
         $zipFile->openFile($this->outputFilename);
         $zipFile->setCompressionLevel(ZipCompressionLevel::MAXIMUM);
-        $zipAllInfo = $zipFile->getAllInfo();
 
-        foreach ($zipAllInfo as $entryName => $info) {
+        foreach ($zipFile->getEntries() as $entryName => $zipEntry) {
+            $entryName = (string) $entryName;
             static::assertSame($zipFile[$entryName], $entries[$entryName]['data']);
-            static::assertSame($info->getMethodName(), $entries[$entryName]['expected']);
-            $entryInfo = $zipFile->getEntryInfo($entryName);
-            static::assertEquals($entryInfo, $info);
+            static::assertSame($zipEntry->getCompressionMethod(), $entries[$entryName]['method']);
         }
         $zipFile->close();
     }
 
     /**
      * @dataProvider provideInvalidCompressionLevels
-     *
-     * @param int $compressionLevel
      */
-    public function testSetInvalidCompressionLevel($compressionLevel)
+    public function testSetInvalidCompressionLevel(int $compressionLevel): void
     {
-        $this->expectException(
-            InvalidArgumentException::class,
-            'Invalid compression level. Minimum level 1. Maximum level 9'
-        );
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid compression level. Minimum level 1. Maximum level 9');
 
         $zipFile = new ZipFile();
         $zipFile['file 1'] = 'contents';
         $zipFile->setCompressionLevel($compressionLevel);
     }
 
-    /**
-     * @return array
-     */
-    public function provideInvalidCompressionLevels()
+    public function provideInvalidCompressionLevels(): array
     {
         return [
             [-10],
@@ -1008,7 +935,7 @@ class ZipFileTest extends ZipTestCase
      * @throws ZipException
      * @throws \Exception
      */
-    public function testExtract()
+    public function testExtract(): void
     {
         $entries = [
             'test1.txt' => random_bytes(255),
@@ -1048,7 +975,7 @@ class ZipFileTest extends ZipTestCase
             );
 
             if ($contents === null) {
-                static::assertTrue(is_dir($fullExtractedFilename));
+                static::assertDirectoryExists($fullExtractedFilename);
                 static::assertTrue(FilesUtil::isEmptyDir($fullExtractedFilename));
             } else {
                 static::assertTrue(is_file($fullExtractedFilename));
@@ -1069,7 +996,7 @@ class ZipFileTest extends ZipTestCase
      * @throws ZipException
      * @throws \Exception
      */
-    public function testExtractSomeFiles()
+    public function testExtractSomeFiles(): void
     {
         $entries = [
             'test1.txt' => random_bytes(255),
@@ -1106,7 +1033,7 @@ class ZipFileTest extends ZipTestCase
 
             if (\in_array($entryName, $extractEntries, true)) {
                 if ($value === null) {
-                    static::assertTrue(is_dir($fullExtractFilename));
+                    static::assertDirectoryExists($fullExtractFilename);
                     static::assertTrue(FilesUtil::isEmptyDir($fullExtractFilename));
                 } else {
                     static::assertTrue(is_file($fullExtractFilename));
@@ -1114,7 +1041,7 @@ class ZipFileTest extends ZipTestCase
                     static::assertEquals($contents, $value);
                 }
             } elseif ($value === null) {
-                static::assertFalse(is_dir($fullExtractFilename));
+                static::assertDirectoryDoesNotExist($fullExtractFilename);
             } else {
                 static::assertFalse(is_file($fullExtractFilename));
             }
@@ -1129,9 +1056,10 @@ class ZipFileTest extends ZipTestCase
     /**
      * @throws ZipException
      */
-    public function testExtractFail()
+    public function testExtractFail(): void
     {
-        $this->expectException(ZipException::class, 'not found');
+        $this->expectException(ZipException::class);
+        $this->expectExceptionMessage('not found');
 
         $zipFile = new ZipFile();
         $zipFile['file'] = 'content';
@@ -1145,9 +1073,10 @@ class ZipFileTest extends ZipTestCase
     /**
      * @throws ZipException
      */
-    public function testExtractFail2()
+    public function testExtractFail2(): void
     {
-        $this->expectException(ZipException::class, 'Destination is not directory');
+        $this->expectException(ZipException::class);
+        $this->expectExceptionMessage('Destination is not directory');
 
         $zipFile = new ZipFile();
         $zipFile['file'] = 'content';
@@ -1161,13 +1090,12 @@ class ZipFileTest extends ZipTestCase
     /**
      * @throws ZipException
      */
-    public function testExtractFail3()
+    public function testExtractFail3(): void
     {
-        $this->expectException(ZipException::class, 'Destination is not writable directory');
+        $this->expectException(ZipException::class);
+        $this->expectExceptionMessage('Destination is not writable directory');
 
-        if (static::skipTestForRootUser()) {
-            return;
-        }
+        static::skipTestForRootUser();
 
         $zipFile = new ZipFile();
         $zipFile['file'] = 'content';
@@ -1184,12 +1112,10 @@ class ZipFileTest extends ZipTestCase
     /**
      * @noinspection OnlyWritesOnParameterInspection
      */
-    public function testAddFromArrayAccessNullName()
+    public function testAddFromArrayAccessNullName(): void
     {
-        $this->expectException(
-            InvalidArgumentException::class,
-            'Key must not be null, but must contain the name of the zip entry.'
-        );
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Key must not be null, but must contain the name of the zip entry.');
 
         $zipFile = new ZipFile();
         $zipFile[null] = 'content';
@@ -1198,12 +1124,10 @@ class ZipFileTest extends ZipTestCase
     /**
      * @noinspection OnlyWritesOnParameterInspection
      */
-    public function testAddFromArrayAccessEmptyName()
+    public function testAddFromArrayAccessEmptyName(): void
     {
-        $this->expectException(
-            InvalidArgumentException::class,
-            'Key is empty, but must contain the name of the zip entry.'
-        );
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Key is empty, but must contain the name of the zip entry.');
 
         $zipFile = new ZipFile();
         $zipFile[''] = 'content';
@@ -1212,34 +1136,10 @@ class ZipFileTest extends ZipTestCase
     /**
      * @throws ZipException
      */
-    public function testAddFromStringNullContents()
+    public function testAddFromStringUnsupportedMethod(): void
     {
-        $this->expectException(InvalidArgumentException::class, 'Contents is null');
-
-        $zipFile = new ZipFile();
-        $zipFile->addFromString('file', null);
-    }
-
-    /**
-     * @throws ZipException
-     */
-    public function testAddFromStringNullEntryName()
-    {
-        $this->expectException(InvalidArgumentException::class, 'Entry name is null');
-
-        $zipFile = new ZipFile();
-        $zipFile->addFromString(null, 'contents');
-    }
-
-    /**
-     * @throws ZipException
-     */
-    public function testAddFromStringUnsupportedMethod()
-    {
-        $this->expectException(
-            ZipUnsupportMethodException::class,
-            'Compression method 99 (AES Encryption) is not supported.'
-        );
+        $this->expectException(ZipUnsupportMethodException::class);
+        $this->expectExceptionMessage('Compression method 99 (AES Encryption) is not supported.');
 
         $zipFile = new ZipFile();
         $zipFile->addFromString('file', 'contents', ZipCompressionMethod::WINZIP_AES);
@@ -1249,9 +1149,10 @@ class ZipFileTest extends ZipTestCase
     /**
      * @throws ZipException
      */
-    public function testAddFromStringEmptyEntryName()
+    public function testAddFromStringEmptyEntryName(): void
     {
-        $this->expectException(InvalidArgumentException::class, 'Empty entry name');
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Empty entry name');
 
         $zipFile = new ZipFile();
         $zipFile->addFromString('', 'contents');
@@ -1262,7 +1163,7 @@ class ZipFileTest extends ZipTestCase
      *
      * @throws ZipException
      */
-    public function testAddFromStringCompressionMethod()
+    public function testAddFromStringCompressionMethod(): void
     {
         $fileStored = sys_get_temp_dir() . '/zip-stored.txt';
         $fileDeflated = sys_get_temp_dir() . '/zip-deflated.txt';
@@ -1280,19 +1181,20 @@ class ZipFileTest extends ZipTestCase
         unlink($fileDeflated);
 
         $zipFile->openFile($this->outputFilename);
-        $infoStored = $zipFile->getEntryInfo(basename($fileStored));
-        $infoDeflated = $zipFile->getEntryInfo(basename($fileDeflated));
-        static::assertSame($infoStored->getMethodName(), 'Stored');
-        static::assertSame($infoDeflated->getMethodName(), 'Deflated');
+        $methodStored = $zipFile->getEntry(basename($fileStored))->getCompressionMethod();
+        $methodDeflated = $zipFile->getEntry(basename($fileDeflated))->getCompressionMethod();
+        static::assertSame($methodStored, ZipCompressionMethod::STORED);
+        static::assertSame($methodDeflated, ZipCompressionMethod::DEFLATED);
         $zipFile->close();
     }
 
     /**
      * @throws ZipException
      */
-    public function testAddFromStreamInvalidResource()
+    public function testAddFromStreamInvalidResource(): void
     {
-        $this->expectException(InvalidArgumentException::class, 'Stream is not resource');
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Stream is not resource');
 
         $zipFile = new ZipFile();
         /** @noinspection PhpParamsInspection */
@@ -1302,9 +1204,10 @@ class ZipFileTest extends ZipTestCase
     /**
      * @throws ZipException
      */
-    public function testAddFromStreamEmptyEntryName()
+    public function testAddFromStreamEmptyEntryName(): void
     {
-        $this->expectException(InvalidArgumentException::class, 'Empty entry name');
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Empty entry name');
 
         $handle = fopen(__FILE__, 'rb');
 
@@ -1315,12 +1218,10 @@ class ZipFileTest extends ZipTestCase
     /**
      * @throws ZipException
      */
-    public function testAddFromStreamUnsupportedMethod()
+    public function testAddFromStreamUnsupportedMethod(): void
     {
-        $this->expectException(
-            ZipUnsupportMethodException::class,
-            'Compression method 99 (AES Encryption) is not supported.'
-        );
+        $this->expectException(ZipUnsupportMethodException::class);
+        $this->expectExceptionMessage('Compression method 99 (AES Encryption) is not supported.');
 
         $handle = fopen(__FILE__, 'rb');
 
@@ -1334,7 +1235,7 @@ class ZipFileTest extends ZipTestCase
      *
      * @throws ZipException
      */
-    public function testAddFromStreamCompressionMethod()
+    public function testAddFromStreamCompressionMethod(): void
     {
         $fileStored = sys_get_temp_dir() . '/zip-stored.txt';
         $fileDeflated = sys_get_temp_dir() . '/zip-deflated.txt';
@@ -1355,30 +1256,20 @@ class ZipFileTest extends ZipTestCase
         unlink($fileDeflated);
 
         $zipFile->openFile($this->outputFilename);
-        $infoStored = $zipFile->getEntryInfo(basename($fileStored));
-        $infoDeflated = $zipFile->getEntryInfo(basename($fileDeflated));
-        static::assertSame($infoStored->getMethodName(), 'Stored');
-        static::assertSame($infoDeflated->getMethodName(), 'Deflated');
+        $methodStored = $zipFile->getEntry(basename($fileStored))->getCompressionMethod();
+        $methodDeflated = $zipFile->getEntry(basename($fileDeflated))->getCompressionMethod();
+        static::assertSame($methodStored, ZipCompressionMethod::STORED);
+        static::assertSame($methodDeflated, ZipCompressionMethod::DEFLATED);
         $zipFile->close();
     }
 
     /**
      * @throws ZipException
      */
-    public function testAddFileNullFileName()
+    public function testAddFileCantExists(): void
     {
-        $this->expectException(InvalidArgumentException::class, 'Filename is null');
-
-        $zipFile = new ZipFile();
-        $zipFile->addFile(null);
-    }
-
-    /**
-     * @throws ZipException
-     */
-    public function testAddFileCantExists()
-    {
-        $this->expectException(InvalidArgumentException::class, 'File path/to/file is not readable');
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('File path/to/file is not readable');
 
         $zipFile = new ZipFile();
         $zipFile->addFile('path/to/file');
@@ -1387,12 +1278,10 @@ class ZipFileTest extends ZipTestCase
     /**
      * @throws ZipException
      */
-    public function testAddFileUnsupportedMethod()
+    public function testAddFileUnsupportedMethod(): void
     {
-        $this->expectException(
-            ZipUnsupportMethodException::class,
-            'Compression method 99 (AES Encryption) is not supported.'
-        );
+        $this->expectException(ZipUnsupportMethodException::class);
+        $this->expectExceptionMessage('Compression method 99 (AES Encryption) is not supported.');
 
         $zipFile = new ZipFile();
         $zipFile->addFile(__FILE__, null, ZipCompressionMethod::WINZIP_AES);
@@ -1402,17 +1291,13 @@ class ZipFileTest extends ZipTestCase
     /**
      * @throws ZipException
      */
-    public function testAddFileCannotOpen()
+    public function testAddFileCannotOpen(): void
     {
-        if (static::skipTestForWindows()) {
-            return;
-        }
+        static::skipTestForWindows();
+        static::skipTestForRootUser();
 
-        if (static::skipTestForRootUser()) {
-            return;
-        }
-
-        $this->expectException(InvalidArgumentException::class, 'is not readable');
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('is not readable');
 
         static::assertNotFalse(file_put_contents($this->outputFilename, ''));
         static::assertTrue(chmod($this->outputFilename, 0244));
@@ -1424,20 +1309,10 @@ class ZipFileTest extends ZipTestCase
     /**
      * @throws ZipException
      */
-    public function testAddDirNullDirname()
+    public function testAddDirEmptyDirname(): void
     {
-        $this->expectException(InvalidArgumentException::class, 'Input dir is null');
-
-        $zipFile = new ZipFile();
-        $zipFile->addDir(null);
-    }
-
-    /**
-     * @throws ZipException
-     */
-    public function testAddDirEmptyDirname()
-    {
-        $this->expectException(InvalidArgumentException::class, 'The input directory is not specified');
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('The input directory is not specified');
 
         $zipFile = new ZipFile();
         $zipFile->addDir('');
@@ -1446,9 +1321,10 @@ class ZipFileTest extends ZipTestCase
     /**
      * @throws ZipException
      */
-    public function testAddDirCantExists()
+    public function testAddDirCantExists(): void
     {
-        $this->expectException(InvalidArgumentException::class, 'does not exist');
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('does not exist');
 
         $zipFile = new ZipFile();
         $zipFile->addDir(uniqid('', false));
@@ -1457,20 +1333,10 @@ class ZipFileTest extends ZipTestCase
     /**
      * @throws ZipException
      */
-    public function testAddDirRecursiveNullDirname()
+    public function testAddDirRecursiveEmptyDirname(): void
     {
-        $this->expectException(InvalidArgumentException::class, 'Input dir is null');
-
-        $zipFile = new ZipFile();
-        $zipFile->addDirRecursive(null);
-    }
-
-    /**
-     * @throws ZipException
-     */
-    public function testAddDirRecursiveEmptyDirname()
-    {
-        $this->expectException(InvalidArgumentException::class, 'The input directory is not specified');
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('The input directory is not specified');
 
         $zipFile = new ZipFile();
         $zipFile->addDirRecursive('');
@@ -1479,9 +1345,10 @@ class ZipFileTest extends ZipTestCase
     /**
      * @throws ZipException
      */
-    public function testAddDirRecursiveCantExists()
+    public function testAddDirRecursiveCantExists(): void
     {
-        $this->expectException(InvalidArgumentException::class, 'does not exist');
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('does not exist');
 
         $zipFile = new ZipFile();
         $zipFile->addDirRecursive(uniqid('', false));
@@ -1490,20 +1357,10 @@ class ZipFileTest extends ZipTestCase
     /**
      * @throws ZipException
      */
-    public function testAddFilesFromGlobNull()
+    public function testAddFilesFromGlobEmpty(): void
     {
-        $this->expectException(InvalidArgumentException::class, 'Input dir is null');
-
-        $zipFile = new ZipFile();
-        $zipFile->addFilesFromGlob(null, '*.png');
-    }
-
-    /**
-     * @throws ZipException
-     */
-    public function testAddFilesFromGlobEmpty()
-    {
-        $this->expectException(InvalidArgumentException::class, 'The input directory is not specified');
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('The input directory is not specified');
 
         $zipFile = new ZipFile();
         $zipFile->addFilesFromGlob('', '*.png');
@@ -1512,9 +1369,10 @@ class ZipFileTest extends ZipTestCase
     /**
      * @throws ZipException
      */
-    public function testAddFilesFromGlobCantExists()
+    public function testAddFilesFromGlobCantExists(): void
     {
-        $this->expectException(InvalidArgumentException::class, 'does not exist');
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('does not exist');
 
         $zipFile = new ZipFile();
         $zipFile->addFilesFromGlob('path/to/path', '*.png');
@@ -1523,20 +1381,10 @@ class ZipFileTest extends ZipTestCase
     /**
      * @throws ZipException
      */
-    public function testAddFilesFromGlobNullPattern()
+    public function testAddFilesFromGlobEmptyPattern(): void
     {
-        $this->expectException(InvalidArgumentException::class, 'The glob pattern is not specified');
-
-        $zipFile = new ZipFile();
-        $zipFile->addFilesFromGlob(__DIR__, null);
-    }
-
-    /**
-     * @throws ZipException
-     */
-    public function testAddFilesFromGlobEmptyPattern()
-    {
-        $this->expectException(InvalidArgumentException::class, 'The glob pattern is not specified');
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('The glob pattern is not specified');
 
         $zipFile = new ZipFile();
         $zipFile->addFilesFromGlob(__DIR__, '');
@@ -1545,20 +1393,10 @@ class ZipFileTest extends ZipTestCase
     /**
      * @throws ZipException
      */
-    public function testAddFilesFromGlobRecursiveNull()
+    public function testAddFilesFromGlobRecursiveEmpty(): void
     {
-        $this->expectException(InvalidArgumentException::class, 'Input dir is null');
-
-        $zipFile = new ZipFile();
-        $zipFile->addFilesFromGlobRecursive(null, '*.png');
-    }
-
-    /**
-     * @throws ZipException
-     */
-    public function testAddFilesFromGlobRecursiveEmpty()
-    {
-        $this->expectException(InvalidArgumentException::class, 'The input directory is not specified');
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('The input directory is not specified');
 
         $zipFile = new ZipFile();
         $zipFile->addFilesFromGlobRecursive('', '*.png');
@@ -1567,9 +1405,10 @@ class ZipFileTest extends ZipTestCase
     /**
      * @throws ZipException
      */
-    public function testAddFilesFromGlobRecursiveCantExists()
+    public function testAddFilesFromGlobRecursiveCantExists(): void
     {
-        $this->expectException(InvalidArgumentException::class, 'does not exist');
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('does not exist');
 
         $zipFile = new ZipFile();
         $zipFile->addFilesFromGlobRecursive('path/to/path', '*.png');
@@ -1578,20 +1417,10 @@ class ZipFileTest extends ZipTestCase
     /**
      * @throws ZipException
      */
-    public function testAddFilesFromGlobRecursiveNullPattern()
+    public function testAddFilesFromGlobRecursiveEmptyPattern(): void
     {
-        $this->expectException(InvalidArgumentException::class, 'The glob pattern is not specified');
-
-        $zipFile = new ZipFile();
-        $zipFile->addFilesFromGlobRecursive(__DIR__, null);
-    }
-
-    /**
-     * @throws ZipException
-     */
-    public function testAddFilesFromGlobRecursiveEmptyPattern()
-    {
-        $this->expectException(InvalidArgumentException::class, 'The glob pattern is not specified');
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('The glob pattern is not specified');
 
         $zipFile = new ZipFile();
         $zipFile->addFilesFromGlobRecursive(__DIR__, '');
@@ -1600,20 +1429,10 @@ class ZipFileTest extends ZipTestCase
     /**
      * @throws ZipException
      */
-    public function testAddFilesFromRegexDirectoryNull()
+    public function testAddFilesFromRegexDirectoryEmpty(): void
     {
-        $this->expectException(InvalidArgumentException::class, 'The input directory is not specified');
-
-        $zipFile = new ZipFile();
-        $zipFile->addFilesFromRegex(null, '~\.png$~i');
-    }
-
-    /**
-     * @throws ZipException
-     */
-    public function testAddFilesFromRegexDirectoryEmpty()
-    {
-        $this->expectException(InvalidArgumentException::class, 'The input directory is not specified');
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('The input directory is not specified');
 
         $zipFile = new ZipFile();
         $zipFile->addFilesFromRegex('', '~\.png$~i');
@@ -1622,9 +1441,10 @@ class ZipFileTest extends ZipTestCase
     /**
      * @throws ZipException
      */
-    public function testAddFilesFromRegexCantExists()
+    public function testAddFilesFromRegexCantExists(): void
     {
-        $this->expectException(InvalidArgumentException::class, 'does not exist');
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('does not exist');
 
         $zipFile = new ZipFile();
         $zipFile->addFilesFromRegex('path/to/path', '~\.png$~i');
@@ -1633,20 +1453,10 @@ class ZipFileTest extends ZipTestCase
     /**
      * @throws ZipException
      */
-    public function testAddFilesFromRegexNullPattern()
+    public function testAddFilesFromRegexEmptyPattern(): void
     {
-        $this->expectException(InvalidArgumentException::class, 'The regex pattern is not specified');
-
-        $zipFile = new ZipFile();
-        $zipFile->addFilesFromRegex(__DIR__, null);
-    }
-
-    /**
-     * @throws ZipException
-     */
-    public function testAddFilesFromRegexEmptyPattern()
-    {
-        $this->expectException(InvalidArgumentException::class, 'The regex pattern is not specified');
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('The regex pattern is not specified');
 
         $zipFile = new ZipFile();
         $zipFile->addFilesFromRegex(__DIR__, '');
@@ -1655,20 +1465,10 @@ class ZipFileTest extends ZipTestCase
     /**
      * @throws ZipException
      */
-    public function testAddFilesFromRegexRecursiveDirectoryNull()
+    public function testAddFilesFromRegexRecursiveEmpty(): void
     {
-        $this->expectException(InvalidArgumentException::class, 'The input directory is not specified');
-
-        $zipFile = new ZipFile();
-        $zipFile->addFilesFromRegexRecursive(null, '~\.png$~i');
-    }
-
-    /**
-     * @throws ZipException
-     */
-    public function testAddFilesFromRegexRecursiveEmpty()
-    {
-        $this->expectException(InvalidArgumentException::class, 'The input directory is not specified');
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('The input directory is not specified');
 
         $zipFile = new ZipFile();
         $zipFile->addFilesFromRegexRecursive('', '~\.png$~i');
@@ -1677,9 +1477,10 @@ class ZipFileTest extends ZipTestCase
     /**
      * @throws ZipException
      */
-    public function testAddFilesFromRegexRecursiveCantExists()
+    public function testAddFilesFromRegexRecursiveCantExists(): void
     {
-        $this->expectException(InvalidArgumentException::class, 'does not exist');
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('does not exist');
 
         $zipFile = new ZipFile();
         $zipFile->addFilesFromGlobRecursive('path/to/path', '~\.png$~i');
@@ -1688,20 +1489,10 @@ class ZipFileTest extends ZipTestCase
     /**
      * @throws ZipException
      */
-    public function testAddFilesFromRegexRecursiveNullPattern()
+    public function testAddFilesFromRegexRecursiveEmptyPattern(): void
     {
-        $this->expectException(InvalidArgumentException::class, 'The regex pattern is not specified');
-
-        $zipFile = new ZipFile();
-        $zipFile->addFilesFromRegexRecursive(__DIR__, null);
-    }
-
-    /**
-     * @throws ZipException
-     */
-    public function testAddFilesFromRegexRecursiveEmptyPattern()
-    {
-        $this->expectException(InvalidArgumentException::class, 'The regex pattern is not specified');
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('The regex pattern is not specified');
 
         $zipFile = new ZipFile();
         $zipFile->addFilesFromRegexRecursive(__DIR__, '');
@@ -1710,9 +1501,10 @@ class ZipFileTest extends ZipTestCase
     /**
      * @throws ZipException
      */
-    public function testSaveAsStreamBadStream()
+    public function testSaveAsStreamBadStream(): void
     {
-        $this->expectException(InvalidArgumentException::class, 'handle is not resource');
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('handle is not resource');
 
         $zipFile = new ZipFile();
         /** @noinspection PhpParamsInspection */
@@ -1722,22 +1514,18 @@ class ZipFileTest extends ZipTestCase
     /**
      * @throws ZipException
      */
-    public function testSaveAsFileNotWritable()
+    public function testSaveAsFileNotWritable(): void
     {
-        if (static::skipTestForWindows()) {
-            return;
-        }
-
-        if (static::skipTestForRootUser()) {
-            return;
-        }
+        static::skipTestForWindows();
+        static::skipTestForRootUser();
 
         static::assertTrue(mkdir($this->outputDirname, 0444, true));
         static::assertTrue(chmod($this->outputDirname, 0444));
 
         $this->outputFilename = $this->outputDirname . \DIRECTORY_SEPARATOR . basename($this->outputFilename);
 
-        $this->setExpectedExceptionRegExp(InvalidArgumentException::class, '~Cannot open ".*?" for writing.~');
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Permission denied');
 
         $zipFile = new ZipFile();
         $zipFile->saveAsFile($this->outputFilename);
@@ -1749,10 +1537,10 @@ class ZipFileTest extends ZipTestCase
      * @throws ZipException
      * @throws \Exception
      */
-    public function testZipFileArrayAccessAndCountableAndIterator()
+    public function testZipFileArrayAccessAndCountableAndIterator(): void
     {
         $files = [];
-        $numFiles = mt_rand(20, 100);
+        $numFiles = random_int(20, 100);
         for ($i = 0; $i < $numFiles; $i++) {
             $files['file' . $i . '.txt'] = random_bytes(255);
         }
@@ -1842,7 +1630,7 @@ class ZipFileTest extends ZipTestCase
     /**
      * @throws ZipException
      */
-    public function testArrayAccessAddFile()
+    public function testArrayAccessAddFile(): void
     {
         $entryName = 'path/to/file.dat';
         $entryNameStream = 'path/to/' . basename(__FILE__);
@@ -1865,55 +1653,44 @@ class ZipFileTest extends ZipTestCase
     }
 
     /**
-     * @throws ZipEntryNotFoundException
      * @throws ZipException
      * @throws \Exception
      */
-    public function testUnknownCompressionMethod()
+    public function testUnknownCompressionMethod(): void
     {
         $zipFile = new ZipFile();
 
         $zipFile->addFromString('file', 'content', ZipEntry::UNKNOWN);
         $zipFile->addFromString('file2', base64_encode(random_bytes(512)), ZipEntry::UNKNOWN);
 
-        static::assertSame($zipFile->getEntryInfo('file')->getMethodName(), 'Stored');
-        static::assertSame($zipFile->getEntryInfo('file2')->getMethodName(), 'Deflated');
+        static::assertSame($zipFile->getEntry('file')->getCompressionMethod(), ZipCompressionMethod::STORED);
+        static::assertSame($zipFile->getEntry('file2')->getCompressionMethod(), ZipCompressionMethod::DEFLATED);
 
         $zipFile->saveAsFile($this->outputFilename);
         $zipFile->close();
 
         $zipFile->openFile($this->outputFilename);
-        static::assertSame($zipFile->getEntryInfo('file')->getMethodName(), 'Stored');
-        static::assertSame($zipFile->getEntryInfo('file2')->getMethodName(), 'Deflated');
-
+        static::assertSame($zipFile->getEntry('file')->getCompressionMethod(), ZipCompressionMethod::STORED);
+        static::assertSame($zipFile->getEntry('file2')->getCompressionMethod(), ZipCompressionMethod::DEFLATED);
         $zipFile->close();
     }
 
     /**
      * @throws ZipException
      */
-    public function testAddEmptyDirNullName()
+    public function testAddEmptyDirEmptyName(): void
     {
-        $this->expectException(InvalidArgumentException::class, 'Entry name is null');
-
-        $zipFile = new ZipFile();
-        $zipFile->addEmptyDir(null);
-    }
-
-    /**
-     * @throws ZipException
-     */
-    public function testAddEmptyDirEmptyName()
-    {
-        $this->expectException(InvalidArgumentException::class, 'Empty entry name');
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Empty entry name');
 
         $zipFile = new ZipFile();
         $zipFile->addEmptyDir('');
     }
 
-    public function testNotFoundEntry()
+    public function testNotFoundEntry(): void
     {
-        $this->expectException(ZipEntryNotFoundException::class, '"bad entry name"');
+        $this->expectException(ZipEntryNotFoundException::class);
+        $this->expectExceptionMessage('"bad entry name"');
 
         $zipFile = new ZipFile();
         $zipFile['bad entry name'];
@@ -1924,7 +1701,7 @@ class ZipFileTest extends ZipTestCase
      *
      * @throws ZipException
      */
-    public function testRewriteFile()
+    public function testRewriteFile(): void
     {
         $zipFile = new ZipFile();
         $zipFile['file'] = 'content';
@@ -1958,9 +1735,10 @@ class ZipFileTest extends ZipTestCase
      *
      * @throws ZipException
      */
-    public function testRewriteString()
+    public function testRewriteString(): void
     {
-        $this->expectException(ZipException::class, 'Overwrite is only supported for open local files');
+        $this->expectException(ZipException::class);
+        $this->expectExceptionMessage('Overwrite is only supported for open local files');
 
         $zipFile = new ZipFile();
         $zipFile['file'] = 'content';
@@ -1984,9 +1762,10 @@ class ZipFileTest extends ZipTestCase
     /**
      * @throws ZipException
      */
-    public function testRewriteNullStream()
+    public function testRewriteNullStream(): void
     {
-        $this->expectException(ZipException::class, 'input stream is null');
+        $this->expectException(ZipException::class);
+        $this->expectExceptionMessage('input stream is null');
 
         $zipFile = new ZipFile();
         $zipFile->rewrite();
@@ -1997,7 +1776,7 @@ class ZipFileTest extends ZipTestCase
      *
      * @throws ZipException
      */
-    public function testRewriteRelativeFile()
+    public function testRewriteRelativeFile(): void
     {
         $zipFile = new ZipFile();
         $zipFile['entry.txt'] = 'test';
@@ -2022,12 +1801,10 @@ class ZipFileTest extends ZipTestCase
      *
      * @throws ZipException
      */
-    public function testRewriteDifferentWinDirectorySeparator()
+    public function testRewriteDifferentWinDirectorySeparator(): void
     {
         if (\DIRECTORY_SEPARATOR !== '\\') {
             static::markTestSkipped('Windows test only');
-
-            return;
         }
 
         $zipFile = new ZipFile();
@@ -2053,7 +1830,7 @@ class ZipFileTest extends ZipTestCase
     /**
      * @throws ZipException
      */
-    public function testRewriteRelativeFile2()
+    public function testRewriteRelativeFile2(): void
     {
         $this->outputFilename = basename($this->outputFilename);
 
@@ -2076,11 +1853,10 @@ class ZipFileTest extends ZipTestCase
     /**
      * @throws ZipException
      */
-    public function testFilename0()
+    public function testFilename0(): void
     {
         $zipFile = new ZipFile();
         $zipFile[0] = 0;
-        static::assertTrue(isset($zipFile[0]));
         static::assertTrue(isset($zipFile['0']));
         static::assertCount(1, $zipFile);
         $zipFile
@@ -2100,7 +1876,7 @@ class ZipFileTest extends ZipTestCase
         static::assertTrue(unlink($this->outputFilename));
 
         $zipFile = new ZipFile();
-        $zipFile->addFromString(0, 0);
+        $zipFile->addFromString('0', '0');
         static::assertTrue(isset($zipFile[0]));
         static::assertTrue(isset($zipFile['0']));
         static::assertCount(1, $zipFile);
@@ -2115,7 +1891,7 @@ class ZipFileTest extends ZipTestCase
     /**
      * @throws ZipException
      */
-    public function testPsrResponse()
+    public function testPsrResponse(): void
     {
         $zipFile = new ZipFile();
         for ($i = 0; $i < 10; $i++) {
@@ -2123,7 +1899,6 @@ class ZipFileTest extends ZipTestCase
         }
         $filename = 'file.jar';
         $response = $zipFile->outputAsResponse(new Response(), $filename);
-        static::assertInstanceOf(ResponseInterface::class, $response);
         static::assertSame('application/java-archive', $response->getHeaderLine('content-type'));
         static::assertSame('attachment; filename="file.jar"', $response->getHeaderLine('content-disposition'));
     }
@@ -2131,13 +1906,11 @@ class ZipFileTest extends ZipTestCase
     /**
      * @dataProvider provideCompressionLevels
      *
-     * @param int $compressionLevel
-     *
      * @throws ZipEntryNotFoundException
      * @throws ZipException
      * @throws \Exception
      */
-    public function testCompressionLevel($compressionLevel)
+    public function testCompressionLevel(int $compressionLevel): void
     {
         $fileContent = random_bytes(512);
         $entryName = 'file.txt';
@@ -2155,14 +1928,10 @@ class ZipFileTest extends ZipTestCase
         $zipFile->openFile($this->outputFilename);
         static::assertSame($zipFile->getEntryContents($entryName), $fileContent);
         static::assertSame($zipFile->getEntry($entryName)->getCompressionLevel(), $compressionLevel);
-        static::assertSame($zipFile->getEntryInfo($entryName)->getCompressionLevel(), $compressionLevel);
         $zipFile->close();
     }
 
-    /**
-     * @return array
-     */
-    public function provideCompressionLevels()
+    public function provideCompressionLevels(): array
     {
         return [
             [ZipCompressionLevel::MAXIMUM],
@@ -2175,9 +1944,10 @@ class ZipFileTest extends ZipTestCase
     /**
      * @throws ZipException
      */
-    public function testInvalidCompressionLevel()
+    public function testInvalidCompressionLevel(): void
     {
-        $this->expectException(InvalidArgumentException::class, 'Invalid compression level');
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid compression level');
 
         $zipFile = new ZipFile();
         $zipFile->addFromString('file', 'content');
@@ -2187,9 +1957,10 @@ class ZipFileTest extends ZipTestCase
     /**
      * @throws ZipException
      */
-    public function testInvalidCompressionLevelEntry()
+    public function testInvalidCompressionLevelEntry(): void
     {
-        $this->expectException(InvalidArgumentException::class, 'Invalid compression level');
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid compression level');
 
         $zipFile = new ZipFile();
         $zipFile->addFromString('file', 'content');
@@ -2199,7 +1970,7 @@ class ZipFileTest extends ZipTestCase
     /**
      * @throws ZipException
      */
-    public function testCompressionGlobal()
+    public function testCompressionGlobal(): void
     {
         $zipFile = new ZipFile();
         for ($i = 0; $i < 10; $i++) {
@@ -2214,21 +1985,20 @@ class ZipFileTest extends ZipTestCase
         static::assertCorrectZipArchive($this->outputFilename);
 
         $zipFile->openFile($this->outputFilename);
-        $infoList = $zipFile->getAllInfo();
+        $zipEntries = $zipFile->getEntries();
         array_walk(
-            $infoList,
-            function (ZipInfo $zipInfo) {
-                $this->assertSame($zipInfo->getCompressionLevel(), ZipCompressionLevel::SUPER_FAST);
+            $zipEntries,
+            function (ZipEntry $zipEntry): void {
+                $this->assertSame($zipEntry->getCompressionLevel(), ZipCompressionLevel::SUPER_FAST);
             }
         );
         $zipFile->close();
     }
 
     /**
-     * @throws ZipEntryNotFoundException
      * @throws ZipException
      */
-    public function testCompressionMethodEntry()
+    public function testCompressionMethodEntry(): void
     {
         $zipFile = new ZipFile();
         $zipFile->addFromString('file', 'content', ZipCompressionMethod::STORED);
@@ -2236,23 +2006,21 @@ class ZipFileTest extends ZipTestCase
         $zipFile->close();
 
         $zipFile->openFile($this->outputFilename);
-        static::assertSame($zipFile->getEntryInfo('file')->getMethodName(), 'Stored');
+        static::assertSame($zipFile->getEntry('file')->getCompressionMethod(), ZipCompressionMethod::STORED);
         $zipFile->setCompressionMethodEntry('file', ZipCompressionMethod::DEFLATED);
-        static::assertSame($zipFile->getEntryInfo('file')->getMethodName(), 'Deflated');
+        static::assertSame($zipFile->getEntry('file')->getCompressionMethod(), ZipCompressionMethod::DEFLATED);
 
         $zipFile->rewrite();
-        static::assertSame($zipFile->getEntryInfo('file')->getMethodName(), 'Deflated');
+        static::assertSame($zipFile->getEntry('file')->getCompressionMethod(), ZipCompressionMethod::DEFLATED);
     }
 
     /**
      * @throws ZipException
      */
-    public function testInvalidCompressionMethodEntry()
+    public function testInvalidCompressionMethodEntry(): void
     {
-        $this->expectException(
-            ZipUnsupportMethodException::class,
-            'Compression method 99 (AES Encryption) is not supported.'
-        );
+        $this->expectException(ZipUnsupportMethodException::class);
+        $this->expectExceptionMessage('Compression method 99 (AES Encryption) is not supported.');
 
         $zipFile = new ZipFile();
         $zipFile->addFromString('file', 'content', ZipCompressionMethod::STORED);
@@ -2263,7 +2031,7 @@ class ZipFileTest extends ZipTestCase
     /**
      * @throws ZipException
      */
-    public function testUnchangeAll()
+    public function testUnchangeAll(): void
     {
         $zipFile = new ZipFile();
         for ($i = 0; $i < 10; $i++) {
@@ -2299,7 +2067,7 @@ class ZipFileTest extends ZipTestCase
     /**
      * @throws ZipException
      */
-    public function testUnchangeArchiveComment()
+    public function testUnchangeArchiveComment(): void
     {
         $zipFile = new ZipFile();
         for ($i = 0; $i < 10; $i++) {
@@ -2324,10 +2092,9 @@ class ZipFileTest extends ZipTestCase
     }
 
     /**
-     * @throws ZipEntryNotFoundException
      * @throws ZipException
      */
-    public function testUnchangeEntry()
+    public function testUnchangeEntry(): void
     {
         $zipFile = new ZipFile();
         $zipFile['file 1'] = 'content 1';
@@ -2343,18 +2110,18 @@ class ZipFileTest extends ZipTestCase
         $zipFile->setPasswordEntry('file 1', 'password');
 
         static::assertSame($zipFile['file 1'], 'modify content 1');
-        static::assertTrue($zipFile->getEntryInfo('file 1')->isEncrypted());
+        static::assertTrue($zipFile->getEntry('file 1')->isEncrypted());
 
         static::assertSame($zipFile['file 2'], 'content 2');
-        static::assertFalse($zipFile->getEntryInfo('file 2')->isEncrypted());
+        static::assertFalse($zipFile->getEntry('file 2')->isEncrypted());
 
         $zipFile->unchangeEntry('file 1');
 
         static::assertSame($zipFile['file 1'], 'content 1');
-        static::assertFalse($zipFile->getEntryInfo('file 1')->isEncrypted());
+        static::assertFalse($zipFile->getEntry('file 1')->isEncrypted());
 
         static::assertSame($zipFile['file 2'], 'content 2');
-        static::assertFalse($zipFile->getEntryInfo('file 2')->isEncrypted());
+        static::assertFalse($zipFile->getEntry('file 2')->isEncrypted());
         $zipFile->close();
     }
 
@@ -2363,15 +2130,11 @@ class ZipFileTest extends ZipTestCase
      *
      * @dataProvider provideOutputAsAttachment
      *
-     * @param string      $zipFilename
-     * @param string|null $mimeType
-     * @param string      $expectedMimeType
-     * @param bool        $attachment
-     * @param string      $expectedAttachment
+     * @param ?string $mimeType
      *
      * @throws ZipException
      */
-    public function testOutputAsAttachment($zipFilename, $mimeType, $expectedMimeType, $attachment, $expectedAttachment)
+    public function testOutputAsAttachment(string $zipFilename, ?string $mimeType, string $expectedMimeType, bool $attachment, string $expectedAttachment): void
     {
         $zipFile = new ZipFile();
         $file1Contents = 'content 1';
@@ -2402,10 +2165,7 @@ class ZipFileTest extends ZipTestCase
         }
     }
 
-    /**
-     * @return array
-     */
-    public function provideOutputAsAttachment()
+    public function provideOutputAsAttachment(): array
     {
         return [
             ['file.zip', null, 'application/zip', true, 'attachment'],
@@ -2417,14 +2177,10 @@ class ZipFileTest extends ZipTestCase
     /**
      * @dataProvider provideGetEntryStream
      *
-     * @param ZipFile $zipFile
-     * @param string  $entryName
-     * @param string  $contents
-     *
      * @throws ZipEntryNotFoundException
      * @throws ZipException
      */
-    public function testReopenEntryStream(ZipFile $zipFile, $entryName, $contents)
+    public function testReopenEntryStream(ZipFile $zipFile, string $entryName, string $contents): void
     {
         for ($i = 0; $i < 2; $i++) {
             $fp = $zipFile->getEntryStream($entryName);
@@ -2438,10 +2194,8 @@ class ZipFileTest extends ZipTestCase
 
     /**
      * @throws \Exception
-     *
-     * @return array
      */
-    public function provideGetEntryStream()
+    public function provideGetEntryStream(): array
     {
         $entryName = 'entry';
         $contents = random_bytes(1024);
@@ -2464,7 +2218,7 @@ class ZipFileTest extends ZipTestCase
     /**
      * @throws ZipException
      */
-    public function testGetEntries()
+    public function testGetEntries(): void
     {
         $zipFile = new ZipFile();
         for ($i = 0; $i < 100; $i++) {
@@ -2503,7 +2257,7 @@ class ZipFileTest extends ZipTestCase
     /**
      * @throws ZipException
      */
-    public function testRenameWithRecompressData()
+    public function testRenameWithRecompressData(): void
     {
         $entryName = 'file.txt';
         $newEntryName = 'rename_file.txt';
@@ -2533,7 +2287,7 @@ class ZipFileTest extends ZipTestCase
      * @throws ZipEntryNotFoundException
      * @throws ZipException
      */
-    public function testCloneZipContainerInZipWriter()
+    public function testCloneZipContainerInZipWriter(): void
     {
         $zipFile = new ZipFile();
         $zipFile['file 1'] = 'contents';
@@ -2549,7 +2303,7 @@ class ZipFileTest extends ZipTestCase
     /**
      * @throws ZipException
      */
-    public function testMultiSave()
+    public function testMultiSave(): void
     {
         $zipFile = new ZipFile();
         $zipFile['file 1'] = 'contents';
@@ -2564,9 +2318,10 @@ class ZipFileTest extends ZipTestCase
      * @throws ZipEntryNotFoundException
      * @throws ZipException
      */
-    public function testNoData()
+    public function testNoData(): void
     {
-        $this->expectException(ZipException::class, 'No data for zip entry file');
+        $this->expectException(ZipException::class);
+        $this->expectExceptionMessage('No data for zip entry file');
 
         $entryName = 'file';
 
@@ -2586,7 +2341,7 @@ class ZipFileTest extends ZipTestCase
      * @throws ZipEntryNotFoundException
      * @throws ZipException
      */
-    public function testReplaceEntryContentsByFile()
+    public function testReplaceEntryContentsByFile(): void
     {
         $entryName = basename(__FILE__);
 

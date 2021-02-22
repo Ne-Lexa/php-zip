@@ -1,5 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
+/*
+ * This file is part of the nelexa/zip package.
+ * (c) Ne-Lexa <https://github.com/Ne-Lexa/php-zip>
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace PhpZip\IO\Filter\Cipher\WinZipAes;
 
 use PhpZip\Exception\RuntimeException;
@@ -11,37 +20,27 @@ use PhpZip\Model\ZipEntry;
  */
 class WinZipAesEncryptionStreamFilter extends \php_user_filter
 {
-    const FILTER_NAME = 'phpzip.encryption.winzipaes';
+    public const FILTER_NAME = 'phpzip.encryption.winzipaes';
 
-    /** @var string */
-    private $buffer;
+    private string $buffer;
 
-    /** @var int */
-    private $remaining = 0;
+    private int $remaining = 0;
 
-    /** @var ZipEntry */
-    private $entry;
+    private ZipEntry $entry;
 
-    /** @var int */
-    private $size;
+    private int $size;
 
-    /** @var WinZipAesContext|null */
-    private $context;
+    private ?WinZipAesContext $context = null;
 
-    /**
-     * @return bool
-     */
-    public static function register()
+    public static function register(): bool
     {
         return stream_filter_register(self::FILTER_NAME, __CLASS__);
     }
 
     /**
-     * @return bool
-     *
      * @noinspection DuplicatedCode
      */
-    public function onCreate()
+    public function onCreate(): bool
     {
         if (!isset($this->params['entry'])) {
             return false;
@@ -53,9 +52,9 @@ class WinZipAesEncryptionStreamFilter extends \php_user_filter
         $this->entry = $this->params['entry'];
 
         if (
-            $this->entry->getPassword() === null ||
-            !$this->entry->isEncrypted() ||
-            !$this->entry->hasExtraField(WinZipAesExtraField::HEADER_ID)
+            $this->entry->getPassword() === null
+            || !$this->entry->isEncrypted()
+            || !$this->entry->hasExtraField(WinZipAesExtraField::HEADER_ID)
         ) {
             return false;
         }
@@ -67,15 +66,7 @@ class WinZipAesEncryptionStreamFilter extends \php_user_filter
         return true;
     }
 
-    /**
-     * @param resource $in
-     * @param resource $out
-     * @param int      $consumed
-     * @param bool     $closing
-     *
-     * @return int
-     */
-    public function filter($in, $out, &$consumed, $closing)
+    public function filter($in, $out, &$consumed, $closing): int
     {
         while ($bucket = stream_bucket_make_writeable($in)) {
             $this->buffer .= $bucket->data;

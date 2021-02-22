@@ -1,5 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
+/*
+ * This file is part of the nelexa/zip package.
+ * (c) Ne-Lexa <https://github.com/Ne-Lexa/php-zip>
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace PhpZip\Tests\Extra\Fields;
 
 use PHPUnit\Framework\TestCase;
@@ -16,19 +25,14 @@ final class ApkAlignmentExtraFieldTest extends TestCase
     /**
      * @dataProvider provideExtraField
      *
-     * @param int    $multiple
-     * @param int    $padding
-     * @param string $binaryData
-     * @param string $toString
-     *
      * @throws ZipException
      */
     public function testExtraField(
-        $multiple,
-        $padding,
-        $binaryData,
-        $toString
-    ) {
+        int $multiple,
+        int $padding,
+        string $binaryData,
+        string $toString
+    ): void {
         $extraField = new ApkAlignmentExtraField($multiple, $padding);
         self::assertSame($extraField->getHeaderId(), ApkAlignmentExtraField::HEADER_ID);
         self::assertSame($extraField->getMultiple(), $multiple);
@@ -43,10 +47,7 @@ final class ApkAlignmentExtraFieldTest extends TestCase
         self::assertSame((string) $extraField, $toString);
     }
 
-    /**
-     * @return array
-     */
-    public function provideExtraField()
+    public function provideExtraField(): array
     {
         return [
             [
@@ -82,7 +83,7 @@ final class ApkAlignmentExtraFieldTest extends TestCase
         ];
     }
 
-    public function testSetter()
+    public function testSetter(): void
     {
         $extraField = new ApkAlignmentExtraField(ApkAlignmentExtraField::ALIGNMENT_BYTES, 3);
         $extraField->setMultiple(ApkAlignmentExtraField::COMMON_PAGE_ALIGNMENT_BYTES);
@@ -94,12 +95,10 @@ final class ApkAlignmentExtraFieldTest extends TestCase
     /**
      * @throws ZipException
      */
-    public function testInvalidParse()
+    public function testInvalidParse(): void
     {
-        $this->expectException(
-            ZipException::class,
-            'Minimum 6 bytes of the extensible data block/field used for alignment of uncompressed entries.'
-        );
+        $this->expectException(ZipException::class);
+        $this->expectExceptionMessage('Minimum 6 bytes of the extensible data block/field used for alignment of uncompressed entries.');
 
         ApkAlignmentExtraField::unpackLocalFileData("\x04");
     }

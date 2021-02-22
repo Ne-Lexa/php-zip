@@ -1,5 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
+/*
+ * This file is part of the nelexa/zip package.
+ * (c) Ne-Lexa <https://github.com/Ne-Lexa/php-zip>
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace PhpZip\Model\Extra\Fields;
 
 use PhpZip\Exception\ZipException;
@@ -20,31 +29,25 @@ class ApkAlignmentExtraField implements ZipExtraField
      *          well as for aligning the entries's data. See ZIP
      *          appnote.txt section 4.5 Extensible data fields.
      */
-    const HEADER_ID = 0xd935;
+    public const HEADER_ID = 0xd935;
 
     /**
      * @var int minimum size (in bytes) of the extensible data block/field used
      *          for alignment of uncompressed entries
      */
-    const MIN_SIZE = 6;
+    public const MIN_SIZE = 6;
 
     /** @var int */
-    const ALIGNMENT_BYTES = 4;
+    public const ALIGNMENT_BYTES = 4;
 
     /** @var int */
-    const COMMON_PAGE_ALIGNMENT_BYTES = 4096;
+    public const COMMON_PAGE_ALIGNMENT_BYTES = 4096;
 
-    /** @var int */
-    private $multiple;
+    private int $multiple;
 
-    /** @var int */
-    private $padding;
+    private int $padding;
 
-    /**
-     * @param int $multiple
-     * @param int $padding
-     */
-    public function __construct($multiple, $padding)
+    public function __construct(int $multiple, int $padding)
     {
         $this->multiple = $multiple;
         $this->padding = $padding;
@@ -54,57 +57,43 @@ class ApkAlignmentExtraField implements ZipExtraField
      * Returns the Header ID (type) of this Extra Field.
      * The Header ID is an unsigned short integer (two bytes)
      * which must be constant during the life cycle of this object.
-     *
-     * @return int
      */
-    public function getHeaderId()
+    public function getHeaderId(): int
     {
         return self::HEADER_ID;
     }
 
-    /**
-     * @return int
-     */
-    public function getMultiple()
+    public function getMultiple(): int
     {
         return $this->multiple;
     }
 
-    /**
-     * @return int
-     */
-    public function getPadding()
+    public function getPadding(): int
     {
         return $this->padding;
     }
 
-    /**
-     * @param int $multiple
-     */
-    public function setMultiple($multiple)
+    public function setMultiple(int $multiple): void
     {
-        $this->multiple = (int) $multiple;
+        $this->multiple = $multiple;
     }
 
-    /**
-     * @param int $padding
-     */
-    public function setPadding($padding)
+    public function setPadding(int $padding): void
     {
-        $this->padding = (int) $padding;
+        $this->padding = $padding;
     }
 
     /**
      * Populate data from this array as if it was in local file data.
      *
-     * @param string        $buffer the buffer to read data from
-     * @param ZipEntry|null $entry
+     * @param string    $buffer the buffer to read data from
+     * @param ?ZipEntry $entry
      *
      * @throws ZipException
      *
      * @return ApkAlignmentExtraField
      */
-    public static function unpackLocalFileData($buffer, ZipEntry $entry = null)
+    public static function unpackLocalFileData(string $buffer, ?ZipEntry $entry = null): self
     {
         $length = \strlen($buffer);
 
@@ -127,14 +116,14 @@ class ApkAlignmentExtraField implements ZipExtraField
     /**
      * Populate data from this array as if it was in central directory data.
      *
-     * @param string        $buffer the buffer to read data from
-     * @param ZipEntry|null $entry
+     * @param string    $buffer the buffer to read data from
+     * @param ?ZipEntry $entry
      *
      * @throws ZipException on error
      *
      * @return ApkAlignmentExtraField
      */
-    public static function unpackCentralDirData($buffer, ZipEntry $entry = null)
+    public static function unpackCentralDirData(string $buffer, ?ZipEntry $entry = null): self
     {
         return self::unpackLocalFileData($buffer, $entry);
     }
@@ -145,7 +134,7 @@ class ApkAlignmentExtraField implements ZipExtraField
      *
      * @return string the data
      */
-    public function packLocalFileData()
+    public function packLocalFileData(): string
     {
         return pack('vx' . $this->padding, $this->multiple);
     }
@@ -156,15 +145,12 @@ class ApkAlignmentExtraField implements ZipExtraField
      *
      * @return string the data
      */
-    public function packCentralDirData()
+    public function packCentralDirData(): string
     {
         return $this->packLocalFileData();
     }
 
-    /**
-     * @return string
-     */
-    public function __toString()
+    public function __toString(): string
     {
         return sprintf(
             '0x%04x APK Alignment: Multiple=%d Padding=%d',

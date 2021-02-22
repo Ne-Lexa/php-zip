@@ -6,10 +6,15 @@
 [![Code Coverage](https://scrutinizer-ci.com/g/Ne-Lexa/php-zip/badges/coverage.png?b=master)](https://scrutinizer-ci.com/g/Ne-Lexa/php-zip/?branch=master)
 [![Latest Stable Version](https://poser.pugx.org/nelexa/zip/v/stable)](https://packagist.org/packages/nelexa/zip)
 [![Total Downloads](https://poser.pugx.org/nelexa/zip/downloads)](https://packagist.org/packages/nelexa/zip)
-[![Minimum PHP Version](http://img.shields.io/badge/php-%3E%3D%205.5-8892BF.svg)](https://php.net/)
 [![License](https://poser.pugx.org/nelexa/zip/license)](https://packagist.org/packages/nelexa/zip)
 
 [Russian Documentation](README.RU.md)
+
+### Versions & Dependencies
+| Version             | PHP        | Documentation                                                        |
+| ------------------- | ---------- | -------------------------------------------------------------------- |
+| ^4.0 (master)       | ^7.4\|^8.0 | current                                                              |
+| ^3.0                | ^5.5\|^7.0 | [Docs v3.3](https://github.com/Ne-Lexa/php-zip/blob/3.3.3/README.md) |
 
 Table of contents
 -----------------
@@ -28,13 +33,13 @@ Table of contents
   + [Deleting entries from the archive](#Documentation-Remove-Zip-Entries)
   + [Working with entries and archive](#Documentation-Entries)
   + [Working with passwords](#Documentation-Password)
-  + [zipalign - alignment tool for Android (APK) files](#Documentation-ZipAlign-Usage)
   + [Undo changes](#Documentation-Unchanged)
   + [Saving a file or output to a browser](#Documentation-Save-Or-Output-Entries)
   + [Closing the archive](#Documentation-Close-Zip-Archive)
 - [Running the tests](#Running-Tests)
 - [Changelog](#Changelog)
 - [Upgrade](#Upgrade)
+  + [Upgrade version 3 to version 4](#Upgrade-v3-to-v4)
   + [Upgrade version 2 to version 3.0](#Upgrade-v2-to-v3)
 
 ### <a name="Features"></a> Features
@@ -50,8 +55,7 @@ Table of contents
   + Deflate compression.
   + BZIP2 compression with the extension `php-bz2`.
 - Support for `ZIP64` (file size is more than 4 GB or the number of entries in the archive is more than 65535).
-- Built-in support for aligning the archive to optimize Android packages (APK) [`zipalign`](https://developer.android.com/studio/command-line/zipalign.html).
-- Working with passwords for PHP 5.5
+- Working with passwords
   > **Attention!**
   >
   > For 32-bit systems, the `Traditional PKWARE Encryption (ZipCrypto)` encryption method is not currently supported. 
@@ -66,9 +70,9 @@ Table of contents
   + Set the encryption method for all or individual entries in the archive.
 
 ### <a name="Requirements"></a> Requirements
-- `PHP` >= 7.2 or `PHP` >= 8.0 (preferably 64-bit).
+- `PHP` >= 7.4 or `PHP` >= 8.0 (preferably 64-bit).
 - Optional php-extension `bzip2` for BZIP2 compression.
-- Optional php-extension `openssl` or `mcrypt` for `WinZip Aes Encryption` support.
+- Optional php-extension `openssl` for `WinZip Aes Encryption` support.
 
 ### <a name="Installation"></a> Installation
 `composer require nelexa/zip`
@@ -123,22 +127,20 @@ Other examples can be found in the `tests/` folder
 - [ZipFile::addFilesFromGlobRecursive](#Documentation-ZipFile-addFilesFromGlobRecursive) - adds files from a directory by glob pattern with subdirectories.
 - [ZipFile::addFilesFromRegex](#Documentation-ZipFile-addFilesFromRegex) - adds files from a directory by PCRE pattern without subdirectories.
 - [ZipFile::addFilesFromRegexRecursive](#Documentation-ZipFile-addFilesFromRegexRecursive) - adds files from a directory by PCRE pattern with subdirectories.
-- [ZipFile::addFromStream](#Documentation-ZipFile-addFromStream) - adds a entry from the stream to the ZIP archive.
+- [ZipFile::addFromStream](#Documentation-ZipFile-addFromStream) - adds an entry from the stream to the ZIP archive.
 - [ZipFile::addFromString](#Documentation-ZipFile-addFromString) - adds a file to a ZIP archive using its contents.
 - [ZipFile::close](#Documentation-ZipFile-close) - close the archive.
 - [ZipFile::count](#Documentation-ZipFile-count) - returns the number of entries in the archive.
 - [ZipFile::deleteFromName](#Documentation-ZipFile-deleteFromName) - deletes an entry in the archive using its name.
-- [ZipFile::deleteFromGlob](#Documentation-ZipFile-deleteFromGlob) - deletes a entries in the archive using glob pattern.
-- [ZipFile::deleteFromRegex](#Documentation-ZipFile-deleteFromRegex) - deletes a entries in the archive using PCRE pattern.
+- [ZipFile::deleteFromGlob](#Documentation-ZipFile-deleteFromGlob) - deletes an entries in the archive using glob pattern.
+- [ZipFile::deleteFromRegex](#Documentation-ZipFile-deleteFromRegex) - deletes an entries in the archive using PCRE pattern.
 - [ZipFile::deleteAll](#Documentation-ZipFile-deleteAll) - deletes all entries in the ZIP archive.
 - [ZipFile::disableEncryption](#Documentation-ZipFile-disableEncryption) - disable encryption for all entries that are already in the archive.
 - [ZipFile::disableEncryptionEntry](#Documentation-ZipFile-disableEncryptionEntry) - disable encryption of an entry defined by its name.
 - [ZipFile::extractTo](#Documentation-ZipFile-extractTo) - extract the archive contents.
-- [ZipFile::getAllInfo](#Documentation-ZipFile-getAllInfo) - returns detailed information about all entries in the archive.
 - [ZipFile::getArchiveComment](#Documentation-ZipFile-getArchiveComment) - returns the Zip archive comment.
 - [ZipFile::getEntryComment](#Documentation-ZipFile-getEntryComment) - returns the comment of an entry using the entry name.
 - [ZipFile::getEntryContent](#Documentation-ZipFile-getEntryContent) - returns the entry contents using its name.
-- [ZipFile::getEntryInfo](#Documentation-ZipFile-getEntryInfo) - returns detailed information about the entry in the archive.
 - [ZipFile::getListFiles](#Documentation-ZipFile-getListFiles) - returns list of archive files.
 - [ZipFile::hasEntry](#Documentation-ZipFile-hasEntry) - checks if there is an entry in the archive.
 - [ZipFile::isDirectory](#Documentation-ZipFile-isDirectory) - checks that the entry in the archive is a directory.
@@ -160,15 +162,11 @@ Other examples can be found in the `tests/` folder
 - [ZipFile::setEntryComment](#Documentation-ZipFile-setEntryComment) - set the comment of an entry defined by its name.
 - [ZipFile::setReadPassword](#Documentation-ZipFile-setReadPassword) - set the password for the open archive.
 - [ZipFile::setReadPasswordEntry](#Documentation-ZipFile-setReadPasswordEntry) - sets a password for reading of an entry defined by its name.
-- ~~ZipFile::withNewPassword~~ - is an deprecated method, use the [ZipFile::setPassword](#Documentation-ZipFile-setPassword) method.
 - [ZipFile::setPassword](#Documentation-ZipFile-setPassword) - sets a new password for all files in the archive.
 - [ZipFile::setPasswordEntry](#Documentation-ZipFile-setPasswordEntry) - sets a new password of an entry defined by its name.
-- [ZipFile::setZipAlign](#Documentation-ZipFile-setZipAlign) - sets the alignment of the archive to optimize APK files (Android packages).
 - [ZipFile::unchangeAll](#Documentation-ZipFile-unchangeAll) - undo all changes done in the archive.
 - [ZipFile::unchangeArchiveComment](#Documentation-ZipFile-unchangeArchiveComment) - undo changes to the archive comment.
 - [ZipFile::unchangeEntry](#Documentation-ZipFile-unchangeEntry) - undo changes of an entry defined by its name.
-- ~~ZipFile::withoutPassword~~ - is an deprecated method, use the [ZipFile::disableEncryption](#Documentation-ZipFile-disableEncryption) method.
-- ~~ZipFile::withReadPassword~~ - is an deprecated method, use the [ZipFile::setReadPassword](#Documentation-ZipFile-setReadPassword) method.
 
 #### <a name="Documentation-Open-Zip-Archive"></a> Creation/Opening of ZIP-archive
 <a name="Documentation-ZipFile-__construct"></a>**ZipFile::__construct** - initializes the ZIP archive.
@@ -293,15 +291,6 @@ $commentArchive = $zipFile->getArchiveComment();
 $zipFile = new \PhpZip\ZipFile();
 $commentEntry = $zipFile->getEntryComment($entryName);
 ```
-<a name="Documentation-ZipFile-getEntryInfo"></a> **ZipFile::getEntryInfo** - returns detailed information about the entry in the archive
-```php
-$zipFile = new \PhpZip\ZipFile();
-$zipInfo = $zipFile->getEntryInfo('file.txt');
-```
-<a name="Documentation-ZipFile-getAllInfo"></a> **ZipFile::getAllInfo** - returns detailed information about all entries in the archive.
-```php
-$zipAllInfo = $zipFile->getAllInfo();
-```
 #### <a name="Documentation-Add-Zip-Entries"></a> Adding entries to the archive
 
 All methods of adding entries to a ZIP archive allow you to specify a method for compressing content.
@@ -346,7 +335,7 @@ $zipFile->addSplFile($splFile, $entryName, $options = [
 ]);
 ```
 <a name="Documentation-ZipFile-addFromFinder"></a>
-**ZipFile::addFromFinder"** - adds files from the `Symfony\Component\Finder\Finder` to a ZIP archive.
+**ZipFile::addFromFinder** - adds files from the `Symfony\Component\Finder\Finder` to a ZIP archive.
 https://symfony.com/doc/current/components/finder.html
 ```php
 $finder = new \Symfony\Component\Finder\Finder();
@@ -376,7 +365,7 @@ $zipFile->addFromString($entryName, $contents, \PhpZip\Constants\ZipCompressionM
 $zipFile->addFromString($entryName, $contents, \PhpZip\Constants\ZipCompressionMethod::DEFLATED); // Deflate compression
 $zipFile->addFromString($entryName, $contents, \PhpZip\Constants\ZipCompressionMethod::BZIP2); // BZIP2 compression
 ```
-<a name="Documentation-ZipFile-addFromStream"></a> **ZipFile::addFromStream** - adds a entry from the stream to the ZIP archive.
+<a name="Documentation-ZipFile-addFromStream"></a> **ZipFile::addFromStream** - adds an entry from the stream to the ZIP archive.
 ```php
 $zipFile = new \PhpZip\ZipFile();
 // $stream = fopen(..., 'rb');
@@ -710,17 +699,6 @@ $zipFile->disableEncryption();
 ```php
 $zipFile->disableEncryptionEntry($entryName);
 ```
-#### <a name="Documentation-ZipAlign-Usage"></a> zipalign
-<a name="Documentation-ZipFile-setZipAlign"></a> **ZipFile::setZipAlign** - sets the alignment of the archive to optimize APK files (Android packages).
-
-This method adds padding to unencrypted and not compressed entries, to optimize memory consumption in the Android system. It is recommended to use for `APK` files. The file may grow slightly.
-
-This method is an alternative to executing the `zipalign -f -v 4 filename.zip`.
-
-More details can be found on the [link](https://developer.android.com/studio/command-line/zipalign.html).
-```php
-$zipFile->setZipAlign(4);
-```
 #### <a name="Documentation-Unchanged"></a> Undo changes
 <a name="Documentation-ZipFile-unchangeAll"></a> **ZipFile::unchangeAll** - undo all changes done in the archive.
 ```php
@@ -792,6 +770,20 @@ vendor/bin/phpunit
 Changes are documented in the [releases page](https://github.com/Ne-Lexa/php-zip/releases).
 
 ### <a name="Upgrade"></a> Upgrade
+#### <a name="Upgrade-v3-to-v4"></a> Upgrade version 3 to version 4
+Update the major version in the file `composer.json` to `^4.0`.
+```json
+{
+    "require": {
+        "nelexa/zip": "^4.0"
+    }
+}
+```
+Then install updates using `Composer`:
+```bash
+composer update nelexa/zip
+```
+
 #### <a name="Upgrade-v2-to-v3"></a> Upgrade version 2 to version 3.0
 Update the major version in the file `composer.json` to `^3.0`.
 ```json
@@ -800,6 +792,9 @@ Update the major version in the file `composer.json` to `^3.0`.
         "nelexa/zip": "^3.0"
     }
 }
+Update your code to work with the new version:
+**BC**
+- removed `zipalign` functional. This functionality will be placed in a separate package `nelexa/apkfile`.
 ```
 Then install updates using `Composer`:
 ```bash
@@ -828,5 +823,3 @@ Update your code to work with the new version:
   + `getLevel`
   + `setCompressionMethod`
   + `setEntryPassword`
-
-

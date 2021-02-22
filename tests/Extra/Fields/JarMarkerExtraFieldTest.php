@@ -1,5 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
+/*
+ * This file is part of the nelexa/zip package.
+ * (c) Ne-Lexa <https://github.com/Ne-Lexa/php-zip>
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace PhpZip\Tests\Extra\Fields;
 
 use PHPUnit\Framework\TestCase;
@@ -18,7 +27,7 @@ final class JarMarkerExtraFieldTest extends TestCase
     /**
      * @throws ZipException
      */
-    public function testExtraField()
+    public function testExtraField(): void
     {
         $jarField = new JarMarkerExtraField();
         self::assertSame('', $jarField->packLocalFileData());
@@ -30,12 +39,10 @@ final class JarMarkerExtraFieldTest extends TestCase
     /**
      * @throws ZipException
      */
-    public function testInvalidUnpackLocalData()
+    public function testInvalidUnpackLocalData(): void
     {
-        $this->expectException(
-            ZipException::class,
-            "JarMarker doesn't expect any data"
-        );
+        $this->expectException(ZipException::class);
+        $this->expectExceptionMessage("JarMarker doesn't expect any data");
 
         JarMarkerExtraField::unpackLocalFileData("\x02\x00\00");
     }
@@ -43,12 +50,10 @@ final class JarMarkerExtraFieldTest extends TestCase
     /**
      * @throws ZipException
      */
-    public function testInvalidUnpackCdData()
+    public function testInvalidUnpackCdData(): void
     {
-        $this->expectException(
-            ZipException::class,
-            "JarMarker doesn't expect any data"
-        );
+        $this->expectException(ZipException::class);
+        $this->expectExceptionMessage("JarMarker doesn't expect any data");
 
         JarMarkerExtraField::unpackCentralDirData("\x02\x00\00");
     }

@@ -1,5 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
+/*
+ * This file is part of the nelexa/zip package.
+ * (c) Ne-Lexa <https://github.com/Ne-Lexa/php-zip>
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace PhpZip\Model\Data;
 
 use PhpZip\Exception\Crc32Exception;
@@ -8,37 +17,22 @@ use PhpZip\IO\ZipReader;
 use PhpZip\Model\ZipData;
 use PhpZip\Model\ZipEntry;
 
-/**
- * Class ZipFileData.
- */
 class ZipSourceFileData implements ZipData
 {
-    /** @var ZipReader */
-    private $zipReader;
+    private ZipReader $zipReader;
 
     /** @var resource|null */
     private $stream;
 
-    /** @var ZipEntry */
-    private $sourceEntry;
+    private ZipEntry $sourceEntry;
 
-    /** @var int */
-    private $offset;
+    private int $offset;
 
-    /** @var int */
-    private $uncompressedSize;
+    private int $uncompressedSize;
 
-    /** @var int */
-    private $compressedSize;
+    private int $compressedSize;
 
-    /**
-     * ZipFileData constructor.
-     *
-     * @param ZipReader $zipReader
-     * @param ZipEntry  $zipEntry
-     * @param int       $offsetData
-     */
-    public function __construct(ZipReader $zipReader, ZipEntry $zipEntry, $offsetData)
+    public function __construct(ZipReader $zipReader, ZipEntry $zipEntry, int $offsetData)
     {
         $this->zipReader = $zipReader;
         $this->offset = $offsetData;
@@ -47,21 +41,16 @@ class ZipSourceFileData implements ZipData
         $this->uncompressedSize = $zipEntry->getUncompressedSize();
     }
 
-    /**
-     * @param ZipEntry $entry
-     *
-     * @return bool
-     */
-    public function hasRecompressData(ZipEntry $entry)
+    public function hasRecompressData(ZipEntry $entry): bool
     {
-        return $this->sourceEntry->getCompressionLevel() !== $entry->getCompressionLevel() ||
-            $this->sourceEntry->getCompressionMethod() !== $entry->getCompressionMethod() ||
-            $this->sourceEntry->isEncrypted() !== $entry->isEncrypted() ||
-            $this->sourceEntry->getEncryptionMethod() !== $entry->getEncryptionMethod() ||
-            $this->sourceEntry->getPassword() !== $entry->getPassword() ||
-            $this->sourceEntry->getCompressedSize() !== $entry->getCompressedSize() ||
-            $this->sourceEntry->getUncompressedSize() !== $entry->getUncompressedSize() ||
-            $this->sourceEntry->getCrc() !== $entry->getCrc();
+        return $this->sourceEntry->getCompressionLevel() !== $entry->getCompressionLevel()
+            || $this->sourceEntry->getCompressionMethod() !== $entry->getCompressionMethod()
+            || $this->sourceEntry->isEncrypted() !== $entry->isEncrypted()
+            || $this->sourceEntry->getEncryptionMethod() !== $entry->getEncryptionMethod()
+            || $this->sourceEntry->getPassword() !== $entry->getPassword()
+            || $this->sourceEntry->getCompressedSize() !== $entry->getCompressedSize()
+            || $this->sourceEntry->getUncompressedSize() !== $entry->getUncompressedSize()
+            || $this->sourceEntry->getCrc() !== $entry->getCrc();
     }
 
     /**
@@ -83,7 +72,7 @@ class ZipSourceFileData implements ZipData
      *
      * @return string returns data as string
      */
-    public function getDataAsString()
+    public function getDataAsString(): string
     {
         $autoClosable = $this->stream === null;
 
@@ -105,64 +94,49 @@ class ZipSourceFileData implements ZipData
     }
 
     /**
-     * @param resource $outputStream Output stream
+     * @param resource $outStream Output stream
      *
      * @throws ZipException
      * @throws Crc32Exception
      */
-    public function copyDataToStream($outputStream)
+    public function copyDataToStream($outStream): void
     {
         if (\is_resource($this->stream)) {
             rewind($this->stream);
-            stream_copy_to_stream($this->stream, $outputStream);
+            stream_copy_to_stream($this->stream, $outStream);
         } else {
-            $this->zipReader->copyUncompressedDataToStream($this, $outputStream);
+            $this->zipReader->copyUncompressedDataToStream($this, $outStream);
         }
     }
 
     /**
      * @param resource $outputStream Output stream
      */
-    public function copyCompressedDataToStream($outputStream)
+    public function copyCompressedDataToStream($outputStream): void
     {
         $this->zipReader->copyCompressedDataToStream($this, $outputStream);
     }
 
-    /**
-     * @return ZipEntry
-     */
-    public function getSourceEntry()
+    public function getSourceEntry(): ZipEntry
     {
         return $this->sourceEntry;
     }
 
-    /**
-     * @return int
-     */
-    public function getCompressedSize()
+    public function getCompressedSize(): int
     {
         return $this->compressedSize;
     }
 
-    /**
-     * @return int
-     */
-    public function getUncompressedSize()
+    public function getUncompressedSize(): int
     {
         return $this->uncompressedSize;
     }
 
-    /**
-     * @return int
-     */
-    public function getOffset()
+    public function getOffset(): int
     {
         return $this->offset;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function __destruct()
     {
         if (\is_resource($this->stream)) {

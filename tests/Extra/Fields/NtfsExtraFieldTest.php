@@ -1,13 +1,20 @@
 <?php
 
+declare(strict_types=1);
+
+/*
+ * This file is part of the nelexa/zip package.
+ * (c) Ne-Lexa <https://github.com/Ne-Lexa/php-zip>
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace PhpZip\Tests\Extra\Fields;
 
 use PHPUnit\Framework\TestCase;
 use PhpZip\Model\Extra\Fields\NtfsExtraField;
 
 /**
- * Class NtfsExtraFieldTest.
- *
  * @internal
  *
  * @small
@@ -24,27 +31,19 @@ final class NtfsExtraFieldTest extends TestCase
     /**
      * @dataProvider provideExtraField
      *
-     * @param int    $modifyNtfsTime
-     * @param int    $accessNtfsTime
-     * @param int    $createNtfsTime
-     * @param float  $modifyTimestamp
-     * @param float  $accessTimestamp
-     * @param float  $createTimestamp
-     * @param string $binaryData
-     *
      * @throws \Exception
      *
      * @noinspection PhpTooManyParametersInspection
      */
     public function testExtraField(
-        $modifyNtfsTime,
-        $accessNtfsTime,
-        $createNtfsTime,
-        $modifyTimestamp,
-        $accessTimestamp,
-        $createTimestamp,
-        $binaryData
-    ) {
+        int $modifyNtfsTime,
+        int $accessNtfsTime,
+        int $createNtfsTime,
+        float $modifyTimestamp,
+        float $accessTimestamp,
+        float $createTimestamp,
+        string $binaryData
+    ): void {
         $extraField = new NtfsExtraField($modifyNtfsTime, $accessNtfsTime, $createNtfsTime);
         self::assertSame($extraField->getHeaderId(), NtfsExtraField::HEADER_ID);
 
@@ -64,15 +63,24 @@ final class NtfsExtraFieldTest extends TestCase
             $extraField->getCreateDateTime()
         );
 
-        self::assertEqualsIntegerWithDelta($extraFieldFromDateTime->getModifyNtfsTime(), $extraField->getModifyNtfsTime(), 100);
-        self::assertEqualsIntegerWithDelta($extraFieldFromDateTime->getAccessNtfsTime(), $extraField->getAccessNtfsTime(), 100);
-        self::assertEqualsIntegerWithDelta($extraFieldFromDateTime->getCreateNtfsTime(), $extraField->getCreateNtfsTime(), 100);
+        self::assertEqualsIntegerWithDelta(
+            $extraFieldFromDateTime->getModifyNtfsTime(),
+            $extraField->getModifyNtfsTime(),
+            100
+        );
+        self::assertEqualsIntegerWithDelta(
+            $extraFieldFromDateTime->getAccessNtfsTime(),
+            $extraField->getAccessNtfsTime(),
+            100
+        );
+        self::assertEqualsIntegerWithDelta(
+            $extraFieldFromDateTime->getCreateNtfsTime(),
+            $extraField->getCreateNtfsTime(),
+            100
+        );
     }
 
-    /**
-     * @return array
-     */
-    public function provideExtraField()
+    public function provideExtraField(): array
     {
         return [
             [
@@ -105,18 +113,12 @@ final class NtfsExtraFieldTest extends TestCase
         ];
     }
 
-    /**
-     * @param int    $expected
-     * @param int    $actual
-     * @param int    $delta
-     * @param string $message
-     */
     private static function assertEqualsIntegerWithDelta(
-        $expected,
-        $actual,
-        $delta,
-        $message = ''
-    ) {
+        int $expected,
+        int $actual,
+        int $delta,
+        string $message = ''
+    ): void {
         self::assertSame(
             self::roundInt($expected, $delta),
             self::roundInt($actual, $delta),
@@ -124,13 +126,7 @@ final class NtfsExtraFieldTest extends TestCase
         );
     }
 
-    /**
-     * @param int $number
-     * @param int $delta
-     *
-     * @return int
-     */
-    private static function roundInt($number, $delta)
+    private static function roundInt(int $number, int $delta): int
     {
         return (int) (floor($number / $delta) * $delta);
     }
@@ -138,27 +134,19 @@ final class NtfsExtraFieldTest extends TestCase
     /**
      * @dataProvider provideExtraField
      *
-     * @param int   $mtimeNtfs
-     * @param int   $atimeNtfs
-     * @param int   $ctimeNtfs
-     * @param float $mtimeTimestamp
-     * @param float $atimeTimestamp
-     * @param float $ctimeTimestamp
-     *
      * @noinspection PhpTooManyParametersInspection
-     * @noinspection PhpUnitDeprecationsInspection
      */
     public function testConverter(
-        $mtimeNtfs,
-        $atimeNtfs,
-        $ctimeNtfs,
-        $mtimeTimestamp,
-        $atimeTimestamp,
-        $ctimeTimestamp
-    ) {
-        self::assertEquals(NtfsExtraField::ntfsTimeToTimestamp($mtimeNtfs), $mtimeTimestamp, '', 0.00001);
-        self::assertEquals(NtfsExtraField::ntfsTimeToTimestamp($atimeNtfs), $atimeTimestamp, '', 0.00001);
-        self::assertEquals(NtfsExtraField::ntfsTimeToTimestamp($ctimeNtfs), $ctimeTimestamp, '', 0.00001);
+        int $mtimeNtfs,
+        int $atimeNtfs,
+        int $ctimeNtfs,
+        float $mtimeTimestamp,
+        float $atimeTimestamp,
+        float $ctimeTimestamp
+    ): void {
+        self::assertEqualsWithDelta(NtfsExtraField::ntfsTimeToTimestamp($mtimeNtfs), $mtimeTimestamp, 0.00001);
+        self::assertEqualsWithDelta(NtfsExtraField::ntfsTimeToTimestamp($atimeNtfs), $atimeTimestamp, 0.00001);
+        self::assertEqualsWithDelta(NtfsExtraField::ntfsTimeToTimestamp($ctimeNtfs), $ctimeTimestamp, 0.00001);
 
         self::assertEqualsIntegerWithDelta(NtfsExtraField::timestampToNtfsTime($mtimeTimestamp), $mtimeNtfs, 10);
         self::assertEqualsIntegerWithDelta(NtfsExtraField::timestampToNtfsTime($atimeTimestamp), $atimeNtfs, 10);
@@ -168,7 +156,7 @@ final class NtfsExtraFieldTest extends TestCase
     /**
      * @throws \Exception
      */
-    public function testSetter()
+    public function testSetter(): void
     {
         $timeZone = new \DateTimeZone('UTC');
         $initDateTime = new \DateTimeImmutable('-1 min', $timeZone);

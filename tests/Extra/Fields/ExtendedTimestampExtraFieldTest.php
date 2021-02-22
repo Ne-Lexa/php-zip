@@ -1,5 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
+/*
+ * This file is part of the nelexa/zip package.
+ * (c) Ne-Lexa <https://github.com/Ne-Lexa/php-zip>
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace PhpZip\Tests\Extra\Fields;
 
 use PHPUnit\Framework\TestCase;
@@ -17,23 +26,20 @@ final class ExtendedTimestampExtraFieldTest extends TestCase
     /**
      * @dataProvider provideExtraField
      *
-     * @param int      $flags
-     * @param int|null $modifyTime
-     * @param int|null $accessTime
-     * @param int|null $createTime
-     * @param string   $localData
-     * @param string   $cdData
-     *
      * @noinspection PhpTooManyParametersInspection
+     *
+     * @param ?int $modifyTime
+     * @param ?int $accessTime
+     * @param ?int $createTime
      */
     public function testExtraField(
-        $flags,
-        $modifyTime,
-        $accessTime,
-        $createTime,
-        $localData,
-        $cdData
-    ) {
+        int $flags,
+        ?int $modifyTime,
+        ?int $accessTime,
+        ?int $createTime,
+        string $localData,
+        string $cdData
+    ): void {
         $localExtraField = new ExtendedTimestampExtraField($flags, $modifyTime, $accessTime, $createTime);
         self::assertSame($localExtraField->getHeaderId(), ExtendedTimestampExtraField::HEADER_ID);
         self::assertSame($localExtraField->getFlags(), $flags);
@@ -59,16 +65,13 @@ final class ExtendedTimestampExtraFieldTest extends TestCase
         self::assertSame($localExtraField->packCentralDirData(), $cdData);
     }
 
-    /**
-     * @return array
-     */
-    public function provideExtraField()
+    public function provideExtraField(): array
     {
         return [
             [
-                ExtendedTimestampExtraField::MODIFY_TIME_BIT |
-                ExtendedTimestampExtraField::ACCESS_TIME_BIT |
-                ExtendedTimestampExtraField::CREATE_TIME_BIT,
+                ExtendedTimestampExtraField::MODIFY_TIME_BIT
+                | ExtendedTimestampExtraField::ACCESS_TIME_BIT
+                | ExtendedTimestampExtraField::CREATE_TIME_BIT,
                 911512006,
                 911430000,
                 893709400,
@@ -76,8 +79,8 @@ final class ExtendedTimestampExtraFieldTest extends TestCase
                 "\x07\xC6\x91T6",
             ],
             [
-                ExtendedTimestampExtraField::MODIFY_TIME_BIT |
-                ExtendedTimestampExtraField::ACCESS_TIME_BIT,
+                ExtendedTimestampExtraField::MODIFY_TIME_BIT
+                | ExtendedTimestampExtraField::ACCESS_TIME_BIT,
                 1492955702,
                 1492955638,
                 null,
@@ -98,7 +101,7 @@ final class ExtendedTimestampExtraFieldTest extends TestCase
     /**
      * @throws \Exception
      */
-    public function testSetter()
+    public function testSetter(): void
     {
         $mtime = time();
         $atime = null;
@@ -115,8 +118,8 @@ final class ExtendedTimestampExtraFieldTest extends TestCase
         $field->setAccessTime($atime);
         self::assertSame(
             $field->getFlags(),
-            ExtendedTimestampExtraField::MODIFY_TIME_BIT |
-            ExtendedTimestampExtraField::ACCESS_TIME_BIT
+            ExtendedTimestampExtraField::MODIFY_TIME_BIT
+            | ExtendedTimestampExtraField::ACCESS_TIME_BIT
         );
         self::assertSame($field->getModifyTime(), $mtime);
         self::assertSame($field->getAccessTime(), $atime);
@@ -127,9 +130,9 @@ final class ExtendedTimestampExtraFieldTest extends TestCase
         $field->setCreateTime($ctime);
         self::assertSame(
             $field->getFlags(),
-            ExtendedTimestampExtraField::MODIFY_TIME_BIT |
-            ExtendedTimestampExtraField::ACCESS_TIME_BIT |
-            ExtendedTimestampExtraField::CREATE_TIME_BIT
+            ExtendedTimestampExtraField::MODIFY_TIME_BIT
+            | ExtendedTimestampExtraField::ACCESS_TIME_BIT
+            | ExtendedTimestampExtraField::CREATE_TIME_BIT
         );
         self::assertSame($field->getModifyTime(), $mtime);
         self::assertSame($field->getAccessTime(), $atime);
@@ -141,8 +144,8 @@ final class ExtendedTimestampExtraFieldTest extends TestCase
         self::assertNull($field->getCreateDateTime());
         self::assertSame(
             $field->getFlags(),
-            ExtendedTimestampExtraField::MODIFY_TIME_BIT |
-            ExtendedTimestampExtraField::ACCESS_TIME_BIT
+            ExtendedTimestampExtraField::MODIFY_TIME_BIT
+            | ExtendedTimestampExtraField::ACCESS_TIME_BIT
         );
 
         $field->setAccessTime(null);
