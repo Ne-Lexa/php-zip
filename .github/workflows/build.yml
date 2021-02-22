@@ -30,6 +30,7 @@ jobs:
 
             -
                 name: Install linux dependencies
+                if:   matrix.os == 'ubuntu-latest'
                 run:  sudo apt-get install unzip p7zip-full
 
             -
@@ -39,7 +40,7 @@ jobs:
                     php-version: ${{ matrix.php }}
                     extensions:  ${{ env.extensions }}
                     coverage:    pcov
-                    ini-values:  date.timezone='UTC'
+                    ini-values:  date.timezone='UTC', memory_limit=-1
                     tools:       composer:v2
 
             -
@@ -53,13 +54,12 @@ jobs:
                 run:  echo "COMPOSER_CACHE_DIR=~\AppData\Local\Composer" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
 
             -
-                name: Cache dependencies installed with composer
+                name: Cache composer dependencies
                 uses: actions/cache@v2
                 with:
                     path:         ${{ env.COMPOSER_CACHE_DIR }}
                     key:          php${{ matrix.php }}-composer-${{ hashFiles('**/composer.json') }}
-                    restore-keys: |
-                                  php${{ matrix.php }}-composer-
+                    restore-keys: php${{ matrix.php }}-composer-
 
             -
                 name: Check PHP Version
