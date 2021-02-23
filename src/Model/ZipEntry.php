@@ -943,13 +943,10 @@ class ZipEntry
      */
     public function setEncryptionMethod(?int $encryptionMethod): self
     {
-        if ($encryptionMethod === null) {
-            $encryptionMethod = ZipEncryptionMethod::NONE;
-        }
+        $method = $encryptionMethod ?? ZipEncryptionMethod::NONE;
 
-        $encryptionMethod = (int) $encryptionMethod;
-        ZipEncryptionMethod::checkSupport($encryptionMethod);
-        $this->encryptionMethod = $encryptionMethod;
+        ZipEncryptionMethod::checkSupport($method);
+        $this->encryptionMethod = $method;
 
         $this->setEncrypted($this->encryptionMethod !== ZipEncryptionMethod::NONE);
         $this->extractVersion = self::UNKNOWN;

@@ -19,9 +19,9 @@ use PhpZip\Model\ZipEntry;
 /**
  * NTFS Extra Field.
  *
- * @see     https://pkware.cachefly.net/webdocs/casestudies/APPNOTE.TXT .ZIP File Format Specification
+ * @see https://pkware.cachefly.net/webdocs/casestudies/APPNOTE.TXT .ZIP File Format Specification
  */
-class NtfsExtraField implements ZipExtraField
+final class NtfsExtraField implements ZipExtraField
 {
     /** @var int Header id */
     public const HEADER_ID = 0x000a;
@@ -84,8 +84,8 @@ class NtfsExtraField implements ZipExtraField
     /**
      * Populate data from this array as if it was in local file data.
      *
-     * @param string    $buffer the buffer to read data from
-     * @param ?ZipEntry $entry
+     * @param string        $buffer the buffer to read data from
+     * @param ZipEntry|null $entry  optional zip entry
      *
      * @throws ZipException
      *
@@ -127,8 +127,8 @@ class NtfsExtraField implements ZipExtraField
     /**
      * Populate data from this array as if it was in central directory data.
      *
-     * @param string    $buffer the buffer to read data from
-     * @param ?ZipEntry $entry
+     * @param string        $buffer the buffer to read data from
+     * @param ZipEntry|null $entry  optional zip entry
      *
      * @throws ZipException
      *

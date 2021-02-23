@@ -18,7 +18,7 @@ use PhpZip\Model\ZipEntry;
 /**
  * Simple placeholder for all those extra fields we don't want to deal with.
  */
-class UnrecognizedExtraField implements ZipExtraField
+final class UnrecognizedExtraField implements ZipExtraField
 {
     private int $headerId;
 

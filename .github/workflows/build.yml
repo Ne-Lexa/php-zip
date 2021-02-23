@@ -54,7 +54,7 @@ jobs:
                     extensions:  ${{ env.extensions }}
                     coverage:    pcov
                     ini-values:  ${{ env.PHP_INI }}
-                    tools:       composer:v2
+                    tools:       composer:v2, cs2pr
 
             -
                 name: Determine composer cache directory on Linux or MacOS
@@ -110,8 +110,12 @@ jobs:
                 run:  vendor/bin/phpunit -v --coverage-clover=coverage.clover
 
             -
+                name: Static analysis
+                run:  vendor/bin/psalm --shepherd --stats --output-format=checkstyle | cs2pr --graceful-warnings --colorize
+
+            -
                 name: Upload code coverage scrutinizer
                 if:   env.PHPUNIT_COVERAGE == 1
-                run: |
-                     wget https://scrutinizer-ci.com/ocular.phar
-                     php ocular.phar code-coverage:upload --format=php-clover coverage.clover
+                run:  |
+                      wget https://scrutinizer-ci.com/ocular.phar
+                      php ocular.phar code-coverage:upload --format=php-clover coverage.clover

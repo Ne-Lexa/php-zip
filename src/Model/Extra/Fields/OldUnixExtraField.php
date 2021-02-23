@@ -62,7 +62,7 @@ use PhpZip\Model\ZipEntry;
  * mid-1994. Therefore future archiving software should continue to
  * support it.
  */
-class OldUnixExtraField implements ZipExtraField
+final class OldUnixExtraField implements ZipExtraField
 {
     /** @var int Header id */
     public const HEADER_ID = 0x5855;
@@ -100,8 +100,8 @@ class OldUnixExtraField implements ZipExtraField
     /**
      * Populate data from this array as if it was in local file data.
      *
-     * @param string    $buffer the buffer to read data from
-     * @param ?ZipEntry $entry
+     * @param string        $buffer the buffer to read data from
+     * @param ZipEntry|null $entry  optional zip entry
      *
      * @return OldUnixExtraField
      */
@@ -133,8 +133,8 @@ class OldUnixExtraField implements ZipExtraField
     /**
      * Populate data from this array as if it was in central directory data.
      *
-     * @param string    $buffer the buffer to read data from
-     * @param ?ZipEntry $entry
+     * @param string        $buffer the buffer to read data from
+     * @param ZipEntry|null $entry  optional zip entry
      *
      * @return OldUnixExtraField
      */

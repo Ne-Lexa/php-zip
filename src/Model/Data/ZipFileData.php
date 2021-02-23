@@ -71,11 +71,8 @@ class ZipFileData implements ZipData
      */
     public function copyDataToStream($outStream): void
     {
-        try {
-            $stream = $this->getDataAsStream();
-            stream_copy_to_stream($stream, $outStream);
-        } finally {
-            fclose($stream);
-        }
+        $stream = $this->getDataAsStream();
+        stream_copy_to_stream($stream, $outStream);
+        fclose($stream);
     }
 }

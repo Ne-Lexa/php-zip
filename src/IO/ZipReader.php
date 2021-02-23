@@ -370,13 +370,10 @@ class ZipReader
             if ($unicodePathExtraField !== null && $unicodePathExtraField->getCrc32() === crc32($entryName)) {
                 $unicodePath = $unicodePathExtraField->getUnicodeValue();
 
-                if ($unicodePath !== null) {
+                if ($unicodePath !== '') {
                     $unicodePath = str_replace('\\', '/', $unicodePath);
 
-                    if (
-                        $unicodePath !== ''
-                        && substr_count($entryName, '/') === substr_count($unicodePath, '/')
-                    ) {
+                    if (substr_count($entryName, '/') === substr_count($unicodePath, '/')) {
                         $entryName = $unicodePath;
                     }
                 }
@@ -869,6 +866,9 @@ class ZipReader
         return \PHP_INT_SIZE === 8; // true for 64bit system
     }
 
+    /**
+     * @psalm-suppress InvalidPropertyAssignmentValue
+     */
     public function close(): void
     {
         if (\is_resource($this->inStream)) {

@@ -24,7 +24,7 @@ use PhpZip\Model\ZipEntry;
  * If this extra field is added as the very first extra field of
  * the archive, Solaris will consider it an executable jar file.
  */
-class JarMarkerExtraField implements ZipExtraField
+final class JarMarkerExtraField implements ZipExtraField
 {
     /** @var int Header id. */
     public const HEADER_ID = 0xCAFE;
@@ -79,8 +79,8 @@ class JarMarkerExtraField implements ZipExtraField
     /**
      * Populate data from this array as if it was in local file data.
      *
-     * @param string    $buffer the buffer to read data from
-     * @param ?ZipEntry $entry
+     * @param string        $buffer the buffer to read data from
+     * @param ZipEntry|null $entry  optional zip entry
      *
      * @throws ZipException on error
      *
@@ -98,8 +98,8 @@ class JarMarkerExtraField implements ZipExtraField
     /**
      * Populate data from this array as if it was in central directory data.
      *
-     * @param string    $buffer the buffer to read data from
-     * @param ?ZipEntry $entry
+     * @param string        $buffer the buffer to read data from
+     * @param ZipEntry|null $entry  optional zip entry
      *
      * @throws ZipException on error
      *

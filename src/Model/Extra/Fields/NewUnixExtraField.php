@@ -51,7 +51,7 @@ use PhpZip\Model\ZipEntry;
  * and this extra field are present, the values in this extra field
  * supercede the values in that extra field.
  */
-class NewUnixExtraField implements ZipExtraField
+final class NewUnixExtraField implements ZipExtraField
 {
     /** @var int header id */
     public const HEADER_ID = 0x7875;
@@ -88,8 +88,8 @@ class NewUnixExtraField implements ZipExtraField
     /**
      * Populate data from this array as if it was in local file data.
      *
-     * @param string    $buffer the buffer to read data from
-     * @param ?ZipEntry $entry
+     * @param string        $buffer the buffer to read data from
+     * @param ZipEntry|null $entry  optional zip entry
      *
      * @throws ZipException
      *
@@ -120,8 +120,8 @@ class NewUnixExtraField implements ZipExtraField
     /**
      * Populate data from this array as if it was in central directory data.
      *
-     * @param string    $buffer the buffer to read data from
-     * @param ?ZipEntry $entry
+     * @param string        $buffer the buffer to read data from
+     * @param ZipEntry|null $entry  optional zip entry
      *
      * @throws ZipException
      *

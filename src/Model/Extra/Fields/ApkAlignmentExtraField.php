@@ -21,7 +21,7 @@ use PhpZip\Model\ZipEntry;
  * @see https://android.googlesource.com/platform/tools/apksig/+/master/src/main/java/com/android/apksig/ApkSigner.java
  * @see https://developer.android.com/studio/command-line/zipalign
  */
-class ApkAlignmentExtraField implements ZipExtraField
+final class ApkAlignmentExtraField implements ZipExtraField
 {
     /**
      * @var int Extensible data block/field header ID used for storing
@@ -30,12 +30,6 @@ class ApkAlignmentExtraField implements ZipExtraField
      *          appnote.txt section 4.5 Extensible data fields.
      */
     public const HEADER_ID = 0xd935;
-
-    /**
-     * @var int minimum size (in bytes) of the extensible data block/field used
-     *          for alignment of uncompressed entries
-     */
-    public const MIN_SIZE = 6;
 
     /** @var int */
     public const ALIGNMENT_BYTES = 4;
@@ -86,8 +80,8 @@ class ApkAlignmentExtraField implements ZipExtraField
     /**
      * Populate data from this array as if it was in local file data.
      *
-     * @param string    $buffer the buffer to read data from
-     * @param ?ZipEntry $entry
+     * @param string        $buffer the buffer to read data from
+     * @param ZipEntry|null $entry  optional zip entry
      *
      * @throws ZipException
      *
@@ -116,8 +110,8 @@ class ApkAlignmentExtraField implements ZipExtraField
     /**
      * Populate data from this array as if it was in central directory data.
      *
-     * @param string    $buffer the buffer to read data from
-     * @param ?ZipEntry $entry
+     * @param string        $buffer the buffer to read data from
+     * @param ZipEntry|null $entry  optional zip entry
      *
      * @throws ZipException on error
      *

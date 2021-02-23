@@ -53,7 +53,7 @@ use PhpZip\Model\ZipEntry;
  *
  * @see ftp://ftp.info-zip.org/pub/infozip/doc/appnote-iz-latest.zip Info-ZIP version Specification
  */
-class AsiExtraField implements ZipExtraField
+final class AsiExtraField implements ZipExtraField
 {
     /** @var int Header id */
     public const HEADER_ID = 0x756e;
@@ -99,12 +99,12 @@ class AsiExtraField implements ZipExtraField
     /**
      * Populate data from this array as if it was in local file data.
      *
-     * @param string    $buffer the buffer to read data from
-     * @param ?ZipEntry $entry
+     * @param string        $buffer the buffer to read data from
+     * @param ZipEntry|null $entry  optional zip entry
      *
      * @throws Crc32Exception
      *
-     * @return static
+     * @return AsiExtraField
      */
     public static function unpackLocalFileData(string $buffer, ?ZipEntry $entry = null): self
     {
@@ -134,8 +134,8 @@ class AsiExtraField implements ZipExtraField
     /**
      * Populate data from this array as if it was in central directory data.
      *
-     * @param string    $buffer the buffer to read data from
-     * @param ?ZipEntry $entry
+     * @param string        $buffer the buffer to read data from
+     * @param ZipEntry|null $entry  optional zip entry
      *
      * @throws Crc32Exception
      *
@@ -216,7 +216,7 @@ class AsiExtraField implements ZipExtraField
      *
      * @return int the type with the mode
      */
-    protected function getPermissionsMode(int $mode): int
+    private function getPermissionsMode(int $mode): int
     {
         $type = 0;
 

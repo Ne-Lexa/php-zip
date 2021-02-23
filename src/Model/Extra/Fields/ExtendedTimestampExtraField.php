@@ -73,7 +73,7 @@ use PhpZip\Model\ZipEntry;
  *
  * @see ftp://ftp.info-zip.org/pub/infozip/doc/appnote-iz-latest.zip Info-ZIP version Specification
  */
-class ExtendedTimestampExtraField implements ZipExtraField
+final class ExtendedTimestampExtraField implements ZipExtraField
 {
     /** @var int Header id */
     public const HEADER_ID = 0x5455;
@@ -158,8 +158,8 @@ class ExtendedTimestampExtraField implements ZipExtraField
     /**
      * Populate data from this array as if it was in local file data.
      *
-     * @param string    $buffer the buffer to read data from
-     * @param ?ZipEntry $entry
+     * @param string        $buffer the buffer to read data from
+     * @param ZipEntry|null $entry  optional zip entry
      *
      * @return ExtendedTimestampExtraField
      */
@@ -195,8 +195,8 @@ class ExtendedTimestampExtraField implements ZipExtraField
     /**
      * Populate data from this array as if it was in central directory data.
      *
-     * @param string    $buffer the buffer to read data from
-     * @param ?ZipEntry $entry
+     * @param string        $buffer the buffer to read data from
+     * @param ZipEntry|null $entry  optional zip entry
      *
      * @return ExtendedTimestampExtraField
      */

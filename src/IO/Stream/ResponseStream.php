@@ -59,7 +59,7 @@ class ResponseStream implements StreamInterface
         ],
     ];
 
-    /** @var resource */
+    /** @var resource|null */
     private $stream;
 
     private ?int $size = null;
@@ -97,7 +97,7 @@ class ResponseStream implements StreamInterface
      */
     public function getMetadata($key = null)
     {
-        if (!$this->stream) {
+        if ($this->stream === null) {
             return $key ? null : [];
         }
         $meta = stream_get_meta_data($this->stream);
@@ -141,7 +141,7 @@ class ResponseStream implements StreamInterface
      */
     public function rewind(): void
     {
-        $this->seekable && rewind($this->stream);
+        $this->stream !== null && $this->seekable && rewind($this->stream);
     }
 
     /**
@@ -199,7 +199,7 @@ class ResponseStream implements StreamInterface
      */
     public function seek($offset, $whence = \SEEK_SET): void
     {
-        $this->seekable && fseek($this->stream, $offset, $whence);
+        $this->stream !== null && $this->seekable && fseek($this->stream, $offset, $whence);
     }
 
     /**
@@ -217,7 +217,7 @@ class ResponseStream implements StreamInterface
     {
         $this->size = null;
 
-        return $this->writable ? fwrite($this->stream, $string) : false;
+        return $this->stream !== null && $this->writable ? fwrite($this->stream, $string) : false;
     }
 
     /**
@@ -233,7 +233,7 @@ class ResponseStream implements StreamInterface
      */
     public function read($length): string
     {
-        return $this->readable ? fread($this->stream, $length) : '';
+        return $this->stream !== null && $this->readable ? fread($this->stream, $length) : '';
     }
 
     /**
@@ -257,6 +257,8 @@ class ResponseStream implements StreamInterface
 
     /**
      * Closes the stream and any underlying resources.
+     *
+     * @psalm-suppress InvalidPropertyAssignmentValue
      */
     public function close(): void
     {

@@ -56,7 +56,7 @@ namespace PhpZip\Model\Extra\Fields;
  *
  * @see https://pkware.cachefly.net/webdocs/casestudies/APPNOTE.TXT section 4.6.9
  */
-class UnicodePathExtraField extends AbstractUnicodeExtraField
+final class UnicodePathExtraField extends AbstractUnicodeExtraField
 {
     public const HEADER_ID = 0x7075;
 

@@ -55,7 +55,7 @@ namespace PhpZip\Model\Extra\Fields;
  *
  * @see https://pkware.cachefly.net/webdocs/casestudies/APPNOTE.TXT section 4.6.8
  */
-class UnicodeCommentExtraField extends AbstractUnicodeExtraField
+final class UnicodeCommentExtraField extends AbstractUnicodeExtraField
 {
     public const HEADER_ID = 0x6375;
 

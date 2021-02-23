@@ -24,7 +24,7 @@ use PhpZip\Model\ZipEntry;
  *
  * @see http://www.winzip.com/win/en/aes_tips.htm AES Coding Tips for Developers
  */
-class WinZipAesExtraField implements ZipExtraField
+final class WinZipAesExtraField implements ZipExtraField
 {
     /** @var int Header id */
     public const HEADER_ID = 0x9901;

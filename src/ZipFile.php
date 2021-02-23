@@ -99,6 +99,7 @@ class ZipFile implements \Countable, \ArrayAccess, \Iterator
             throw new ZipException("File {$filename} does not exist.");
         }
 
+        /** @psalm-suppress InvalidArgument */
         set_error_handler(
             static function (int $errorNumber, string $errorString): ?bool {
                 throw new InvalidArgumentException($errorString, $errorNumber);
@@ -417,6 +418,7 @@ class ZipFile implements \Countable, \ArrayAccess, \Iterator
                 continue;
             }
 
+            /** @psalm-suppress InvalidArgument */
             set_error_handler(
                 static function (int $errorNumber, string $errorString) use ($entry, $file): ?bool {
                     throw new ZipException(
@@ -1454,6 +1456,7 @@ class ZipFile implements \Countable, \ArrayAccess, \Iterator
     {
         $tempFilename = $filename . '.temp' . uniqid('', false);
 
+        /** @psalm-suppress InvalidArgument */
         set_error_handler(
             static function (int $errorNumber, string $errorString): ?bool {
                 throw new InvalidArgumentException($errorString, $errorNumber);
@@ -1479,7 +1482,7 @@ class ZipFile implements \Countable, \ArrayAccess, \Iterator
             }
         }
 
-        if (!@rename($tempFilename, $filename)) {
+        if (!rename($tempFilename, $filename)) {
             if (is_file($tempFilename)) {
                 unlink($tempFilename);
             }

@@ -22,7 +22,7 @@ use PhpZip\Model\ZipEntry;
  *
  * @see https://pkware.cachefly.net/webdocs/casestudies/APPNOTE.TXT .ZIP File Format Specification
  */
-class Zip64ExtraField implements ZipExtraField
+final class Zip64ExtraField implements ZipExtraField
 {
     /** @var int The Header ID for a ZIP64 Extended Information Extra Field. */
     public const HEADER_ID = 0x0001;
