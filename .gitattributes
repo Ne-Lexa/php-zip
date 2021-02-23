@@ -5,4 +5,7 @@
 bootstrap.php export-ignore
 logo.svg export-ignore
 phpunit.xml export-ignore
+phpunit.xml.dist export-ignore
+psalm.xml export-ignore
+psalm.xml.dist export-ignore
 tests export-ignore
