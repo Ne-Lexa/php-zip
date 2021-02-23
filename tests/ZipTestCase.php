@@ -26,8 +26,6 @@ abstract class ZipTestCase extends TestCase
 
     /**
      * Before test.
-     *
-     * @noinspection PhpMissingParentCallCommonInspection
      */
     protected function setUp(): void
     {
@@ -48,11 +46,11 @@ abstract class ZipTestCase extends TestCase
     {
         parent::tearDown();
 
-        if ($this->outputFilename !== null && file_exists($this->outputFilename)) {
+        if (file_exists($this->outputFilename)) {
             unlink($this->outputFilename);
         }
 
-        if ($this->outputDirname !== null && is_dir($this->outputDirname)) {
+        if (is_dir($this->outputDirname)) {
             FilesUtil::removeDir($this->outputDirname);
         }
     }
