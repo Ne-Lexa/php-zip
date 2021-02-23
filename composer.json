@@ -8,7 +8,6 @@
         "archive",
         "extract",
         "winzip",
-        "zipalign",
         "ziparchive"
     ],
     "homepage": "https://github.com/Ne-Lexa/php-zip",

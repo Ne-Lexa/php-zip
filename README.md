@@ -1,5 +1,5 @@
-`PhpZip`
-========
+<h1 align="center"><img src="logo.svg" alt="PhpZip" width="250" height="51"></h1>
+
 `PhpZip` is a php-library for extended work with ZIP-archives.
 
 [![Build Status](https://github.com/Ne-Lexa/php-zip/workflows/build/badge.svg)](https://github.com/Ne-Lexa/php-zip/actions)

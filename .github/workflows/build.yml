@@ -12,6 +12,7 @@ jobs:
             extensions:       bz2, dom, iconv, fileinfo, openssl, xml, zlib
             key:              cache-v1
             PHPUNIT_COVERAGE: 0
+            PHP_INI:          date.timezone='UTC', memory_limit=-1, opcache.enable=1, opcache.enable_cli=1
 
         strategy:
             matrix:
@@ -35,13 +36,30 @@ jobs:
                 run:  sudo apt-get install unzip p7zip-full
 
             -
+                name: Set JIT args
+                if:   matrix.php == '8.0'
+                run:  echo "PHP_INI=\"$PHP_INI, opcache.jit_buffer_size=256M\"" >> $GITHUB_ENV
+
+            -
                 name: Install PHP with extensions
+                if:   matrix.php == '7.4'
                 uses: shivammathur/setup-php@v2
                 with:
-                    php-version: ${{ matrix.php }}
+                    php-version: 7.4
                     extensions:  ${{ env.extensions }}
                     coverage:    pcov
-                    ini-values:  date.timezone='UTC', memory_limit=-1
+                    ini-values:  ${{ env.PHP_INI }}
+                    tools:       composer:v2
+
+            -
+                name: Install PHP 8.0 with extensions
+                if:   matrix.php == '8.0'
+                uses: shivammathur/setup-php@v2
+                with:
+                    php-version: 8.0
+                    extensions:  ${{ env.extensions }}
+                    coverage:    pcov
+                    ini-values:  date.timezone='UTC', memory_limit=-1, opcache.enable=1, opcache.enable_cli=1, opcache.jit_buffer_size=256M
                     tools:       composer:v2
 
             -

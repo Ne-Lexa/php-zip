@@ -3,5 +3,6 @@
 .gitignore export-ignore
 .php_cs export-ignore
 bootstrap.php export-ignore
+logo.svg export-ignore
 phpunit.xml export-ignore
 tests export-ignore
