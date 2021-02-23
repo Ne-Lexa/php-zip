@@ -102,12 +102,12 @@ jobs:
             -
                 name: Run tests with phpunit
                 if:   env.PHPUNIT_COVERAGE == 0
-                run:  vendor/bin/phpunit -v
+                run:  vendor/bin/phpunit -v --testsuite "all_tests" --group small,medium,large
 
             -
                 name: Run tests with phpunit and coverage
                 if:   env.PHPUNIT_COVERAGE == 1
-                run:  vendor/bin/phpunit -v --coverage-clover=coverage.clover
+                run:  vendor/bin/phpunit -v --coverage-clover=coverage.clover --testsuite "all_tests" --group small,medium,large
 
             -
                 name: Static analysis
