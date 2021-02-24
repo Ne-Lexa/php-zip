@@ -144,7 +144,8 @@ finally{
 - [ZipFile::openFromString](#zipfileopenfromstring) - открывает ZIP-архив из строки.
 - [ZipFile::openFromStream](#zipfileopenfromstream) - открывает ZIP-архив из потока.
 - [ZipFile::outputAsAttachment](#zipfileoutputasattachment) - выводит ZIP-архив в браузер.
-- [ZipFile::outputAsResponse](#zipfileoutputasresponse) - выводит ZIP-архив, как Response PSR-7.
+- [ZipFile::outputAsPsr7Response](#zipfileoutputaspsr7response) - выводит ZIP-архив, как PSR-7 Response.
+- [ZipFile::outputAsSymfonyResponse](#zipfileoutputassymfonyresponse) - выводит ZIP-архив, как Symfony Response.
 - [ZipFile::outputAsString](#zipfileoutputasstring) - выводит ZIP-архив в виде строки.
 - [ZipFile::rename](#zipfilerename) - переименовывает запись по имени.
 - [ZipFile::rewrite](#zipfilerewrite) - сохраняет изменения и заново открывает изменившийся архив.
@@ -753,28 +754,57 @@ $zipFile->outputAsAttachment($outputFilename);
 $mimeType = 'application/zip';
 $zipFile->outputAsAttachment($outputFilename, $mimeType);
 ```
-##### ZipFile::outputAsResponse
-Выводит ZIP-архив, как Response [PSR-7](http://www.php-fig.org/psr/psr-7/).
+##### ZipFile::outputAsPsr7Response
+Выводит ZIP-архив, как [PSR-7 Response](http://www.php-fig.org/psr/psr-7/).
 
 Метод вывода может использоваться в любом PSR-7 совместимом фреймворке. 
 ```php
 // $response = ....; // instance Psr\Http\Message\ResponseInterface
-$zipFile->outputAsResponse($response, $outputFilename);
+$zipFile->outputAsPsr7Response($response, $outputFilename);
 ```
 Можно установить MIME-тип:
 ```php
 $mimeType = 'application/zip';
-$zipFile->outputAsResponse($response, $outputFilename, $mimeType);
+$zipFile->outputAsPsr7Response($response, $outputFilename, $mimeType);
 ```
-Пример для Slim Framework:
+##### ZipFile::outputAsSymfonyResponse
+Выводит ZIP-архив, как [Symfony Response](https://symfony.com/doc/current/components/http_foundation.html#response).
+
+Метод вывода можно использовать в фреймворке Symfony.
 ```php
-$app = new \Slim\App;
-$app->get('/download', function ($req, $res, $args) {
-    $zipFile = new \PhpZip\ZipFile();
-    $zipFile['file.txt'] = 'content';
-    return $zipFile->outputAsResponse($res, 'file.zip');
-});
-$app->run();
+$response = $zipFile->outputAsSymfonyResponse($outputFilename);
+```
+Вы можете установить Mime-Type:
+```php
+$mimeType = 'application/zip';
+$response = $zipFile->outputAsSymfonyResponse($outputFilename, $mimeType);
+```
+Пример использования в Symfony Controller:
+```php
+<?php
+
+namespace App\Controller;
+
+use PhpZip\ZipFile;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Routing\Annotation\Route;
+
+class DownloadZipController
+{
+    /**
+     * @Route("/downloads/{id}")
+     *
+     * @throws \PhpZip\Exception\ZipException
+     */
+    public function __invoke(string $id): Response
+    {
+        $zipFile = new ZipFile();
+        $zipFile['file'] = 'contents';
+
+        $outputFilename = $id . '.zip';
+        return $zipFile->outputAsSymfonyResponse($outputFilename);
+    }
+}
 ```
 ##### ZipFile::rewrite
 Сохраняет изменения и заново открывает изменившийся архив.

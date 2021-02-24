@@ -35,6 +35,8 @@ use PhpZip\Util\StringUtil;
 use Psr\Http\Message\ResponseInterface;
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\Finder\SplFileInfo as SymfonySplFileInfo;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
  * Create, open .ZIP files, modify, get info and extract files.
@@ -239,8 +241,8 @@ class ZipFile implements \Countable, \ArrayAccess, \Iterator
      *
      * @param ?string $comment
      *
-     * @throws ZipException
      * @throws ZipEntryNotFoundException
+     * @throws ZipException
      *
      * @return ZipFile
      */
@@ -269,8 +271,8 @@ class ZipFile implements \Countable, \ArrayAccess, \Iterator
     }
 
     /**
-     * @throws ZipException
      * @throws ZipEntryNotFoundException
+     * @throws ZipException
      *
      * @return resource
      */
@@ -313,8 +315,12 @@ class ZipFile implements \Countable, \ArrayAccess, \Iterator
      *
      * @return ZipFile
      */
-    public function extractTo(string $destDir, $entries = null, array $options = [], ?array &$extractedEntries = []): self
-    {
+    public function extractTo(
+        string $destDir,
+        $entries = null,
+        array $options = [],
+        ?array &$extractedEntries = []
+    ): self {
         if (!file_exists($destDir)) {
             throw new ZipException(sprintf('Destination %s not found', $destDir));
         }
@@ -942,8 +948,12 @@ class ZipFile implements \Countable, \ArrayAccess, \Iterator
      * @return ZipFile
      * @sse https://en.wikipedia.org/wiki/Glob_(programming) Glob pattern syntax
      */
-    public function addFilesFromGlob(string $inputDir, string $globPattern, string $localPath = '/', ?int $compressionMethod = null): self
-    {
+    public function addFilesFromGlob(
+        string $inputDir,
+        string $globPattern,
+        string $localPath = '/',
+        ?int $compressionMethod = null
+    ): self {
         return $this->addGlob($inputDir, $globPattern, $localPath, false, $compressionMethod);
     }
 
@@ -1016,8 +1026,12 @@ class ZipFile implements \Countable, \ArrayAccess, \Iterator
      * @return ZipFile
      * @sse https://en.wikipedia.org/wiki/Glob_(programming) Glob pattern syntax
      */
-    public function addFilesFromGlobRecursive(string $inputDir, string $globPattern, string $localPath = '/', ?int $compressionMethod = null): self
-    {
+    public function addFilesFromGlobRecursive(
+        string $inputDir,
+        string $globPattern,
+        string $localPath = '/',
+        ?int $compressionMethod = null
+    ): self {
         return $this->addGlob($inputDir, $globPattern, $localPath, true, $compressionMethod);
     }
 
@@ -1039,8 +1053,12 @@ class ZipFile implements \Countable, \ArrayAccess, \Iterator
      *
      * @internal param bool $recursive Recursive search
      */
-    public function addFilesFromRegex(string $inputDir, string $regexPattern, string $localPath = '/', ?int $compressionMethod = null): self
-    {
+    public function addFilesFromRegex(
+        string $inputDir,
+        string $regexPattern,
+        string $localPath = '/',
+        ?int $compressionMethod = null
+    ): self {
         return $this->addRegex($inputDir, $regexPattern, $localPath, false, $compressionMethod);
     }
 
@@ -1097,8 +1115,12 @@ class ZipFile implements \Countable, \ArrayAccess, \Iterator
      *
      * @throws ZipException
      */
-    private function doAddFiles(string $fileSystemDir, array $files, string $zipPath, ?int $compressionMethod = null): void
-    {
+    private function doAddFiles(
+        string $fileSystemDir,
+        array $files,
+        string $zipPath,
+        ?int $compressionMethod = null
+    ): void {
         $fileSystemDir = rtrim($fileSystemDir, '/\\') . \DIRECTORY_SEPARATOR;
 
         if (!empty($zipPath)) {
@@ -1140,8 +1162,12 @@ class ZipFile implements \Countable, \ArrayAccess, \Iterator
      *
      * @internal param bool $recursive Recursive search
      */
-    public function addFilesFromRegexRecursive(string $inputDir, string $regexPattern, string $localPath = '/', ?int $compressionMethod = null): self
-    {
+    public function addFilesFromRegexRecursive(
+        string $inputDir,
+        string $regexPattern,
+        string $localPath = '/',
+        ?int $compressionMethod = null
+    ): self {
         return $this->addRegex($inputDir, $regexPattern, $localPath, true, $compressionMethod);
     }
 
@@ -1530,9 +1556,34 @@ class ZipFile implements \Countable, \ArrayAccess, \Iterator
      */
     public function outputAsAttachment(string $outputFilename, ?string $mimeType = null, bool $attachment = true): void
     {
-        if ($mimeType === null) {
-            $mimeType = $this->getMimeTypeByFilename($outputFilename);
+        [
+            'resource' => $resource,
+            'headers' => $headers,
+        ] = $this->getOutputData($outputFilename, $mimeType, $attachment);
+
+        if (!headers_sent()) {
+            foreach ($headers as $key => $value) {
+                header($key . ': ' . $value);
+            }
         }
+
+        rewind($resource);
+
+        try {
+            echo stream_get_contents($resource, -1, 0);
+        } finally {
+            fclose($resource);
+        }
+    }
+
+    /**
+     * @param ?string $mimeType
+     *
+     * @throws ZipException
+     */
+    private function getOutputData(string $outputFilename, ?string $mimeType = null, bool $attachment = true): array
+    {
+        $mimeType ??= $this->getMimeTypeByFilename($outputFilename);
 
         if (!($handle = fopen('php://temp', 'w+b'))) {
             throw new InvalidArgumentException('php://temp cannot open for write.');
@@ -1542,23 +1593,21 @@ class ZipFile implements \Countable, \ArrayAccess, \Iterator
 
         $size = fstat($handle)['size'];
 
-        $headerContentDisposition = 'Content-Disposition: ' . ($attachment ? 'attachment' : 'inline');
+        $contentDisposition = $attachment ? 'attachment' : 'inline';
+        $name = basename($outputFilename);
 
-        if (!empty($outputFilename)) {
-            $headerContentDisposition .= '; filename="' . basename($outputFilename) . '"';
+        if (!empty($name)) {
+            $contentDisposition .= '; filename="' . $name . '"';
         }
 
-        header($headerContentDisposition);
-        header('Content-Type: ' . $mimeType);
-        header('Content-Length: ' . $size);
-
-        rewind($handle);
-
-        try {
-            echo stream_get_contents($handle, -1, 0);
-        } finally {
-            fclose($handle);
-        }
+        return [
+            'resource' => $handle,
+            'headers' => [
+                'Content-Disposition' => $contentDisposition,
+                'Content-Type' => $mimeType,
+                'Content-Length' => $size,
+            ],
+        ];
     }
 
     protected function getMimeTypeByFilename(string $outputFilename): string
@@ -1581,39 +1630,93 @@ class ZipFile implements \Countable, \ArrayAccess, \Iterator
      * @param bool              $attachment     Http Header 'Content-Disposition' if true then attachment otherwise inline
      *
      * @throws ZipException
+     *
+     * @deprecated deprecated since version 2.0, replace to {@see ZipFile::outputAsPsr7Response}
      */
-    public function outputAsResponse(ResponseInterface $response, string $outputFilename, ?string $mimeType = null, bool $attachment = true): ResponseInterface
-    {
-        if ($mimeType === null) {
-            $mimeType = $this->getMimeTypeByFilename($outputFilename);
-        }
+    public function outputAsResponse(
+        ResponseInterface $response,
+        string $outputFilename,
+        ?string $mimeType = null,
+        bool $attachment = true
+    ): ResponseInterface {
+        @trigger_error(
+            sprintf(
+                'Method %s is deprecated. Replace to %s::%s',
+                __METHOD__,
+                __CLASS__,
+                'outputAsPsr7Response'
+            ),
+            \E_USER_DEPRECATED
+        );
 
-        if (!($handle = fopen('php://temp', 'w+b'))) {
-            throw new InvalidArgumentException('php://temp cannot open for write.');
-        }
-        $this->writeZipToStream($handle);
-        $this->close();
-        rewind($handle);
+        return $this->outputAsPsr7Response($response, $outputFilename, $mimeType, $attachment);
+    }
 
-        $contentDispositionValue = ($attachment ? 'attachment' : 'inline');
+    /**
+     * Output .ZIP archive as PSR-7 Response.
+     *
+     * @param ResponseInterface $response       Instance PSR-7 Response
+     * @param string            $outputFilename Output filename
+     * @param string|null       $mimeType       Mime-Type
+     * @param bool              $attachment     Http Header 'Content-Disposition' if true then attachment otherwise inline
+     *
+     * @throws ZipException
+     *
+     * @since 4.0.0
+     */
+    public function outputAsPsr7Response(
+        ResponseInterface $response,
+        string $outputFilename,
+        ?string $mimeType = null,
+        bool $attachment = true
+    ): ResponseInterface {
+        [
+            'resource' => $resource,
+            'headers' => $headers,
+        ] = $this->getOutputData($outputFilename, $mimeType, $attachment);
 
-        if (!empty($outputFilename)) {
-            $contentDispositionValue .= '; filename="' . basename($outputFilename) . '"';
-        }
-
-        $stream = new ResponseStream($handle);
-        $size = $stream->getSize();
-
-        if ($size !== null) {
+        foreach ($headers as $key => $value) {
             /** @noinspection CallableParameterUseCaseInTypeContextInspection */
-            $response = $response->withHeader('Content-Length', (string) $size);
+            $response = $response->withHeader($key, (string) $value);
         }
 
-        return $response
-            ->withHeader('Content-Type', $mimeType)
-            ->withHeader('Content-Disposition', $contentDispositionValue)
-            ->withBody($stream)
-        ;
+        return $response->withBody(new ResponseStream($resource));
+    }
+
+    /**
+     * Output .ZIP archive as Symfony Response.
+     *
+     * @param string      $outputFilename Output filename
+     * @param string|null $mimeType       Mime-Type
+     * @param bool        $attachment     Http Header 'Content-Disposition' if true then attachment otherwise inline
+     *
+     * @throws ZipException
+     *
+     * @since 4.0.0
+     */
+    public function outputAsSymfonyResponse(
+        string $outputFilename,
+        ?string $mimeType = null,
+        bool $attachment = true
+    ): Response {
+        [
+            'resource' => $resource,
+            'headers' => $headers,
+        ] = $this->getOutputData($outputFilename, $mimeType, $attachment);
+
+        return new StreamedResponse(
+            static function () use ($resource): void {
+                if (!($output = fopen('php://output', 'w+b'))) {
+                    throw new InvalidArgumentException('php://output cannot open for write.');
+                }
+                rewind($resource);
+                stream_copy_to_stream($resource, $output);
+                fclose($output);
+                fclose($resource);
+            },
+            200,
+            $headers
+        );
     }
 
     /**

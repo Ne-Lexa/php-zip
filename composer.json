@@ -36,7 +36,8 @@
         "phpunit/phpunit": "^9",
         "symfony/var-dumper": "^5.0",
         "friendsofphp/php-cs-fixer": "^2.18",
-        "vimeo/psalm": "^4.6"
+        "vimeo/psalm": "^4.6",
+        "symfony/http-foundation": "^5.2"
     },
     "autoload": {
         "psr-4": {

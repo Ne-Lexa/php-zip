@@ -1856,7 +1856,7 @@ class ZipFileTest extends ZipTestCase
     public function testFilename0(): void
     {
         $zipFile = new ZipFile();
-        $zipFile[0] = 0;
+        $zipFile[0] = '0';
         static::assertTrue(isset($zipFile['0']));
         static::assertCount(1, $zipFile);
         $zipFile
@@ -1891,16 +1891,31 @@ class ZipFileTest extends ZipTestCase
     /**
      * @throws ZipException
      */
-    public function testPsrResponse(): void
+    public function testOutputAsPsr7Response(): void
     {
         $zipFile = new ZipFile();
         for ($i = 0; $i < 10; $i++) {
-            $zipFile[$i] = $i;
+            $zipFile[$i] = (string) $i;
         }
         $filename = 'file.jar';
-        $response = $zipFile->outputAsResponse(new Response(), $filename);
+        $response = $zipFile->outputAsPsr7Response(new Response(), $filename);
         static::assertSame('application/java-archive', $response->getHeaderLine('content-type'));
         static::assertSame('attachment; filename="file.jar"', $response->getHeaderLine('content-disposition'));
+    }
+
+    /**
+     * @throws ZipException
+     */
+    public function testOutputAsSymfonyResponse(): void
+    {
+        $zipFile = new ZipFile();
+        for ($i = 0; $i < 10; $i++) {
+            $zipFile[$i] = (string) $i;
+        }
+        $filename = 'file.jar';
+        $response = $zipFile->outputAsSymfonyResponse($filename);
+        static::assertSame('application/java-archive', $response->headers->get('content-type'));
+        static::assertSame('attachment; filename="file.jar"', $response->headers->get('content-disposition'));
     }
 
     /**

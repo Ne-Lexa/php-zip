@@ -65,6 +65,12 @@ namespace PHPSTORM_META {
     expectedArguments(\PhpZip\ZipFile::outputAsResponse(), 2, argumentsSet("zip_mime_types"));
     expectedArguments(\PhpZip\ZipFile::outputAsResponse(), 3, argumentsSet("bool"));
 
+    expectedArguments(\PhpZip\ZipFile::outputAsPsr7Response(), 2, argumentsSet("zip_mime_types"));
+    expectedArguments(\PhpZip\ZipFile::outputAsPsr7Response(), 3, argumentsSet("bool"));
+
+    expectedArguments(\PhpZip\ZipFile::outputAsSymfonyResponse(), 1, argumentsSet("zip_mime_types"));
+    expectedArguments(\PhpZip\ZipFile::outputAsSymfonyResponse(), 2, argumentsSet("bool"));
+
     registerArgumentsSet(
         'dos_charset',
         \PhpZip\Constants\DosCodePage::CP_LATIN_US,

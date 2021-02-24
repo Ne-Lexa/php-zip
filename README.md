@@ -149,7 +149,8 @@ Other examples can be found in the `tests/` folder
 - [ZipFile::openFromString](#zipfileopenfromstring) - opens a zip-archive from a string.
 - [ZipFile::openFromStream](#zipfileopenfromstream) - opens a zip-archive from the stream.
 - [ZipFile::outputAsAttachment](#zipfileoutputasattachment) - outputs a ZIP-archive to the browser.
-- [ZipFile::outputAsResponse](#zipfileoutputasresponse) - outputs a ZIP-archive as PSR-7 Response.
+- [ZipFile::outputAsPsr7Response](#zipfileoutputaspsr7response) - outputs a ZIP-archive as PSR-7 Response.
+- [ZipFile::outputAsSymfonyResponse](#zipfileoutputaspsr7response) - outputs a ZIP-archive as Symfony Response.
 - [ZipFile::outputAsString](#zipfileoutputasstring) - outputs a ZIP-archive as string.
 - [ZipFile::rename](#zipfilerename) - renames an entry defined by its name.
 - [ZipFile::rewrite](#zipfilerewrite) - save changes and re-open the changed archive.
@@ -782,18 +783,57 @@ You can set the Mime-Type:
 $mimeType = 'application/zip';
 $zipFile->outputAsAttachment($outputFilename, $mimeType);
 ```
-##### ZipFile::outputAsResponse
+##### ZipFile::outputAsPsr7Response
 Outputs a ZIP-archive as [PSR-7 Response](http://www.php-fig.org/psr/psr-7/).
 
 The output method can be used in any PSR-7 compatible framework. 
 ```php
 // $response = ....; // instance Psr\Http\Message\ResponseInterface
-$zipFile->outputAsResponse($response, $outputFilename);
+$zipFile->outputAsPsr7Response($response, $outputFilename);
 ```
 You can set the Mime-Type:
 ```php
 $mimeType = 'application/zip';
-$zipFile->outputAsResponse($response, $outputFilename, $mimeType);
+$zipFile->outputAsPsr7Response($response, $outputFilename, $mimeType);
+```
+##### ZipFile::outputAsSymfonyResponse
+Outputs a ZIP-archive as [Symfony Response](https://symfony.com/doc/current/components/http_foundation.html#response).
+
+The output method can be used in Symfony framework. 
+```php
+$response = $zipFile->outputAsSymfonyResponse($outputFilename);
+```
+You can set the Mime-Type:
+```php
+$mimeType = 'application/zip';
+$response = $zipFile->outputAsSymfonyResponse($outputFilename, $mimeType);
+```
+Example use in Symfony Controller:
+```php
+<?php
+
+namespace App\Controller;
+
+use PhpZip\ZipFile;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Routing\Annotation\Route;
+
+class DownloadZipController
+{
+    /**
+     * @Route("/downloads/{id}")
+     *
+     * @throws \PhpZip\Exception\ZipException
+     */
+    public function __invoke(string $id): Response
+    {
+        $zipFile = new ZipFile();
+        $zipFile['file'] = 'contents';
+
+        $outputFilename = $id . '.zip';
+        return $zipFile->outputAsSymfonyResponse($outputFilename);
+    }
+}
 ```
 ##### ZipFile::rewrite
 Save changes and re-open the changed archive.
