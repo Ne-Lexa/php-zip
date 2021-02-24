@@ -1,5 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
+/*
+ * This file is part of the nelexa/zip package.
+ * (c) Ne-Lexa <https://github.com/Ne-Lexa/php-zip>
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace PhpZip\Util;
 
 /**
@@ -20,9 +29,6 @@ namespace PhpZip\Util;
  *
  * @see https://docs.microsoft.com/ru-ru/windows/win32/api/winbase/nf-winbase-filetimetodosdatetime?redirectedfrom=MSDN
  *
- * @author Ne-Lexa alexey@nelexa.ru
- * @license MIT
- *
  * @internal
  */
 class DateTimeConverter
@@ -30,14 +36,18 @@ class DateTimeConverter
     /**
      * Smallest supported DOS date/time value in a ZIP file,
      * which is January 1st, 1980 AD 00:00:00 local time.
+     *
+     * @var int
      */
-    const MIN_DOS_TIME = 0x210000; // (1 << 21) | (1 << 16)
+    public const MIN_DOS_TIME = (1 << 21) | (1 << 16);
 
     /**
      * Largest supported DOS date/time value in a ZIP file,
      * which is December 31st, 2107 AD 23:59:58 local time.
+     *
+     * @var int
      */
-    const MAX_DOS_TIME = 0xff9fbf7d; // ((2107 - 1980) << 25) | (12 << 21) | (31 << 16) | (23 << 11) | (59 << 5) | (58 >> 1);
+    public const MAX_DOS_TIME = ((2107 - 1980) << 25) | (12 << 21) | (31 << 16) | (23 << 11) | (59 << 5) | (58 >> 1);
 
     /**
      * Convert a 32 bit integer DOS date/time value to a UNIX timestamp value.
@@ -46,7 +56,7 @@ class DateTimeConverter
      *
      * @return int Unix timestamp
      */
-    public static function msDosToUnix($dosTime)
+    public static function msDosToUnix(int $dosTime): int
     {
         if ($dosTime <= self::MIN_DOS_TIME) {
             $dosTime = 0;
@@ -74,7 +84,7 @@ class DateTimeConverter
      *             rounded down to even seconds
      *             and is in between DateTimeConverter::MIN_DOS_TIME and DateTimeConverter::MAX_DOS_TIME
      */
-    public static function unixToMsDos($unixTimestamp)
+    public static function unixToMsDos(int $unixTimestamp): int
     {
         if ($unixTimestamp < 0) {
             throw new \InvalidArgumentException('Negative unix timestamp: ' . $unixTimestamp);
@@ -82,12 +92,12 @@ class DateTimeConverter
 
         $date = getdate($unixTimestamp);
         $dosTime = (
-            (($date['year'] - 1980) << 25) |
-            ($date['mon'] << 21) |
-            ($date['mday'] << 16) |
-            ($date['hours'] << 11) |
-            ($date['minutes'] << 5) |
-            ($date['seconds'] >> 1)
+            (($date['year'] - 1980) << 25)
+            | ($date['mon'] << 21)
+            | ($date['mday'] << 16)
+            | ($date['hours'] << 11)
+            | ($date['minutes'] << 5)
+            | ($date['seconds'] >> 1)
         );
 
         if ($dosTime <= self::MIN_DOS_TIME) {

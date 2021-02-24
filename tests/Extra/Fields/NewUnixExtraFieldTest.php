@@ -1,5 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
+/*
+ * This file is part of the nelexa/zip package.
+ * (c) Ne-Lexa <https://github.com/Ne-Lexa/php-zip>
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace PhpZip\Tests\Extra\Fields;
 
 use PHPUnit\Framework\TestCase;
@@ -18,14 +27,9 @@ final class NewUnixExtraFieldTest extends TestCase
     /**
      * @dataProvider provideExtraField
      *
-     * @param int    $version
-     * @param int    $uid
-     * @param int    $gid
-     * @param string $binaryData
-     *
      * @throws ZipException
      */
-    public function testExtraField($version, $uid, $gid, $binaryData)
+    public function testExtraField(int $version, int $uid, int $gid, string $binaryData): void
     {
         $extraField = new NewUnixExtraField($version, $uid, $gid);
         self::assertSame($extraField->getHeaderId(), NewUnixExtraField::HEADER_ID);
@@ -40,10 +44,7 @@ final class NewUnixExtraFieldTest extends TestCase
         self::assertSame($extraField->packCentralDirData(), $binaryData);
     }
 
-    /**
-     * @return array
-     */
-    public function provideExtraField()
+    public function provideExtraField(): array
     {
         return [
             [
@@ -79,7 +80,7 @@ final class NewUnixExtraFieldTest extends TestCase
         ];
     }
 
-    public function testSetter()
+    public function testSetter(): void
     {
         $extraField = new NewUnixExtraField(1, 1000, 1000);
         self::assertSame(1, $extraField->getVersion());

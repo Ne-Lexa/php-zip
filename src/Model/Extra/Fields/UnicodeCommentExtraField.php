@@ -1,5 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
+/*
+ * This file is part of the nelexa/zip package.
+ * (c) Ne-Lexa <https://github.com/Ne-Lexa/php-zip>
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace PhpZip\Model\Extra\Fields;
 
 /**
@@ -46,26 +55,21 @@ namespace PhpZip\Model\Extra\Fields;
  *
  * @see https://pkware.cachefly.net/webdocs/casestudies/APPNOTE.TXT section 4.6.8
  */
-class UnicodeCommentExtraField extends AbstractUnicodeExtraField
+final class UnicodeCommentExtraField extends AbstractUnicodeExtraField
 {
-    const HEADER_ID = 0x6375;
+    public const HEADER_ID = 0x6375;
 
     /**
      * Returns the Header ID (type) of this Extra Field.
      * The Header ID is an unsigned short integer (two bytes)
      * which must be constant during the life cycle of this object.
-     *
-     * @return int
      */
-    public function getHeaderId()
+    public function getHeaderId(): int
     {
         return self::HEADER_ID;
     }
 
-    /**
-     * @return string
-     */
-    public function __toString()
+    public function __toString(): string
     {
         return sprintf(
             '0x%04x UnicodeComment: "%s"',

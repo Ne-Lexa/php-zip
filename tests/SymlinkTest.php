@@ -1,5 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
+/*
+ * This file is part of the nelexa/zip package.
+ * (c) Ne-Lexa <https://github.com/Ne-Lexa/php-zip>
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace PhpZip\Tests;
 
 use PhpZip\Constants\ZipOptions;
@@ -17,15 +26,11 @@ final class SymlinkTest extends ZipTestCase
     /**
      * @dataProvider provideAllowSymlink
      *
-     * @param bool $allowSymlink
-     *
      * @throws \Exception
      */
-    public function testSymlink($allowSymlink)
+    public function testSymlink(bool $allowSymlink): void
     {
-        if (self::skipTestForWindows()) {
-            return;
-        }
+        self::skipTestForWindows();
 
         if (!is_dir($this->outputDirname)) {
             self::assertTrue(mkdir($this->outputDirname, 0755, true));
@@ -47,7 +52,7 @@ final class SymlinkTest extends ZipTestCase
         self::assertCorrectZipArchive($this->outputFilename);
 
         FilesUtil::removeDir($this->outputDirname);
-        self::assertFalse(is_dir($this->outputDirname));
+        self::assertDirectoryDoesNotExist($this->outputDirname);
         self::assertTrue(mkdir($this->outputDirname, 0755, true));
 
         $zipFile->openFile($this->outputFilename);
@@ -67,10 +72,7 @@ final class SymlinkTest extends ZipTestCase
         }
     }
 
-    /**
-     * @return \Generator
-     */
-    public function provideAllowSymlink()
+    public function provideAllowSymlink(): \Generator
     {
         yield 'allow' => [true];
         yield 'deny' => [false];

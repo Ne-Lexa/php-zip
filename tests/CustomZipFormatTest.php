@@ -1,5 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
+/*
+ * This file is part of the nelexa/zip package.
+ * (c) Ne-Lexa <https://github.com/Ne-Lexa/php-zip>
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace PhpZip\Tests;
 
 use PhpZip\Exception\ZipEntryNotFoundException;
@@ -26,7 +35,7 @@ final class CustomZipFormatTest extends ZipTestCase
      *
      * @see http://www.epubtest.org/test-books source epub files
      */
-    public function testEpub()
+    public function testEpub(): void
     {
         $epubFile = new EpubFile();
         $epubFile->openFile(__DIR__ . '/resources/Advanced-v1.0.0.epub');
@@ -67,7 +76,7 @@ final class CustomZipFormatTest extends ZipTestCase
     /**
      * @throws \Exception
      */
-    public function testBeforeSaveInZipWriter()
+    public function testBeforeSaveInZipWriter(): void
     {
         $zipFile = new ZipFileCustomWriter();
         for ($i = 0; $i < 10; $i++) {
@@ -88,7 +97,7 @@ final class CustomZipFormatTest extends ZipTestCase
     /**
      * @throws \Exception
      */
-    public function testBeforeSaveInZipFile()
+    public function testBeforeSaveInZipFile(): void
     {
         $zipFile = new ZipFileWithBeforeSave();
         for ($i = 0; $i < 10; $i++) {
@@ -106,11 +115,7 @@ final class CustomZipFormatTest extends ZipTestCase
         $zipFile->close();
     }
 
-    /**
-     * @param ZipFile $zipFile
-     * @param bool    $exists
-     */
-    private function existsExtraFields(ZipFile $zipFile, $exists)
+    private function existsExtraFields(ZipFile $zipFile, bool $exists): void
     {
         foreach ($zipFile->getEntries() as $entry) {
             $localExtras = $entry->getLocalExtraFields();

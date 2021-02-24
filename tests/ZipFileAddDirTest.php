@@ -1,5 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
+/*
+ * This file is part of the nelexa/zip package.
+ * (c) Ne-Lexa <https://github.com/Ne-Lexa/php-zip>
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace PhpZip\Tests;
 
 use PhpZip\Exception\ZipException;
@@ -19,7 +28,7 @@ class ZipFileAddDirTest extends ZipFileSetTestCase
     /**
      * @throws ZipException
      */
-    public function testAddDirWithLocalPath()
+    public function testAddDirWithLocalPath(): void
     {
         $localPath = 'to/path';
 
@@ -48,7 +57,7 @@ class ZipFileAddDirTest extends ZipFileSetTestCase
     /**
      * @throws ZipException
      */
-    public function testAddDirWithoutLocalPath()
+    public function testAddDirWithoutLocalPath(): void
     {
         $zipFile = new ZipFile();
         $zipFile->addDir($this->outputDirname);
@@ -74,7 +83,7 @@ class ZipFileAddDirTest extends ZipFileSetTestCase
     /**
      * @throws ZipException
      */
-    public function testAddFilesFromIterator()
+    public function testAddFilesFromIterator(): void
     {
         $localPath = 'to/project';
 
@@ -105,7 +114,7 @@ class ZipFileAddDirTest extends ZipFileSetTestCase
     /**
      * @throws ZipException
      */
-    public function testAddFilesFromIteratorEmptyLocalPath()
+    public function testAddFilesFromIteratorEmptyLocalPath(): void
     {
         $localPath = '';
 
@@ -135,7 +144,7 @@ class ZipFileAddDirTest extends ZipFileSetTestCase
     /**
      * @throws ZipException
      */
-    public function testAddFilesFromRecursiveIterator()
+    public function testAddFilesFromRecursiveIterator(): void
     {
         $localPath = 'to/project';
 
@@ -156,7 +165,7 @@ class ZipFileAddDirTest extends ZipFileSetTestCase
     /**
      * @throws ZipException
      */
-    public function testAddRecursiveDirWithLocalPath()
+    public function testAddRecursiveDirWithLocalPath(): void
     {
         $localPath = 'to/path';
 
@@ -175,7 +184,7 @@ class ZipFileAddDirTest extends ZipFileSetTestCase
     /**
      * @throws ZipException
      */
-    public function testAddRecursiveDirWithoutLocalPath()
+    public function testAddRecursiveDirWithoutLocalPath(): void
     {
         $zipFile = new ZipFile();
         $zipFile->addDirRecursive($this->outputDirname);
@@ -192,7 +201,7 @@ class ZipFileAddDirTest extends ZipFileSetTestCase
     /**
      * @throws ZipException
      */
-    public function testAddFilesFromIteratorWithIgnoreFiles()
+    public function testAddFilesFromIteratorWithIgnoreFiles(): void
     {
         $localPath = 'to/project';
         $ignoreFiles = [
@@ -226,7 +235,7 @@ class ZipFileAddDirTest extends ZipFileSetTestCase
     /**
      * @throws ZipException
      */
-    public function testAddFilesFromRecursiveIteratorWithIgnoreFiles()
+    public function testAddFilesFromRecursiveIteratorWithIgnoreFiles(): void
     {
         $localPath = 'to/project';
         $ignoreFiles = [
@@ -270,7 +279,7 @@ class ZipFileAddDirTest extends ZipFileSetTestCase
      *
      * @throws ZipException
      */
-    public function testAddFilesFromGlob()
+    public function testAddFilesFromGlob(): void
     {
         $localPath = '/';
 
@@ -299,7 +308,7 @@ class ZipFileAddDirTest extends ZipFileSetTestCase
      *
      * @throws ZipException
      */
-    public function testAddFilesFromGlobRecursive()
+    public function testAddFilesFromGlobRecursive(): void
     {
         $localPath = '/';
 
@@ -333,7 +342,7 @@ class ZipFileAddDirTest extends ZipFileSetTestCase
      *
      * @throws ZipException
      */
-    public function testAddFilesFromRegex()
+    public function testAddFilesFromRegex(): void
     {
         $localPath = 'path';
 
@@ -362,7 +371,7 @@ class ZipFileAddDirTest extends ZipFileSetTestCase
      *
      * @throws ZipException
      */
-    public function testAddFilesFromRegexRecursive()
+    public function testAddFilesFromRegexRecursive(): void
     {
         $localPath = '/';
 
@@ -394,7 +403,7 @@ class ZipFileAddDirTest extends ZipFileSetTestCase
     /**
      * @throws ZipException
      */
-    public function testArrayAccessAddDir()
+    public function testArrayAccessAddDir(): void
     {
         $localPath = 'path/to';
         $iterator = new \RecursiveDirectoryIterator($this->outputDirname);

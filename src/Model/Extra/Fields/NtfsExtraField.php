@@ -1,30 +1,36 @@
 <?php
 
+declare(strict_types=1);
+
+/*
+ * This file is part of the nelexa/zip package.
+ * (c) Ne-Lexa <https://github.com/Ne-Lexa/php-zip>
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace PhpZip\Model\Extra\Fields;
 
 use PhpZip\Exception\InvalidArgumentException;
 use PhpZip\Exception\ZipException;
 use PhpZip\Model\Extra\ZipExtraField;
 use PhpZip\Model\ZipEntry;
-use PhpZip\Util\PackUtil;
 
 /**
  * NTFS Extra Field.
  *
- * @see     https://pkware.cachefly.net/webdocs/casestudies/APPNOTE.TXT .ZIP File Format Specification
- *
- * @license MIT
+ * @see https://pkware.cachefly.net/webdocs/casestudies/APPNOTE.TXT .ZIP File Format Specification
  */
-class NtfsExtraField implements ZipExtraField
+final class NtfsExtraField implements ZipExtraField
 {
     /** @var int Header id */
-    const HEADER_ID = 0x000a;
+    public const HEADER_ID = 0x000a;
 
     /** @var int Tag ID */
-    const TIME_ATTR_TAG = 0x0001;
+    public const TIME_ATTR_TAG = 0x0001;
 
     /** @var int Attribute size */
-    const TIME_ATTR_SIZE = 24; // 3 * 8
+    public const TIME_ATTR_SIZE = 24; // 3 * 8
 
     /**
      * @var int A file time is a 64-bit value that represents the number of
@@ -32,41 +38,32 @@ class NtfsExtraField implements ZipExtraField
      *          A.M. January 1, 1601 Coordinated Universal Time (UTC).
      *          this is the offset of Windows time 0 to Unix epoch in 100-nanosecond intervals.
      */
-    const EPOCH_OFFSET = -116444736000000000;
+    public const EPOCH_OFFSET = -116444736000000000;
 
     /** @var int Modify ntfs time */
-    private $modifyNtfsTime;
+    private int $modifyNtfsTime;
 
     /** @var int Access ntfs time */
-    private $accessNtfsTime;
+    private int $accessNtfsTime;
 
     /** @var int Create ntfs time */
-    private $createNtfsTime;
+    private int $createNtfsTime;
 
-    /**
-     * @param int $modifyNtfsTime
-     * @param int $accessNtfsTime
-     * @param int $createNtfsTime
-     */
-    public function __construct($modifyNtfsTime, $accessNtfsTime, $createNtfsTime)
+    public function __construct(int $modifyNtfsTime, int $accessNtfsTime, int $createNtfsTime)
     {
-        $this->modifyNtfsTime = (int) $modifyNtfsTime;
-        $this->accessNtfsTime = (int) $accessNtfsTime;
-        $this->createNtfsTime = (int) $createNtfsTime;
+        $this->modifyNtfsTime = $modifyNtfsTime;
+        $this->accessNtfsTime = $accessNtfsTime;
+        $this->createNtfsTime = $createNtfsTime;
     }
 
     /**
-     * @param \DateTimeInterface $modifyDateTime
-     * @param \DateTimeInterface $accessDateTime
-     * @param \DateTimeInterface $createNtfsTime
-     *
      * @return NtfsExtraField
      */
     public static function create(
         \DateTimeInterface $modifyDateTime,
         \DateTimeInterface $accessDateTime,
         \DateTimeInterface $createNtfsTime
-    ) {
+    ): self {
         return new self(
             self::dateTimeToNtfsTime($modifyDateTime),
             self::dateTimeToNtfsTime($accessDateTime),
@@ -78,10 +75,8 @@ class NtfsExtraField implements ZipExtraField
      * Returns the Header ID (type) of this Extra Field.
      * The Header ID is an unsigned short integer (two bytes)
      * which must be constant during the life cycle of this object.
-     *
-     * @return int
      */
-    public function getHeaderId()
+    public function getHeaderId(): int
     {
         return self::HEADER_ID;
     }
@@ -90,13 +85,13 @@ class NtfsExtraField implements ZipExtraField
      * Populate data from this array as if it was in local file data.
      *
      * @param string        $buffer the buffer to read data from
-     * @param ZipEntry|null $entry
+     * @param ZipEntry|null $entry  optional zip entry
      *
      * @throws ZipException
      *
      * @return NtfsExtraField
      */
-    public static function unpackLocalFileData($buffer, ZipEntry $entry = null)
+    public static function unpackLocalFileData(string $buffer, ?ZipEntry $entry = null): self
     {
         if (\PHP_INT_SIZE === 4) {
             throw new ZipException('not supported for php-32bit');
@@ -109,17 +104,21 @@ class NtfsExtraField implements ZipExtraField
         $createTime = 0;
 
         while ($buffer || $buffer !== '') {
-            $unpack = unpack('vtag/vsizeAttr', $buffer);
+            [
+                'tag' => $tag,
+                'sizeAttr' => $sizeAttr,
+            ] = unpack('vtag/vsizeAttr', $buffer);
 
-            if ($unpack['tag'] === self::TIME_ATTR_TAG && $unpack['sizeAttr'] === self::TIME_ATTR_SIZE) {
-                // refactoring will be needed when php 5.5 support ends
-                $modifyTime = PackUtil::unpackLongLE(substr($buffer, 4, 8));
-                $accessTime = PackUtil::unpackLongLE(substr($buffer, 12, 8));
-                $createTime = PackUtil::unpackLongLE(substr($buffer, 20, 8));
+            if ($tag === self::TIME_ATTR_TAG && $sizeAttr === self::TIME_ATTR_SIZE) {
+                [
+                    'modifyTime' => $modifyTime,
+                    'accessTime' => $accessTime,
+                    'createTime' => $createTime,
+                ] = unpack('PmodifyTime/PaccessTime/PcreateTime', substr($buffer, 4, 24));
 
                 break;
             }
-            $buffer = substr($buffer, 4 + $unpack['sizeAttr']);
+            $buffer = substr($buffer, 4 + $sizeAttr);
         }
 
         return new self($modifyTime, $accessTime, $createTime);
@@ -129,13 +128,13 @@ class NtfsExtraField implements ZipExtraField
      * Populate data from this array as if it was in central directory data.
      *
      * @param string        $buffer the buffer to read data from
-     * @param ZipEntry|null $entry
+     * @param ZipEntry|null $entry  optional zip entry
      *
      * @throws ZipException
      *
      * @return NtfsExtraField
      */
-    public static function unpackCentralDirData($buffer, ZipEntry $entry = null)
+    public static function unpackCentralDirData(string $buffer, ?ZipEntry $entry = null): self
     {
         return self::unpackLocalFileData($buffer, $entry);
     }
@@ -146,63 +145,47 @@ class NtfsExtraField implements ZipExtraField
      *
      * @return string the data
      */
-    public function packLocalFileData()
+    public function packLocalFileData(): string
     {
-        $data = pack('Vvv', 0, self::TIME_ATTR_TAG, self::TIME_ATTR_SIZE);
-        // refactoring will be needed when php 5.5 support ends
-        $data .= PackUtil::packLongLE($this->modifyNtfsTime);
-        $data .= PackUtil::packLongLE($this->accessNtfsTime);
-        $data .= PackUtil::packLongLE($this->createNtfsTime);
-
-        return $data;
+        return pack(
+            'VvvPPP',
+            0,
+            self::TIME_ATTR_TAG,
+            self::TIME_ATTR_SIZE,
+            $this->modifyNtfsTime,
+            $this->accessNtfsTime,
+            $this->createNtfsTime
+        );
     }
 
-    /**
-     * @return int
-     */
-    public function getModifyNtfsTime()
+    public function getModifyNtfsTime(): int
     {
         return $this->modifyNtfsTime;
     }
 
-    /**
-     * @param int $modifyNtfsTime
-     */
-    public function setModifyNtfsTime($modifyNtfsTime)
+    public function setModifyNtfsTime(int $modifyNtfsTime): void
     {
-        $this->modifyNtfsTime = (int) $modifyNtfsTime;
+        $this->modifyNtfsTime = $modifyNtfsTime;
     }
 
-    /**
-     * @return int
-     */
-    public function getAccessNtfsTime()
+    public function getAccessNtfsTime(): int
     {
         return $this->accessNtfsTime;
     }
 
-    /**
-     * @param int $accessNtfsTime
-     */
-    public function setAccessNtfsTime($accessNtfsTime)
+    public function setAccessNtfsTime(int $accessNtfsTime): void
     {
-        $this->accessNtfsTime = (int) $accessNtfsTime;
+        $this->accessNtfsTime = $accessNtfsTime;
     }
 
-    /**
-     * @return int
-     */
-    public function getCreateNtfsTime()
+    public function getCreateNtfsTime(): int
     {
         return $this->createNtfsTime;
     }
 
-    /**
-     * @param int $createNtfsTime
-     */
-    public function setCreateNtfsTime($createNtfsTime)
+    public function setCreateNtfsTime(int $createNtfsTime): void
     {
-        $this->createNtfsTime = (int) $createNtfsTime;
+        $this->createNtfsTime = $createNtfsTime;
     }
 
     /**
@@ -211,95 +194,63 @@ class NtfsExtraField implements ZipExtraField
      *
      * @return string the data
      */
-    public function packCentralDirData()
+    public function packCentralDirData(): string
     {
         return $this->packLocalFileData();
     }
 
-    /**
-     * @return \DateTimeInterface
-     */
-    public function getModifyDateTime()
+    public function getModifyDateTime(): \DateTimeInterface
     {
         return self::ntfsTimeToDateTime($this->modifyNtfsTime);
     }
 
-    /**
-     * @param \DateTimeInterface $modifyTime
-     */
-    public function setModifyDateTime(\DateTimeInterface $modifyTime)
+    public function setModifyDateTime(\DateTimeInterface $modifyTime): void
     {
         $this->modifyNtfsTime = self::dateTimeToNtfsTime($modifyTime);
     }
 
-    /**
-     * @return \DateTimeInterface
-     */
-    public function getAccessDateTime()
+    public function getAccessDateTime(): \DateTimeInterface
     {
         return self::ntfsTimeToDateTime($this->accessNtfsTime);
     }
 
-    /**
-     * @param \DateTimeInterface $accessTime
-     */
-    public function setAccessDateTime(\DateTimeInterface $accessTime)
+    public function setAccessDateTime(\DateTimeInterface $accessTime): void
     {
         $this->accessNtfsTime = self::dateTimeToNtfsTime($accessTime);
     }
 
-    /**
-     * @return \DateTimeInterface
-     */
-    public function getCreateDateTime()
+    public function getCreateDateTime(): \DateTimeInterface
     {
         return self::ntfsTimeToDateTime($this->createNtfsTime);
     }
 
-    /**
-     * @param \DateTimeInterface $createTime
-     */
-    public function setCreateDateTime(\DateTimeInterface $createTime)
+    public function setCreateDateTime(\DateTimeInterface $createTime): void
     {
         $this->createNtfsTime = self::dateTimeToNtfsTime($createTime);
     }
 
     /**
      * @param float $timestamp Float timestamp
-     *
-     * @return int
      */
-    public static function timestampToNtfsTime($timestamp)
+    public static function timestampToNtfsTime(float $timestamp): int
     {
-        return (int) (((float) $timestamp * 10000000) - self::EPOCH_OFFSET);
+        return (int) (($timestamp * 10000000) - self::EPOCH_OFFSET);
     }
 
-    /**
-     * @param \DateTimeInterface $dateTime
-     *
-     * @return int
-     */
-    public static function dateTimeToNtfsTime(\DateTimeInterface $dateTime)
+    public static function dateTimeToNtfsTime(\DateTimeInterface $dateTime): int
     {
         return self::timestampToNtfsTime((float) $dateTime->format('U.u'));
     }
 
     /**
-     * @param int $ntfsTime
-     *
      * @return float Float unix timestamp
      */
-    public static function ntfsTimeToTimestamp($ntfsTime)
+    public static function ntfsTimeToTimestamp(int $ntfsTime): float
     {
         return (float) (($ntfsTime + self::EPOCH_OFFSET) / 10000000);
     }
 
-    /**
-     * @param int $ntfsTime
-     *
-     * @return \DateTimeInterface
-     */
-    public static function ntfsTimeToDateTime($ntfsTime)
+    public static function ntfsTimeToDateTime(int $ntfsTime): \DateTimeInterface
     {
         $timestamp = self::ntfsTimeToTimestamp($ntfsTime);
         $dateTime = \DateTimeImmutable::createFromFormat('U.u', sprintf('%.6f', $timestamp));
@@ -311,10 +262,7 @@ class NtfsExtraField implements ZipExtraField
         return $dateTime;
     }
 
-    /**
-     * @return string
-     */
-    public function __toString()
+    public function __toString(): string
     {
         $args = [self::HEADER_ID];
         $format = '0x%04x NtfsExtra:';

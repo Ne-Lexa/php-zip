@@ -1,5 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
+/*
+ * This file is part of the nelexa/zip package.
+ * (c) Ne-Lexa <https://github.com/Ne-Lexa/php-zip>
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace PhpZip\Tests\Internal;
 
 /**
@@ -18,26 +27,24 @@ class DummyFileSystemStream
      * This method is called immediately after the wrapper is
      * initialized (f.e. by {@see fopen()} and {@see file_get_contents()}).
      *
-     * @param string $path        specifies the URL that was passed to
-     *                            the original function
-     * @param string $mode        the mode used to open the file, as detailed
-     *                            for {@see fopen()}
-     * @param int    $options     Holds additional flags set by the streams
-     *                            API. It can hold one or more of the
-     *                            following values OR'd together.
-     * @param string $opened_path if the path is opened successfully, and
-     *                            STREAM_USE_PATH is set in options,
-     *                            opened_path should be set to the
-     *                            full path of the file/resource that
-     *                            was actually opened
-     *
-     * @return bool
+     * @param string      $path        specifies the URL that was passed to
+     *                                 the original function
+     * @param string      $mode        the mode used to open the file, as detailed
+     *                                 for {@see fopen()}
+     * @param int         $options     Holds additional flags set by the streams
+     *                                 API. It can hold one or more of the
+     *                                 following values OR'd together.
+     * @param string|null $opened_path if the path is opened successfully, and
+     *                                 STREAM_USE_PATH is set in options,
+     *                                 opened_path should be set to the
+     *                                 full path of the file/resource that
+     *                                 was actually opened
      *
      * @see https://www.php.net/streamwrapper.stream-open
      *
      * @noinspection PhpUsageOfSilenceOperatorInspection
      */
-    public function stream_open($path, $mode, $options, &$opened_path)
+    public function stream_open(string $path, string $mode, int $options, ?string &$opened_path): bool
     {
         $parsedUrl = parse_url($path);
         $uri = substr($parsedUrl['path'], 1);
@@ -64,7 +71,7 @@ class DummyFileSystemStream
      *
      * @see https://www.php.net/streamwrapper.stream-read
      */
-    public function stream_read($count)
+    public function stream_read(int $count)
     {
         return fread($this->fp, $count);
     }
@@ -86,7 +93,7 @@ class DummyFileSystemStream
      *
      * @see https://www.php.net/streamwrapper.stream-seek
      */
-    public function stream_seek($offset, $whence = \SEEK_SET)
+    public function stream_seek(int $offset, int $whence = \SEEK_SET): bool
     {
         return fseek($this->fp, $offset, $whence) === 0;
     }
@@ -101,7 +108,7 @@ class DummyFileSystemStream
      *
      * @see https://www.php.net/streamwrapper.stream-tell
      */
-    public function stream_tell()
+    public function stream_tell(): int
     {
         $pos = ftell($this->fp);
 
@@ -123,7 +130,7 @@ class DummyFileSystemStream
      *
      * @see https://www.php.net/streamwrapper.stream-eof
      */
-    public function stream_eof()
+    public function stream_eof(): bool
     {
         return feof($this->fp);
     }
@@ -133,13 +140,11 @@ class DummyFileSystemStream
      *
      * This method is called in response to {@see fstat()}.
      *
-     * @return array
-     *
      * @see https://www.php.net/streamwrapper.stream-stat
      * @see https://www.php.net/stat
      * @see https://www.php.net/fstat
      */
-    public function stream_stat()
+    public function stream_stat(): array
     {
         return fstat($this->fp);
     }
@@ -159,7 +164,7 @@ class DummyFileSystemStream
      *
      * @see https://www.php.net/streamwrapper.stream-flush
      */
-    public function stream_flush()
+    public function stream_flush(): bool
     {
         return fflush($this->fp);
     }
@@ -175,9 +180,9 @@ class DummyFileSystemStream
      *
      * @see https://www.php.net/streamwrapper.stream-truncate
      */
-    public function stream_truncate($new_size)
+    public function stream_truncate(int $new_size): bool
     {
-        return ftruncate($this->fp, (int) $new_size);
+        return ftruncate($this->fp, $new_size);
     }
 
     /**
@@ -194,7 +199,7 @@ class DummyFileSystemStream
      *
      * @see https://www.php.net/streamwrapper.stream-write
      */
-    public function stream_write($data)
+    public function stream_write(string $data): int
     {
         $bytes = fwrite($this->fp, $data);
 
@@ -209,7 +214,7 @@ class DummyFileSystemStream
      *
      * @see https://www.php.net/streamwrapper.stream-close
      */
-    public function stream_close()
+    public function stream_close(): void
     {
         fclose($this->fp);
     }

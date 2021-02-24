@@ -1,5 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
+/*
+ * This file is part of the nelexa/zip package.
+ * (c) Ne-Lexa <https://github.com/Ne-Lexa/php-zip>
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace PhpZip\Model\Extra\Fields;
 
 use PhpZip\Model\Extra\ZipExtraField;
@@ -64,81 +73,72 @@ use PhpZip\Model\ZipEntry;
  *
  * @see ftp://ftp.info-zip.org/pub/infozip/doc/appnote-iz-latest.zip Info-ZIP version Specification
  */
-class ExtendedTimestampExtraField implements ZipExtraField
+final class ExtendedTimestampExtraField implements ZipExtraField
 {
     /** @var int Header id */
-    const HEADER_ID = 0x5455;
+    public const HEADER_ID = 0x5455;
 
     /**
      * @var int the bit set inside the flags by when the last modification time
      *          is present in this extra field
      */
-    const MODIFY_TIME_BIT = 1;
+    public const MODIFY_TIME_BIT = 1;
 
     /**
      * @var int the bit set inside the flags by when the last access time is
      *          present in this extra field
      */
-    const ACCESS_TIME_BIT = 2;
+    public const ACCESS_TIME_BIT = 2;
 
     /**
      * @var int the bit set inside the flags by when the original creation time
      *          is present in this extra field
      */
-    const CREATE_TIME_BIT = 4;
+    public const CREATE_TIME_BIT = 4;
 
     /**
      * @var int The 3 boolean fields (below) come from this flags byte.  The remaining 5 bits
      *          are ignored according to the current version of the spec (December 2012).
      */
-    private $flags;
+    private int $flags;
 
     /** @var int|null Modify time */
-    private $modifyTime;
+    private ?int $modifyTime;
 
     /** @var int|null Access time */
-    private $accessTime;
+    private ?int $accessTime;
 
     /** @var int|null Create time */
-    private $createTime;
+    private ?int $createTime;
 
-    /**
-     * @param int      $flags
-     * @param int|null $modifyTime
-     * @param int|null $accessTime
-     * @param int|null $createTime
-     */
-    public function __construct($flags, $modifyTime, $accessTime, $createTime)
+    public function __construct(int $flags, ?int $modifyTime, ?int $accessTime, ?int $createTime)
     {
-        $this->flags = (int) $flags;
+        $this->flags = $flags;
         $this->modifyTime = $modifyTime;
         $this->accessTime = $accessTime;
         $this->createTime = $createTime;
     }
 
     /**
-     * @param int|null $modifyTime
-     * @param int|null $accessTime
-     * @param int|null $createTime
+     * @param ?int $modifyTime
+     * @param ?int $accessTime
+     * @param ?int $createTime
      *
      * @return ExtendedTimestampExtraField
      */
-    public static function create($modifyTime, $accessTime, $createTime)
+    public static function create(?int $modifyTime, ?int $accessTime, ?int $createTime): self
     {
         $flags = 0;
 
         if ($modifyTime !== null) {
-            $modifyTime = (int) $modifyTime;
             $flags |= self::MODIFY_TIME_BIT;
         }
 
         if ($accessTime !== null) {
-            $accessTime = (int) $accessTime;
             $flags |= self::ACCESS_TIME_BIT;
         }
 
         if ($createTime !== null) {
-            $createTime = (int) $createTime;
             $flags |= self::CREATE_TIME_BIT;
         }
 
@@ -149,10 +149,8 @@ class ExtendedTimestampExtraField implements ZipExtraField
      * Returns the Header ID (type) of this Extra Field.
      * The Header ID is an unsigned short integer (two bytes)
      * which must be constant during the life cycle of this object.
-     *
-     * @return int
      */
-    public function getHeaderId()
+    public function getHeaderId(): int
     {
         return self::HEADER_ID;
     }
@@ -161,11 +159,11 @@ class ExtendedTimestampExtraField implements ZipExtraField
      * Populate data from this array as if it was in local file data.
      *
      * @param string        $buffer the buffer to read data from
-     * @param ZipEntry|null $entry
+     * @param ZipEntry|null $entry  optional zip entry
      *
      * @return ExtendedTimestampExtraField
      */
-    public static function unpackLocalFileData($buffer, ZipEntry $entry = null)
+    public static function unpackLocalFileData(string $buffer, ?ZipEntry $entry = null): self
     {
         $length = \strlen($buffer);
         $flags = unpack('C', $buffer)[1];
@@ -198,11 +196,11 @@ class ExtendedTimestampExtraField implements ZipExtraField
      * Populate data from this array as if it was in central directory data.
      *
      * @param string        $buffer the buffer to read data from
-     * @param ZipEntry|null $entry
+     * @param ZipEntry|null $entry  optional zip entry
      *
      * @return ExtendedTimestampExtraField
      */
-    public static function unpackCentralDirData($buffer, ZipEntry $entry = null)
+    public static function unpackCentralDirData(string $buffer, ?ZipEntry $entry = null): self
     {
         return self::unpackLocalFileData($buffer, $entry);
     }
@@ -213,7 +211,7 @@ class ExtendedTimestampExtraField implements ZipExtraField
      *
      * @return string the data
      */
-    public function packLocalFileData()
+    public function packLocalFileData(): string
     {
         $data = '';
 
@@ -241,7 +239,7 @@ class ExtendedTimestampExtraField implements ZipExtraField
      *
      * @return string the data
      */
-    public function packCentralDirData()
+    public function packCentralDirData(): string
     {
         $cdLength = 1 + ($this->modifyTime !== null ? 4 : 0);
 
@@ -263,7 +261,7 @@ class ExtendedTimestampExtraField implements ZipExtraField
      * @return int flags byte indicating which of the
      *             three datestamp fields are present
      */
-    public function getFlags()
+    public function getFlags(): int
     {
         return $this->flags;
     }
@@ -274,7 +272,7 @@ class ExtendedTimestampExtraField implements ZipExtraField
      *
      * @return int|null modify time (seconds since epoch) or null
      */
-    public function getModifyTime()
+    public function getModifyTime(): ?int
     {
         return $this->modifyTime;
     }
@@ -285,7 +283,7 @@ class ExtendedTimestampExtraField implements ZipExtraField
      *
      * @return int|null access time (seconds since epoch) or null
      */
-    public function getAccessTime()
+    public function getAccessTime(): ?int
     {
         return $this->accessTime;
     }
@@ -301,7 +299,7 @@ class ExtendedTimestampExtraField implements ZipExtraField
      *
      * @return int|null create time (seconds since epoch) or null
      */
-    public function getCreateTime()
+    public function getCreateTime(): ?int
     {
         return $this->createTime;
     }
@@ -314,7 +312,7 @@ class ExtendedTimestampExtraField implements ZipExtraField
      *
      * @return \DateTimeInterface|null modify time as \DateTimeInterface or null
      */
-    public function getModifyDateTime()
+    public function getModifyDateTime(): ?\DateTimeInterface
     {
         return self::timestampToDateTime($this->modifyTime);
     }
@@ -327,7 +325,7 @@ class ExtendedTimestampExtraField implements ZipExtraField
      *
      * @return \DateTimeInterface|null access time as \DateTimeInterface or null
      */
-    public function getAccessDateTime()
+    public function getAccessDateTime(): ?\DateTimeInterface
     {
         return self::timestampToDateTime($this->accessTime);
     }
@@ -345,7 +343,7 @@ class ExtendedTimestampExtraField implements ZipExtraField
      *
      * @return \DateTimeInterface|null create time as \DateTimeInterface or null
      */
-    public function getCreateDateTime()
+    public function getCreateDateTime(): ?\DateTimeInterface
     {
         return self::timestampToDateTime($this->createTime);
     }
@@ -356,13 +354,13 @@ class ExtendedTimestampExtraField implements ZipExtraField
      *
      * @param int|null $unixTime unix time of the modify time (seconds per epoch) or null
      */
-    public function setModifyTime($unixTime)
+    public function setModifyTime(?int $unixTime): void
     {
         $this->modifyTime = $unixTime;
         $this->updateFlags();
     }
 
-    private function updateFlags()
+    private function updateFlags(): void
     {
         $flags = 0;
 
@@ -386,7 +384,7 @@ class ExtendedTimestampExtraField implements ZipExtraField
      *
      * @param int|null $unixTime Unix time of the access time (seconds per epoch) or null
      */
-    public function setAccessTime($unixTime)
+    public function setAccessTime(?int $unixTime): void
     {
         $this->accessTime = $unixTime;
         $this->updateFlags();
@@ -398,18 +396,13 @@ class ExtendedTimestampExtraField implements ZipExtraField
      *
      * @param int|null $unixTime Unix time of the create time (seconds per epoch) or null
      */
-    public function setCreateTime($unixTime)
+    public function setCreateTime(?int $unixTime): void
     {
         $this->createTime = $unixTime;
         $this->updateFlags();
     }
 
-    /**
-     * @param int|null $timestamp
-     *
-     * @return \DateTimeInterface|null
-     */
-    private static function timestampToDateTime($timestamp)
+    private static function timestampToDateTime(?int $timestamp): ?\DateTimeInterface
     {
         try {
             return $timestamp !== null ? new \DateTimeImmutable('@' . $timestamp) : null;
@@ -418,10 +411,7 @@ class ExtendedTimestampExtraField implements ZipExtraField
         }
     }
 
-    /**
-     * @return string
-     */
-    public function __toString()
+    public function __toString(): string
     {
         $args = [self::HEADER_ID];
         $format = '0x%04x ExtendedTimestamp:';

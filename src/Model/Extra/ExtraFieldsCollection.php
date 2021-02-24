@@ -1,5 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
+/*
+ * This file is part of the nelexa/zip package.
+ * (c) Ne-Lexa <https://github.com/Ne-Lexa/php-zip>
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace PhpZip\Model\Extra;
 
 /**
@@ -16,14 +25,12 @@ class ExtraFieldsCollection implements \ArrayAccess, \Countable, \Iterator
      *
      * @var ZipExtraField[]
      */
-    protected $collection = [];
+    protected array $collection = [];
 
     /**
      * Returns the number of Extra Fields in this collection.
-     *
-     * @return int
      */
-    public function count()
+    public function count(): int
     {
         return \count($this->collection);
     }
@@ -37,17 +44,14 @@ class ExtraFieldsCollection implements \ArrayAccess, \Countable, \Iterator
      * @return ZipExtraField|null the Extra Field with the given Header ID or
      *                            if no such Extra Field exists
      */
-    public function get($headerId)
+    public function get(int $headerId): ?ZipExtraField
     {
         $this->validateHeaderId($headerId);
 
-        return isset($this->collection[$headerId]) ? $this->collection[$headerId] : null;
+        return $this->collection[$headerId] ?? null;
     }
 
-    /**
-     * @param int $headerId
-     */
-    private function validateHeaderId($headerId)
+    private function validateHeaderId(int $headerId): void
     {
         if ($headerId < 0 || $headerId > 0xffff) {
             throw new \InvalidArgumentException('$headerId out of range');
@@ -62,7 +66,7 @@ class ExtraFieldsCollection implements \ArrayAccess, \Countable, \Iterator
      * @return ZipExtraField the Extra Field previously associated with the Header ID of
      *                       of the given Extra Field or null if no such Extra Field existed
      */
-    public function add(ZipExtraField $extraField)
+    public function add(ZipExtraField $extraField): ZipExtraField
     {
         $headerId = $extraField->getHeaderId();
 
@@ -75,7 +79,7 @@ class ExtraFieldsCollection implements \ArrayAccess, \Countable, \Iterator
     /**
      * @param ZipExtraField[] $extraFields
      */
-    public function addAll(array $extraFields)
+    public function addAll(array $extraFields): void
     {
         foreach ($extraFields as $extraField) {
             $this->add($extraField);
@@ -85,7 +89,7 @@ class ExtraFieldsCollection implements \ArrayAccess, \Countable, \Iterator
     /**
      * @param ExtraFieldsCollection $collection
      */
-    public function addCollection(self $collection)
+    public function addCollection(self $collection): void
     {
         $this->addAll($collection->collection);
     }
@@ -93,7 +97,7 @@ class ExtraFieldsCollection implements \ArrayAccess, \Countable, \Iterator
     /**
      * @return ZipExtraField[]
      */
-    public function getAll()
+    public function getAll(): array
     {
         return $this->collection;
     }
@@ -102,10 +106,8 @@ class ExtraFieldsCollection implements \ArrayAccess, \Countable, \Iterator
      * Returns Extra Field exists.
      *
      * @param int $headerId the requested Header ID
-     *
-     * @return bool
      */
-    public function has($headerId)
+    public function has(int $headerId): bool
     {
         return isset($this->collection[$headerId]);
     }
@@ -118,7 +120,7 @@ class ExtraFieldsCollection implements \ArrayAccess, \Countable, \Iterator
      * @return ZipExtraField|null the Extra Field with the given Header ID or null
      *                            if no such Extra Field exists
      */
-    public function remove($headerId)
+    public function remove(int $headerId): ?ZipExtraField
     {
         $this->validateHeaderId($headerId);
 
@@ -137,11 +139,11 @@ class ExtraFieldsCollection implements \ArrayAccess, \Countable, \Iterator
      *
      * @see http://php.net/manual/en/arrayaccess.offsetexists.php
      *
-     * @param int $offset an offset to check for
+     * @param mixed $offset an offset to check for
      *
      * @return bool true on success or false on failure
      */
-    public function offsetExists($offset)
+    public function offsetExists($offset): bool
     {
         return isset($this->collection[(int) $offset]);
     }
@@ -151,13 +153,11 @@ class ExtraFieldsCollection implements \ArrayAccess, \Countable, \Iterator
      *
      * @see http://php.net/manual/en/arrayaccess.offsetget.php
      *
-     * @param int $offset the offset to retrieve
-     *
-     * @return ZipExtraField|null
+     * @param mixed $offset the offset to retrieve
      */
-    public function offsetGet($offset)
+    public function offsetGet($offset): ?ZipExtraField
     {
-        return isset($this->collection[$offset]) ? $this->collection[$offset] : null;
+        return $this->collection[(int) $offset] ?? null;
     }
 
     /**
@@ -165,10 +165,10 @@ class ExtraFieldsCollection implements \ArrayAccess, \Countable, \Iterator
      *
      * @see http://php.net/manual/en/arrayaccess.offsetset.php
      *
-     * @param mixed         $offset the offset to assign the value to
-     * @param ZipExtraField $value  the value to set
+     * @param mixed $offset the offset to assign the value to
+     * @param mixed $value  the value to set
      */
-    public function offsetSet($offset, $value)
+    public function offsetSet($offset, $value): void
     {
         if (!$value instanceof ZipExtraField) {
             throw new \InvalidArgumentException('value is not instanceof ' . ZipExtraField::class);
@@ -183,7 +183,7 @@ class ExtraFieldsCollection implements \ArrayAccess, \Countable, \Iterator
      *
      * @param mixed $offset the offset to unset
      */
-    public function offsetUnset($offset)
+    public function offsetUnset($offset): void
     {
         $this->remove($offset);
     }
@@ -192,10 +192,8 @@ class ExtraFieldsCollection implements \ArrayAccess, \Countable, \Iterator
      * Return the current element.
      *
      * @see http://php.net/manual/en/iterator.current.php
-     *
-     * @return ZipExtraField
      */
-    public function current()
+    public function current(): ZipExtraField
     {
         return current($this->collection);
     }
@@ -205,7 +203,7 @@ class ExtraFieldsCollection implements \ArrayAccess, \Countable, \Iterator
      *
      * @see http://php.net/manual/en/iterator.next.php
      */
-    public function next()
+    public function next(): void
     {
         next($this->collection);
     }
@@ -217,7 +215,7 @@ class ExtraFieldsCollection implements \ArrayAccess, \Countable, \Iterator
      *
      * @return int scalar on success, or null on failure
      */
-    public function key()
+    public function key(): int
     {
         return key($this->collection);
     }
@@ -230,7 +228,7 @@ class ExtraFieldsCollection implements \ArrayAccess, \Countable, \Iterator
      * @return bool The return value will be casted to boolean and then evaluated.
      *              Returns true on success or false on failure.
      */
-    public function valid()
+    public function valid(): bool
     {
         return key($this->collection) !== null;
     }
@@ -240,20 +238,17 @@ class ExtraFieldsCollection implements \ArrayAccess, \Countable, \Iterator
      *
      * @see http://php.net/manual/en/iterator.rewind.php
      */
-    public function rewind()
+    public function rewind(): void
     {
         reset($this->collection);
     }
 
-    public function clear()
+    public function clear(): void
     {
         $this->collection = [];
     }
 
-    /**
-     * @return string
-     */
-    public function __toString()
+    public function __toString(): string
     {
         $formats = [];
 

@@ -1,5 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
+/*
+ * This file is part of the nelexa/zip package.
+ * (c) Ne-Lexa <https://github.com/Ne-Lexa/php-zip>
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace PhpZip\Model\Extra;
 
 use PhpZip\Exception\InvalidArgumentException;
@@ -22,9 +31,9 @@ final class ZipExtraDriver
 {
     /**
      * @var array<int, string>
-     * @psalm-var array<int, class-string<\PhpZip\Model\Extra\ZipExtraField>>
+     * @psalm-var array<int, class-string<ZipExtraField>>
      */
-    private static $implementations = [
+    private static array $implementations = [
         ApkAlignmentExtraField::HEADER_ID => ApkAlignmentExtraField::class,
         AsiExtraField::HEADER_ID => AsiExtraField::class,
         ExtendedTimestampExtraField::HEADER_ID => ExtendedTimestampExtraField::class,
@@ -45,7 +54,7 @@ final class ZipExtraDriver
     /**
      * @param string|ZipExtraField $extraField ZipExtraField object or class name
      */
-    public static function register($extraField)
+    public static function register($extraField): void
     {
         if (!is_a($extraField, ZipExtraField::class, true)) {
             throw new InvalidArgumentException(
@@ -61,10 +70,8 @@ final class ZipExtraDriver
 
     /**
      * @param int|string|ZipExtraField $extraType ZipExtraField object or class name or extra header id
-     *
-     * @return bool
      */
-    public static function unregister($extraType)
+    public static function unregister($extraType): bool
     {
         $headerId = null;
 
@@ -85,23 +92,12 @@ final class ZipExtraDriver
         return false;
     }
 
-    /**
-     * @param int $headerId
-     *
-     * @return string|null
-     */
-    public static function getClassNameOrNull($headerId)
+    public static function getClassNameOrNull(int $headerId): ?string
     {
-        $headerId = (int) $headerId;
-
         if ($headerId < 0 || $headerId > 0xffff) {
             throw new \InvalidArgumentException('$headerId out of range: ' . $headerId);
         }
 
-        if (isset(self::$implementations[$headerId])) {
-            return self::$implementations[$headerId];
-        }
-
-        return null;
+        return self::$implementations[$headerId] ?? null;
     }
 }

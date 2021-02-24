@@ -1,5 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
+/*
+ * This file is part of the nelexa/zip package.
+ * (c) Ne-Lexa <https://github.com/Ne-Lexa/php-zip>
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace PhpZip\Model;
 
 use PhpZip\Constants\ZipEncryptionMethod;
@@ -8,7 +17,7 @@ use PhpZip\Exception\ZipEntryNotFoundException;
 use PhpZip\Exception\ZipException;
 
 /**
- * Class ZipContainer.
+ * Zip Container.
  */
 class ZipContainer extends ImmutableZipContainer
 {
@@ -18,21 +27,9 @@ class ZipContainer extends ImmutableZipContainer
      *                                 it possible to undo changes in the archive.
      *                                 When cloning, this container is not cloned.
      */
-    private $sourceContainer;
+    private ?ImmutableZipContainer $sourceContainer;
 
-    /**
-     * @var int|null Apk zipalign value
-     *
-     * @todo remove and use in ApkFileWriter
-     */
-    private $zipAlign;
-
-    /**
-     * MutableZipContainer constructor.
-     *
-     * @param ImmutableZipContainer|null $sourceContainer
-     */
-    public function __construct(ImmutableZipContainer $sourceContainer = null)
+    public function __construct(?ImmutableZipContainer $sourceContainer = null)
     {
         $entries = [];
         $archiveComment = null;
@@ -47,28 +44,20 @@ class ZipContainer extends ImmutableZipContainer
         $this->sourceContainer = $sourceContainer;
     }
 
-    /**
-     * @return ImmutableZipContainer|null
-     */
-    public function getSourceContainer()
+    public function getSourceContainer(): ?ImmutableZipContainer
     {
         return $this->sourceContainer;
     }
 
-    /**
-     * @param ZipEntry $entry
-     */
-    public function addEntry(ZipEntry $entry)
+    public function addEntry(ZipEntry $entry): void
     {
         $this->entries[$entry->getName()] = $entry;
     }
 
     /**
      * @param string|ZipEntry $entry
-     *
-     * @return bool
      */
-    public function deleteEntry($entry)
+    public function deleteEntry($entry): bool
     {
         $entry = $entry instanceof ZipEntry ? $entry->getName() : (string) $entry;
 
@@ -89,7 +78,7 @@ class ZipContainer extends ImmutableZipContainer
      *
      * @return ZipEntry New zip entry
      */
-    public function renameEntry($old, $new)
+    public function renameEntry($old, $new): ZipEntry
     {
         $old = $old instanceof ZipEntry ? $old->getName() : (string) $old;
         $new = $new instanceof ZipEntry ? $new->getName() : (string) $new;
@@ -111,10 +100,8 @@ class ZipContainer extends ImmutableZipContainer
      * @param string|ZipEntry $entryName
      *
      * @throws ZipEntryNotFoundException
-     *
-     * @return ZipEntry
      */
-    public function getEntry($entryName)
+    public function getEntry($entryName): ZipEntry
     {
         $entry = $this->getEntryOrNull($entryName);
 
@@ -127,22 +114,18 @@ class ZipContainer extends ImmutableZipContainer
 
     /**
      * @param string|ZipEntry $entryName
-     *
-     * @return ZipEntry|null
      */
-    public function getEntryOrNull($entryName)
+    public function getEntryOrNull($entryName): ?ZipEntry
     {
         $entryName = $entryName instanceof ZipEntry ? $entryName->getName() : (string) $entryName;
 
-        return isset($this->entries[$entryName]) ? $this->entries[$entryName] : null;
+        return $this->entries[$entryName] ?? null;
     }
 
     /**
      * @param string|ZipEntry $entryName
-     *
-     * @return bool
      */
-    public function hasEntry($entryName)
+    public function hasEntry($entryName): bool
     {
         $entryName = $entryName instanceof ZipEntry ? $entryName->getName() : (string) $entryName;
 
@@ -152,7 +135,7 @@ class ZipContainer extends ImmutableZipContainer
     /**
      * Delete all entries.
      */
-    public function deleteAll()
+    public function deleteAll(): void
     {
         $this->entries = [];
     }
@@ -164,7 +147,7 @@ class ZipContainer extends ImmutableZipContainer
      *
      * @return ZipEntry[] Deleted entries
      */
-    public function deleteByRegex($regexPattern)
+    public function deleteByRegex(string $regexPattern): array
     {
         if (empty($regexPattern)) {
             throw new InvalidArgumentException('The regex pattern is not specified');
@@ -189,7 +172,7 @@ class ZipContainer extends ImmutableZipContainer
     /**
      * Undo all changes done in the archive.
      */
-    public function unchangeAll()
+    public function unchangeAll(): void
     {
         $this->entries = [];
 
@@ -204,7 +187,7 @@ class ZipContainer extends ImmutableZipContainer
     /**
      * Undo change archive comment.
      */
-    public function unchangeArchiveComment()
+    public function unchangeArchiveComment(): void
     {
         $this->archiveComment = null;
 
@@ -217,16 +200,14 @@ class ZipContainer extends ImmutableZipContainer
      * Revert all changes done to an entry with the given name.
      *
      * @param string|ZipEntry $entry Entry name or ZipEntry
-     *
-     * @return bool
      */
-    public function unchangeEntry($entry)
+    public function unchangeEntry($entry): bool
     {
         $entry = $entry instanceof ZipEntry ? $entry->getName() : (string) $entry;
 
         if (
-            $this->sourceContainer !== null &&
-            isset($this->entries[$entry], $this->sourceContainer->entries[$entry])
+            $this->sourceContainer !== null
+            && isset($this->entries[$entry], $this->sourceContainer->entries[$entry])
         ) {
             $this->entries[$entry] = clone $this->sourceContainer->entries[$entry];
 
@@ -245,10 +226,8 @@ class ZipContainer extends ImmutableZipContainer
      *     return strcmp($nameA, $nameB);
      * });
      * ```
-     *
-     * @param callable $cmp
      */
-    public function sortByName(callable $cmp)
+    public function sortByName(callable $cmp): void
     {
         uksort($this->entries, $cmp);
     }
@@ -262,21 +241,15 @@ class ZipContainer extends ImmutableZipContainer
      *     return strcmp($a->getName(), $b->getName());
      * });
      * ```
-     *
-     * @param callable $cmp
      */
-    public function sortByEntry(callable $cmp)
+    public function sortByEntry(callable $cmp): void
     {
         uasort($this->entries, $cmp);
     }
 
-    /**
-     * @param string|null $archiveComment
-     */
-    public function setArchiveComment($archiveComment)
+    public function setArchiveComment(?string $archiveComment): void
     {
         if ($archiveComment !== null && $archiveComment !== '') {
-            $archiveComment = (string) $archiveComment;
             $length = \strlen($archiveComment);
 
             if ($length > 0xffff) {
@@ -286,10 +259,7 @@ class ZipContainer extends ImmutableZipContainer
         $this->archiveComment = $archiveComment;
     }
 
-    /**
-     * @return ZipEntryMatcher
-     */
-    public function matcher()
+    public function matcher(): ZipEntryMatcher
     {
         return new ZipEntryMatcher($this);
     }
@@ -297,9 +267,9 @@ class ZipContainer extends ImmutableZipContainer
     /**
      * Specify a password for extracting files.
      *
-     * @param string|null $password
+     * @param ?string $password
      */
-    public function setReadPassword($password)
+    public function setReadPassword(?string $password): void
     {
         if ($this->sourceContainer !== null) {
             foreach ($this->sourceContainer->entries as $entry) {
@@ -311,13 +281,10 @@ class ZipContainer extends ImmutableZipContainer
     }
 
     /**
-     * @param string $entryName
-     * @param string $password
-     *
      * @throws ZipEntryNotFoundException
      * @throws ZipException
      */
-    public function setReadPasswordEntry($entryName, $password)
+    public function setReadPasswordEntry(string $entryName, string $password): void
     {
         if (!isset($this->sourceContainer->entries[$entryName])) {
             throw new ZipEntryNotFoundException($entryName);
@@ -329,57 +296,39 @@ class ZipContainer extends ImmutableZipContainer
     }
 
     /**
-     * @return int|null
+     * @param ?string $writePassword
+     *
+     * @throws ZipEntryNotFoundException
      */
-    public function getZipAlign()
-    {
-        return $this->zipAlign;
-    }
-
-    /**
-     * @param int|null $zipAlign
-     */
-    public function setZipAlign($zipAlign)
-    {
-        $this->zipAlign = $zipAlign === null ? null : (int) $zipAlign;
-    }
-
-    /**
-     * @return bool
-     */
-    public function isZipAlign()
-    {
-        return $this->zipAlign !== null;
-    }
-
-    /**
-     * @param string|null $writePassword
-     */
-    public function setWritePassword($writePassword)
+    public function setWritePassword(?string $writePassword): void
     {
         $this->matcher()->all()->setPassword($writePassword);
     }
 
     /**
      * Remove password.
+     *
+     * @throws ZipEntryNotFoundException
      */
-    public function removePassword()
+    public function removePassword(): void
     {
         $this->matcher()->all()->setPassword(null);
     }
 
     /**
      * @param string|ZipEntry $entryName
+     *
+     * @throws ZipEntryNotFoundException
      */
-    public function removePasswordEntry($entryName)
+    public function removePasswordEntry($entryName): void
     {
         $this->matcher()->add($entryName)->setPassword(null);
     }
 
     /**
-     * @param int $encryptionMethod
+     * @throws ZipEntryNotFoundException
      */
-    public function setEncryptionMethod($encryptionMethod = ZipEncryptionMethod::WINZIP_AES_256)
+    public function setEncryptionMethod(int $encryptionMethod = ZipEncryptionMethod::WINZIP_AES_256): void
     {
         $this->matcher()->all()->setEncryptionMethod($encryptionMethod);
     }

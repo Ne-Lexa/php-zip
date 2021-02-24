@@ -1,14 +1,13 @@
 {
     "name": "nelexa/zip",
     "type": "library",
-    "description": "PhpZip is a php-library for extended work with ZIP-archives. Open, create, update, delete, extract and get info tool. Supports appending to existing ZIP files, WinZip AES encryption, Traditional PKWARE Encryption, ZipAlign tool, BZIP2 compression, external file attributes and ZIP64 extensions. Alternative ZipArchive. It does not require php-zip extension.",
+    "description": "PhpZip is a php-library for extended work with ZIP-archives. Open, create, update, delete, extract and get info tool. Supports appending to existing ZIP files, WinZip AES encryption, Traditional PKWARE Encryption, BZIP2 compression, external file attributes and ZIP64 extensions. Alternative ZipArchive. It does not require php-zip extension.",
     "keywords": [
         "zip",
         "unzip",
         "archive",
         "extract",
         "winzip",
-        "zipalign",
         "ziparchive"
     ],
     "homepage": "https://github.com/Ne-Lexa/php-zip",
@@ -21,20 +20,24 @@
         }
     ],
     "require": {
-        "php": "^5.5.9 || ^7.0",
+        "php": "^7.4 || ^8.0",
         "ext-zlib": "*",
         "psr/http-message": "^1.0",
-        "paragonie/random_compat": "*",
-        "symfony/finder": "^3.0|^4.0|^5.0"
+        "symfony/finder": "^3.0 || ^4.0 || ^5.0"
     },
     "require-dev": {
+        "ext-iconv": "*",
         "ext-bz2": "*",
         "ext-openssl": "*",
         "ext-fileinfo": "*",
         "ext-xml": "*",
+        "ext-dom": "*",
         "guzzlehttp/psr7": "^1.6",
-        "phpunit/phpunit": "^4.8|^5.7",
-        "symfony/var-dumper": "^3.0|^4.0|^5.0"
+        "phpunit/phpunit": "^9",
+        "symfony/var-dumper": "^5.0",
+        "friendsofphp/php-cs-fixer": "^2.18",
+        "vimeo/psalm": "^4.6",
+        "symfony/http-foundation": "^5.2"
     },
     "autoload": {
         "psr-4": {
@@ -47,14 +50,15 @@
         }
     },
     "suggest": {
+        "ext-iconv": "Needed to support convert zip entry name to requested character encoding",
         "ext-openssl": "Needed to support encrypt zip entries or use ext-mcrypt",
-        "ext-mcrypt": "Needed to support encrypt zip entries or use ext-openssl",
         "ext-bz2": "Needed to support BZIP2 compression",
         "ext-fileinfo": "Needed to get mime-type file"
     },
     "minimum-stability": "stable",
     "scripts": {
         "php:fix": "php .php_cs --force",
-        "php:fix:debug": "php .php_cs"
+        "test": "phpunit --configuration phpunit.xml --do-not-cache-result --colors=always",
+        "test:coverage": "phpunit --configuration phpunit.xml --do-not-cache-result --colors=always --coverage-clover build/logs/clover.xml --coverage-html build/coverage"
     }
 }

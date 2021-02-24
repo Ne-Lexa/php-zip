@@ -1,5 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
+/*
+ * This file is part of the nelexa/zip package.
+ * (c) Ne-Lexa <https://github.com/Ne-Lexa/php-zip>
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace PhpZip\Tests;
 
 use PHPUnit\Framework\TestCase;
@@ -36,7 +45,7 @@ use PhpZip\Model\ZipEntry;
  */
 class ZipEntryTest extends TestCase
 {
-    public function testEntry()
+    public function testEntry(): void
     {
         $zipEntry = new ZipEntry('entry');
         static::assertSame($zipEntry->getName(), 'entry');
@@ -56,8 +65,6 @@ class ZipEntryTest extends TestCase
         static::assertSame($zipEntry->getInternalAttributes(), 0);
         static::assertSame($zipEntry->getExternalAttributes(), DosAttrs::DOS_ARCHIVE);
         static::assertSame($zipEntry->getLocalHeaderOffset(), 0);
-        static::assertInstanceOf(ExtraFieldsCollection::class, $zipEntry->getCdExtraFields());
-        static::assertInstanceOf(ExtraFieldsCollection::class, $zipEntry->getLocalExtraFields());
         static::assertCount(0, $zipEntry->getCdExtraFields());
         static::assertCount(0, $zipEntry->getLocalExtraFields());
         static::assertSame($zipEntry->getComment(), '');
@@ -83,51 +90,37 @@ class ZipEntryTest extends TestCase
 
     /**
      * @dataProvider provideEmptyName
-     *
-     * @param string|null $entryName
-     * @param string      $exceptionMessage
      */
-    public function testEmptyName($entryName, $exceptionMessage)
+    public function testEmptyName(string $entryName, string $exceptionMessage): void
     {
-        $this->setExpectedException(InvalidArgumentException::class, $exceptionMessage);
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage($exceptionMessage);
 
         new ZipEntry($entryName);
     }
 
-    /**
-     * @return array
-     */
-    public function provideEmptyName()
+    public function provideEmptyName(): array
     {
         return [
             ['', 'Empty zip entry name'],
             ['/', 'Empty zip entry name'],
-            [null, 'zip entry name is null'],
         ];
     }
 
     /**
      * @dataProvider provideEntryName
-     *
-     * @param string $entryName
-     * @param string $actualEntryName
-     * @param bool   $directory
      */
-    public function testEntryName($entryName, $actualEntryName, $directory)
+    public function testEntryName(string $entryName, string $actualEntryName, bool $directory): void
     {
         $entry = new ZipEntry($entryName);
         static::assertSame($entry->getName(), $actualEntryName);
         static::assertSame($entry->isDirectory(), $directory);
     }
 
-    /**
-     * @return array
-     */
-    public function provideEntryName()
+    public function provideEntryName(): array
     {
         return [
             ['0', '0', false],
-            [0, '0', false],
             ['directory/', 'directory/', true],
         ];
     }
@@ -135,11 +128,9 @@ class ZipEntryTest extends TestCase
     /**
      * @dataProvider provideCompressionMethod
      *
-     * @param int $compressionMethod
-     *
      * @throws ZipUnsupportMethodException
      */
-    public function testCompressionMethod($compressionMethod)
+    public function testCompressionMethod(int $compressionMethod): void
     {
         $entry = new ZipEntry('entry');
         static::assertSame($entry->getCompressionMethod(), ZipEntry::UNKNOWN);
@@ -148,10 +139,7 @@ class ZipEntryTest extends TestCase
         static::assertSame($entry->getCompressionMethod(), $compressionMethod);
     }
 
-    /**
-     * @return array
-     */
-    public function provideCompressionMethod()
+    public function provideCompressionMethod(): array
     {
         $provides = [
             [ZipCompressionMethod::STORED],
@@ -168,22 +156,18 @@ class ZipEntryTest extends TestCase
     /**
      * @dataProvider provideOutOfRangeCompressionMethod
      *
-     * @param int $compressionMethod
-     *
      * @throws ZipUnsupportMethodException
      */
-    public function testOutOfRangeCompressionMethod($compressionMethod)
+    public function testOutOfRangeCompressionMethod(int $compressionMethod): void
     {
-        $this->setExpectedException(InvalidArgumentException::class, 'method out of range: ' . $compressionMethod);
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('method out of range: ' . $compressionMethod);
 
         $zipEntry = new ZipEntry('entry');
         $zipEntry->setCompressionMethod($compressionMethod);
     }
 
-    /**
-     * @return array
-     */
-    public function provideOutOfRangeCompressionMethod()
+    public function provideOutOfRangeCompressionMethod(): array
     {
         return [
             [-1],
@@ -194,23 +178,18 @@ class ZipEntryTest extends TestCase
     /**
      * @dataProvider provideUnsupportCompressionMethod
      *
-     * @param int    $compressionMethod
-     * @param string $exceptionMessage
-     *
      * @throws ZipUnsupportMethodException
      */
-    public function testUnsupportCompressionMethod($compressionMethod, $exceptionMessage)
+    public function testUnsupportCompressionMethod(int $compressionMethod, string $exceptionMessage): void
     {
-        $this->setExpectedException(ZipUnsupportMethodException::class, $exceptionMessage);
+        $this->expectException(ZipUnsupportMethodException::class);
+        $this->expectExceptionMessage($exceptionMessage);
 
         $zipEntry = new ZipEntry('entry');
         $zipEntry->setCompressionMethod($compressionMethod);
     }
 
-    /**
-     * @return array
-     */
-    public function provideUnsupportCompressionMethod()
+    public function provideUnsupportCompressionMethod(): array
     {
         return [
             [1, 'Compression method 1 (Shrunk) is not supported.'],
@@ -241,25 +220,26 @@ class ZipEntryTest extends TestCase
         ];
     }
 
-    public function testCharset()
+    public function testCharset(): void
     {
         $zipEntry = new ZipEntry('entry');
         $zipEntry->setCharset(DosCodePage::CP_CYRILLIC_RUSSIAN);
         static::assertSame($zipEntry->getCharset(), DosCodePage::CP_CYRILLIC_RUSSIAN);
 
-        $zipEntry->setCharset(null);
+        $zipEntry->setCharset(/* null */);
         static::assertNull($zipEntry->getCharset());
     }
 
-    public function testEmptyCharset()
+    public function testEmptyCharset(): void
     {
-        $this->setExpectedException(InvalidArgumentException::class, 'Empty charset');
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Empty charset');
 
         $zipEntry = new ZipEntry('entry');
         $zipEntry->setCharset('');
     }
 
-    public function testRenameAndDeleteUnicodePath()
+    public function testRenameAndDeleteUnicodePath(): void
     {
         $entryName = 'файл.txt';
         $charset = DosCodePage::CP_CYRILLIC_RUSSIAN;
@@ -290,7 +270,7 @@ class ZipEntryTest extends TestCase
         static::assertNull($utf8EntryName->getCdExtraField(UnicodePathExtraField::HEADER_ID));
     }
 
-    public function testData()
+    public function testData(): void
     {
         $zipEntry = new ZipEntry('entry');
         static::assertNull($zipEntry->getData());
@@ -307,7 +287,7 @@ class ZipEntryTest extends TestCase
     /**
      * @throws \Exception
      */
-    public function testZipNewDataGuardClone()
+    public function testZipNewDataGuardClone(): void
     {
         $resource = fopen('php://temp', 'r+b');
         static::assertNotFalse($resource);
@@ -355,10 +335,8 @@ class ZipEntryTest extends TestCase
 
     /**
      * @dataProvider providePlatform
-     *
-     * @param int $zipOS
      */
-    public function testCreatedOS($zipOS)
+    public function testCreatedOS(int $zipOS): void
     {
         $zipEntry = new ZipEntry('entry');
         static::assertSame($zipEntry->getCreatedOS(), ZipEntry::UNKNOWN);
@@ -366,10 +344,7 @@ class ZipEntryTest extends TestCase
         static::assertSame($zipEntry->getCreatedOS(), $zipOS);
     }
 
-    /**
-     * @return array
-     */
-    public function providePlatform()
+    public function providePlatform(): array
     {
         return [
             [ZipPlatform::OS_DOS],
@@ -380,10 +355,8 @@ class ZipEntryTest extends TestCase
 
     /**
      * @dataProvider providePlatform
-     *
-     * @param int $zipOS
      */
-    public function testExtractedOS($zipOS)
+    public function testExtractedOS(int $zipOS): void
     {
         $zipEntry = new ZipEntry('entry');
         static::assertSame($zipEntry->getExtractedOS(), ZipEntry::UNKNOWN);
@@ -393,21 +366,17 @@ class ZipEntryTest extends TestCase
 
     /**
      * @dataProvider provideInvalidPlatform
-     *
-     * @param int $zipOS
      */
-    public function testInvalidCreatedOs($zipOS)
+    public function testInvalidCreatedOs(int $zipOS): void
     {
-        $this->setExpectedException(InvalidArgumentException::class, 'Platform out of range');
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Platform out of range');
 
         $zipEntry = new ZipEntry('entry');
         $zipEntry->setCreatedOS($zipOS);
     }
 
-    /**
-     * @return array
-     */
-    public function provideInvalidPlatform()
+    public function provideInvalidPlatform(): array
     {
         return [
             [-1],
@@ -417,12 +386,11 @@ class ZipEntryTest extends TestCase
 
     /**
      * @dataProvider provideInvalidPlatform
-     *
-     * @param int $zipOS
      */
-    public function testInvalidExtractedOs($zipOS)
+    public function testInvalidExtractedOs(int $zipOS): void
     {
-        $this->setExpectedException(InvalidArgumentException::class, 'Platform out of range');
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Platform out of range');
 
         $zipEntry = new ZipEntry('entry');
         $zipEntry->setExtractedOS($zipOS);
@@ -431,7 +399,7 @@ class ZipEntryTest extends TestCase
     /**
      * @throws ZipException
      */
-    public function testAutoExtractVersion()
+    public function testAutoExtractVersion(): void
     {
         $zipEntry = new ZipEntry('entry');
         static::assertSame($zipEntry->getExtractVersion(), ZipVersion::v10_DEFAULT_MIN);
@@ -462,7 +430,7 @@ class ZipEntryTest extends TestCase
     /**
      * @throws ZipException
      */
-    public function testExtractVersion()
+    public function testExtractVersion(): void
     {
         $zipEntry = new ZipEntry('entry');
         static::assertSame($zipEntry->getExtractVersion(), ZipVersion::v10_DEFAULT_MIN);
@@ -504,7 +472,7 @@ class ZipEntryTest extends TestCase
         static::assertSame($zipEntry->getExtractVersion(), ZipVersion::v51_ENCR_AES_RC2_CORRECT);
     }
 
-    public function testSoftwareVersion()
+    public function testSoftwareVersion(): void
     {
         $zipEntry = new ZipEntry('entry');
         static::assertSame($zipEntry->getSoftwareVersion(), $zipEntry->getExtractVersion());
@@ -523,7 +491,7 @@ class ZipEntryTest extends TestCase
         static::assertSame($zipEntry->getExtractVersion(), ZipVersion::v63_LZMA_PPMD_BLOWFISH_TWOFISH);
     }
 
-    public function testSize()
+    public function testSize(): void
     {
         $zipEntry = new ZipEntry('entry');
         static::assertSame($zipEntry->getCompressedSize(), ZipEntry::UNKNOWN);
@@ -543,23 +511,25 @@ class ZipEntryTest extends TestCase
         static::assertSame($zipEntry->getUncompressedSize(), ZipEntry::UNKNOWN);
     }
 
-    public function testInvalidCompressedSize()
+    public function testInvalidCompressedSize(): void
     {
-        $this->setExpectedException(InvalidArgumentException::class, 'Compressed size < -1');
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Compressed size < -1');
 
         $zipEntry = new ZipEntry('entry');
         $zipEntry->setCompressedSize(-2);
     }
 
-    public function testInvalidUncompressedSize()
+    public function testInvalidUncompressedSize(): void
     {
-        $this->setExpectedException(InvalidArgumentException::class, 'Uncompressed size < -1');
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Uncompressed size < -1');
 
         $zipEntry = new ZipEntry('entry');
         $zipEntry->setUncompressedSize(-2);
     }
 
-    public function testLocalHeaderOffset()
+    public function testLocalHeaderOffset(): void
     {
         $zipEntry = new ZipEntry('entry');
         static::assertSame($zipEntry->getLocalHeaderOffset(), 0);
@@ -568,11 +538,12 @@ class ZipEntryTest extends TestCase
         $zipEntry->setLocalHeaderOffset($localHeaderOffset);
         static::assertSame($zipEntry->getLocalHeaderOffset(), $localHeaderOffset);
 
-        $this->setExpectedException(InvalidArgumentException::class, 'Negative $localHeaderOffset');
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Negative $localHeaderOffset');
         $zipEntry->setLocalHeaderOffset(-1);
     }
 
-    public function testGeneralPurposeBitFlags()
+    public function testGeneralPurposeBitFlags(): void
     {
         $zipEntry = new ZipEntry('entry');
         static::assertSame($zipEntry->getGeneralPurposeBitFlags(), 0);
@@ -619,7 +590,7 @@ class ZipEntryTest extends TestCase
         );
     }
 
-    public function testEncryptionGPBF()
+    public function testEncryptionGPBF(): void
     {
         $zipEntry = new ZipEntry('entry');
         static::assertFalse($zipEntry->isEncrypted());
@@ -647,21 +618,17 @@ class ZipEntryTest extends TestCase
 
     /**
      * @dataProvider provideInvalidGPBF
-     *
-     * @param int $gpbf
      */
-    public function testInvalidGPBF($gpbf)
+    public function testInvalidGPBF(int $gpbf): void
     {
-        $this->setExpectedException(InvalidArgumentException::class, 'general purpose bit flags out of range');
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('general purpose bit flags out of range');
 
         $zipEntry = new ZipEntry('entry');
         $zipEntry->setGeneralPurposeBitFlags($gpbf);
     }
 
-    /**
-     * @return array
-     */
-    public function provideInvalidGPBF()
+    public function provideInvalidGPBF(): array
     {
         return [
             [-1],
@@ -672,19 +639,15 @@ class ZipEntryTest extends TestCase
     /**
      * @dataProvider provideCompressionLevelGPBF
      *
-     * @param int  $compressionLevel
-     * @param bool $bit1
-     * @param bool $bit2
-     *
      * @throws ZipUnsupportMethodException
      */
-    public function testSetCompressionFlags($compressionLevel, $bit1, $bit2)
+    public function testSetCompressionFlags(int $compressionLevel, bool $bit1, bool $bit2): void
     {
         $zipEntry = new ZipEntry('entry');
         $zipEntry->setCompressionMethod(ZipCompressionMethod::DEFLATED);
 
-        $gpbf = ($bit1 ? GeneralPurposeBitFlag::COMPRESSION_FLAG1 : 0) |
-            ($bit2 ? GeneralPurposeBitFlag::COMPRESSION_FLAG2 : 0);
+        $gpbf = ($bit1 ? GeneralPurposeBitFlag::COMPRESSION_FLAG1 : 0)
+            | ($bit2 ? GeneralPurposeBitFlag::COMPRESSION_FLAG2 : 0);
         $zipEntry->setGeneralPurposeBitFlags($gpbf);
         static::assertSame($zipEntry->getCompressionLevel(), $compressionLevel);
 
@@ -704,10 +667,7 @@ class ZipEntryTest extends TestCase
         );
     }
 
-    /**
-     * @return array
-     */
-    public function provideCompressionLevelGPBF()
+    public function provideCompressionLevelGPBF(): array
     {
         return [
             [ZipCompressionLevel::SUPER_FAST, true, true],
@@ -720,13 +680,9 @@ class ZipEntryTest extends TestCase
     /**
      * @dataProvider provideCompressionLevels
      *
-     * @param int  $compressionLevel
-     * @param bool $bit1
-     * @param bool $bit2
-     *
      * @throws ZipUnsupportMethodException
      */
-    public function testSetCompressionLevel($compressionLevel, $bit1, $bit2)
+    public function testSetCompressionLevel(int $compressionLevel, bool $bit1, bool $bit2): void
     {
         $zipEntry = new ZipEntry('entry');
         $zipEntry->setCompressionMethod(ZipCompressionMethod::DEFLATED);
@@ -750,10 +706,7 @@ class ZipEntryTest extends TestCase
         );
     }
 
-    /**
-     * @return array
-     */
-    public function provideCompressionLevels()
+    public function provideCompressionLevels(): array
     {
         return [
             [ZipCompressionLevel::SUPER_FAST, true, true],
@@ -771,7 +724,7 @@ class ZipEntryTest extends TestCase
     /**
      * @throws ZipException
      */
-    public function testLegacyDefaultCompressionLevel()
+    public function testLegacyDefaultCompressionLevel(): void
     {
         $zipEntry = new ZipEntry('entry');
         $zipEntry->setCompressionMethod(ZipCompressionMethod::DEFLATED);
@@ -785,16 +738,17 @@ class ZipEntryTest extends TestCase
     /**
      * @dataProvider provideInvalidCompressionLevel
      *
-     * @param int $compressionLevel
-     *
      * @throws ZipException
      */
-    public function testInvalidCompressionLevel($compressionLevel)
+    public function testInvalidCompressionLevel(int $compressionLevel): void
     {
-        $this->setExpectedException(
-            InvalidArgumentException::class,
-            'Invalid compression level. Minimum level ' . ZipCompressionLevel::LEVEL_MIN .
-            '. Maximum level ' . ZipCompressionLevel::LEVEL_MAX
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage(
+            sprintf(
+                'Invalid compression level. Minimum level %s. Maximum level %s',
+                ZipCompressionLevel::LEVEL_MIN,
+                ZipCompressionLevel::LEVEL_MAX
+            )
         );
 
         $zipEntry = new ZipEntry('entry');
@@ -802,10 +756,7 @@ class ZipEntryTest extends TestCase
         $zipEntry->setCompressionLevel($compressionLevel);
     }
 
-    /**
-     * @return array
-     */
-    public function provideInvalidCompressionLevel()
+    public function provideInvalidCompressionLevel(): array
     {
         return [
             [0],
@@ -817,10 +768,8 @@ class ZipEntryTest extends TestCase
 
     /**
      * @dataProvider provideDosTime
-     *
-     * @param int $dosTime
      */
-    public function testDosTime($dosTime)
+    public function testDosTime(int $dosTime): void
     {
         $zipEntry = new ZipEntry('entry');
         static::assertSame($zipEntry->getDosTime(), ZipEntry::UNKNOWN);
@@ -829,10 +778,7 @@ class ZipEntryTest extends TestCase
         static::assertSame($zipEntry->getDosTime(), $dosTime);
     }
 
-    /**
-     * @return array
-     */
-    public function provideDosTime()
+    public function provideDosTime(): array
     {
         return [
             [0],
@@ -844,27 +790,21 @@ class ZipEntryTest extends TestCase
 
     /**
      * @dataProvider provideInvalidDosTime
-     *
-     * @param int $dosTime
      */
-    public function testInvalidDosTime($dosTime)
+    public function testInvalidDosTime(int $dosTime): void
     {
         if (\PHP_INT_SIZE === 4) {
             static::markTestSkipped('only 64 bit test');
-
-            return;
         }
 
-        $this->setExpectedException(InvalidArgumentException::class, 'DosTime out of range');
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('DosTime out of range');
 
         $zipEntry = new ZipEntry('entry');
         $zipEntry->setDosTime($dosTime);
     }
 
-    /**
-     * @return array
-     */
-    public function provideInvalidDosTime()
+    public function provideInvalidDosTime(): array
     {
         return [
             [-1],
@@ -872,7 +812,7 @@ class ZipEntryTest extends TestCase
         ];
     }
 
-    public function testSetTime()
+    public function testSetTime(): void
     {
         $zipEntry = new ZipEntry('entry');
         static::assertSame($zipEntry->getDosTime(), ZipEntry::UNKNOWN);
@@ -886,23 +826,18 @@ class ZipEntryTest extends TestCase
     /**
      * @dataProvider provideExternalAttributes
      *
-     * @param string   $entryName
-     * @param int      $expectedExternalAttr
-     * @param int      $createdOS
-     * @param int      $extractedOS
-     * @param int|null $externalAttr
-     * @param int      $unixMode
-     *
      * @noinspection PhpTooManyParametersInspection
+     *
+     * @param ?int $externalAttr
      */
     public function testExternalAttributes(
-        $entryName,
-        $expectedExternalAttr,
-        $createdOS,
-        $extractedOS,
-        $externalAttr,
-        $unixMode
-    ) {
+        string $entryName,
+        int $expectedExternalAttr,
+        int $createdOS,
+        int $extractedOS,
+        ?int $externalAttr,
+        int $unixMode
+    ): void {
         $zipEntry = new ZipEntry($entryName);
         static::assertSame($zipEntry->getExternalAttributes(), $expectedExternalAttr);
         $zipEntry
@@ -918,10 +853,7 @@ class ZipEntryTest extends TestCase
         static::assertSame($zipEntry->getUnixMode(), $unixMode);
     }
 
-    /**
-     * @return array
-     */
-    public function provideExternalAttributes()
+    public function provideExternalAttributes(): array
     {
         return [
             [
@@ -1001,27 +933,21 @@ class ZipEntryTest extends TestCase
 
     /**
      * @dataProvider provideInvalidExternalAttributes
-     *
-     * @param int $externalAttributes
      */
-    public function testInvalidExternalAttributes($externalAttributes)
+    public function testInvalidExternalAttributes(int $externalAttributes): void
     {
         if (\PHP_INT_SIZE === 4) {
             static::markTestSkipped('only 64 bit test');
-
-            return;
         }
 
-        $this->setExpectedException(InvalidArgumentException::class, 'external attributes out of range');
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('external attributes out of range');
 
         $zipEntry = new ZipEntry('entry');
         $zipEntry->setExternalAttributes($externalAttributes);
     }
 
-    /**
-     * @return array
-     */
-    public function provideInvalidExternalAttributes()
+    public function provideInvalidExternalAttributes(): array
     {
         return [
             [-1],
@@ -1029,7 +955,7 @@ class ZipEntryTest extends TestCase
         ];
     }
 
-    public function testInternalAttributes()
+    public function testInternalAttributes(): void
     {
         $zipEntry = new ZipEntry('entry');
         static::assertSame($zipEntry->getInternalAttributes(), 0);
@@ -1040,21 +966,17 @@ class ZipEntryTest extends TestCase
 
     /**
      * @dataProvider provideInvalidInternalAttributes
-     *
-     * @param int $internalAttributes
      */
-    public function testInvalidInternalAttributes($internalAttributes)
+    public function testInvalidInternalAttributes(int $internalAttributes): void
     {
-        $this->setExpectedException(InvalidArgumentException::class, 'internal attributes out of range');
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('internal attributes out of range');
 
         $zipEntry = new ZipEntry('entry');
         $zipEntry->setInternalAttributes($internalAttributes);
     }
 
-    /**
-     * @return array
-     */
-    public function provideInvalidInternalAttributes()
+    public function provideInvalidInternalAttributes(): array
     {
         return [
             [-1],
@@ -1062,31 +984,32 @@ class ZipEntryTest extends TestCase
         ];
     }
 
-    public function testExtraFields()
+    public function testExtraFields(): void
     {
         $zipEntry = new ZipEntry('entry');
 
-        static::assertInstanceOf(ExtraFieldsCollection::class, $zipEntry->getCdExtraFields());
-        static::assertInstanceOf(ExtraFieldsCollection::class, $zipEntry->getLocalExtraFields());
-        static::assertCount(0, $zipEntry->getCdExtraFields());
-        static::assertCount(0, $zipEntry->getLocalExtraFields());
+        $extraCdFields = $zipEntry->getCdExtraFields();
+        $extraLocalFields = $zipEntry->getLocalExtraFields();
+
+        static::assertCount(0, $extraCdFields);
+        static::assertCount(0, $extraLocalFields);
 
         $extraNtfs = new NtfsExtraField(time(), time() - 10000, time() - 100000);
         $extraAsi = new AsiExtraField(010644);
         $extraJar = new JarMarkerExtraField();
 
-        $zipEntry->getLocalExtraFields()->add($extraNtfs);
-        $zipEntry->getCdExtraFields()->add($extraNtfs);
-        static::assertCount(1, $zipEntry->getCdExtraFields());
-        static::assertCount(1, $zipEntry->getLocalExtraFields());
+        $extraLocalFields->add($extraNtfs);
+        $extraCdFields->add($extraNtfs);
+        static::assertCount(1, $extraCdFields);
+        static::assertCount(1, $extraLocalFields);
 
         $zipEntry->addExtraField($extraAsi);
-        static::assertCount(2, $zipEntry->getCdExtraFields());
-        static::assertCount(2, $zipEntry->getLocalExtraFields());
+        static::assertCount(2, $extraCdFields);
+        static::assertCount(2, $extraLocalFields);
 
         $zipEntry->addCdExtraField($extraJar);
-        static::assertCount(3, $zipEntry->getCdExtraFields());
-        static::assertCount(2, $zipEntry->getLocalExtraFields());
+        static::assertCount(3, $extraCdFields);
+        static::assertCount(2, $extraLocalFields);
 
         static::assertSame($zipEntry->getCdExtraField(JarMarkerExtraField::HEADER_ID), $extraJar);
         static::assertNull($zipEntry->getLocalExtraField(JarMarkerExtraField::HEADER_ID));
@@ -1094,26 +1017,26 @@ class ZipEntryTest extends TestCase
 
         static::assertSame(
             [$extraNtfs, $extraAsi, $extraJar],
-            array_values($zipEntry->getCdExtraFields()->getAll())
+            array_values($extraCdFields->getAll())
         );
         static::assertSame(
             [$extraNtfs, $extraAsi],
-            array_values($zipEntry->getLocalExtraFields()->getAll())
+            array_values($extraLocalFields->getAll())
         );
 
         $zipEntry->removeExtraField(AsiExtraField::HEADER_ID);
         static::assertNull($zipEntry->getCdExtraField(AsiExtraField::HEADER_ID));
         static::assertNull($zipEntry->getLocalExtraField(AsiExtraField::HEADER_ID));
 
-        static::assertCount(2, $zipEntry->getCdExtraFields());
-        static::assertCount(1, $zipEntry->getLocalExtraFields());
+        static::assertCount(2, $extraCdFields);
+        static::assertCount(1, $extraLocalFields);
         static::assertSame(
             [$extraNtfs, $extraJar],
-            array_values($zipEntry->getCdExtraFields()->getAll())
+            array_values($extraCdFields->getAll())
         );
         static::assertSame(
             [$extraNtfs],
-            array_values($zipEntry->getLocalExtraFields()->getAll())
+            array_values($extraLocalFields->getAll())
         );
 
         static::assertTrue($zipEntry->hasExtraField(NtfsExtraField::HEADER_ID));
@@ -1121,7 +1044,7 @@ class ZipEntryTest extends TestCase
         static::assertFalse($zipEntry->hasExtraField(AsiExtraField::HEADER_ID));
     }
 
-    public function testComment()
+    public function testComment(): void
     {
         $zipEntry = new ZipEntry('entry');
         static::assertSame($zipEntry->getComment(), '');
@@ -1138,9 +1061,10 @@ class ZipEntryTest extends TestCase
     /**
      * @throws \Exception
      */
-    public function testLongComment()
+    public function testLongComment(): void
     {
-        $this->setExpectedException(InvalidArgumentException::class, 'Comment too long');
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Comment too long');
 
         $longComment = random_bytes(0xffff + 1);
         $zipEntry = new ZipEntry('entry');
@@ -1149,13 +1073,8 @@ class ZipEntryTest extends TestCase
 
     /**
      * @dataProvider provideDataDescriptorRequired
-     *
-     * @param int  $crc
-     * @param int  $compressedSize
-     * @param int  $uncompressedSize
-     * @param bool $required
      */
-    public function testDataDescriptorRequired($crc, $compressedSize, $uncompressedSize, $required)
+    public function testDataDescriptorRequired(int $crc, int $compressedSize, int $uncompressedSize, bool $required): void
     {
         $zipEntry = new ZipEntry('entry');
         $zipEntry->setCrc($crc);
@@ -1168,10 +1087,7 @@ class ZipEntryTest extends TestCase
         static::assertSame($zipEntry->getUncompressedSize(), $uncompressedSize);
     }
 
-    /**
-     * @return array
-     */
-    public function provideDataDescriptorRequired()
+    public function provideDataDescriptorRequired(): array
     {
         return [
             [ZipEntry::UNKNOWN, ZipEntry::UNKNOWN, ZipEntry::UNKNOWN, true],
@@ -1188,12 +1104,10 @@ class ZipEntryTest extends TestCase
     /**
      * @dataProvider provideEncryption
      *
-     * @param string|null $password
-     * @param int|null    $encryptionMethod
-     * @param bool        $encrypted
-     * @param int         $expectedEncryptionMethod
+     * @param ?string $password
+     * @param ?int    $encryptionMethod
      */
-    public function testEncryption($password, $encryptionMethod, $encrypted, $expectedEncryptionMethod)
+    public function testEncryption(?string $password, ?int $encryptionMethod, bool $encrypted, int $expectedEncryptionMethod): void
     {
         $zipEntry = new ZipEntry('entry');
         $zipEntry->setPassword($password, $encryptionMethod);
@@ -1202,14 +1116,11 @@ class ZipEntryTest extends TestCase
         static::assertSame($zipEntry->getPassword(), $password);
         static::assertSame($zipEntry->getEncryptionMethod(), $expectedEncryptionMethod);
 
-        $zipEntry->setPassword($password, null);
+        $zipEntry->setPassword($password);
         static::assertSame($zipEntry->getEncryptionMethod(), $expectedEncryptionMethod);
     }
 
-    /**
-     * @return array
-     */
-    public function provideEncryption()
+    public function provideEncryption(): array
     {
         return [
             [null, null, false, ZipEncryptionMethod::NONE],
@@ -1222,7 +1133,7 @@ class ZipEntryTest extends TestCase
         ];
     }
 
-    public function testDirectoryEncryption()
+    public function testDirectoryEncryption(): void
     {
         $zipEntry = new ZipEntry('directory/');
         $zipEntry->setPassword('12345', ZipEncryptionMethod::WINZIP_AES_256);
@@ -1235,17 +1146,14 @@ class ZipEntryTest extends TestCase
     /**
      * @dataProvider provideEncryptionMethod
      *
-     * @param int|null $encryptionMethod
-     * @param int      $expectedEncryptionMethod
-     * @param bool     $encrypted
-     * @param int      $extractVersion
+     * @param ?int $encryptionMethod
      */
     public function testEncryptionMethod(
-        $encryptionMethod,
-        $expectedEncryptionMethod,
-        $encrypted,
-        $extractVersion
-    ) {
+        ?int $encryptionMethod,
+        int $expectedEncryptionMethod,
+        bool $encrypted,
+        int $extractVersion
+    ): void {
         $zipEntry = new ZipEntry('entry');
         $zipEntry->setEncryptionMethod($encryptionMethod);
         static::assertSame($zipEntry->isEncrypted(), $encrypted);
@@ -1253,10 +1161,7 @@ class ZipEntryTest extends TestCase
         static::assertSame($zipEntry->getExtractVersion(), $extractVersion);
     }
 
-    /**
-     * @return array
-     */
-    public function provideEncryptionMethod()
+    public function provideEncryptionMethod(): array
     {
         return [
             [
@@ -1300,24 +1205,17 @@ class ZipEntryTest extends TestCase
 
     /**
      * @dataProvider provideInvalidEncryptionMethod
-     *
-     * @param int $encryptionMethod
      */
-    public function testInvalidEncryptionMethod($encryptionMethod)
+    public function testInvalidEncryptionMethod(int $encryptionMethod): void
     {
-        $this->setExpectedException(
-            InvalidArgumentException::class,
-            'Encryption method ' . $encryptionMethod . ' is not supported.'
-        );
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage(sprintf('Encryption method %d is not supported.', $encryptionMethod));
 
         $zipEntry = new ZipEntry('entry');
         $zipEntry->setEncryptionMethod($encryptionMethod);
     }
 
-    /**
-     * @return array
-     */
-    public function provideInvalidEncryptionMethod()
+    public function provideInvalidEncryptionMethod(): array
     {
         return [
             [-2],
@@ -1328,11 +1226,8 @@ class ZipEntryTest extends TestCase
 
     /**
      * @dataProvider provideUnixMode
-     *
-     * @param string $entryName
-     * @param int    $unixMode
      */
-    public function testUnixMode($entryName, $unixMode)
+    public function testUnixMode(string $entryName, int $unixMode): void
     {
         $zipEntry = new ZipEntry($entryName);
         $zipEntry->setUnixMode($unixMode);
@@ -1341,10 +1236,7 @@ class ZipEntryTest extends TestCase
         static::assertSame($zipEntry->getCreatedOS(), ZipPlatform::OS_UNIX);
     }
 
-    /**
-     * @return array
-     */
-    public function provideUnixMode()
+    public function provideUnixMode(): array
     {
         return [
             ['entry.txt', 0700], // read, write, & execute only for owner
@@ -1367,19 +1259,15 @@ class ZipEntryTest extends TestCase
     /**
      * @dataProvider provideUnixMode
      * @dataProvider provideSymlink
-     *
-     * @param      $entryName
-     * @param      $unixMode
-     * @param bool $symlink
      */
-    public function testSymlink($entryName, $unixMode, $symlink = false)
+    public function testSymlink(string $entryName, int $unixMode, bool $symlink = false): void
     {
         $zipEntry = new ZipEntry($entryName);
         $zipEntry->setUnixMode($unixMode);
         static::assertSame($zipEntry->isUnixSymlink(), $symlink);
     }
 
-    public function testAsiUnixMode()
+    public function testAsiUnixMode(): void
     {
         $unixMode = 0100666;
         $asiUnixMode = 0100600;
@@ -1399,10 +1287,7 @@ class ZipEntryTest extends TestCase
         static::assertSame($zipEntry->getUnixMode(), $unixMode);
     }
 
-    /**
-     * @return array
-     */
-    public function provideSymlink()
+    public function provideSymlink(): array
     {
         return [
             ['entry', 0120644, true],
@@ -1412,17 +1297,11 @@ class ZipEntryTest extends TestCase
 
     /**
      * @dataProvider provideIsZip64ExtensionsRequired
-     *
-     * @param int  $compressionSize
-     * @param int  $uncompressionSize
-     * @param bool $required
      */
-    public function testIsZip64ExtensionsRequired($compressionSize, $uncompressionSize, $required)
+    public function testIsZip64ExtensionsRequired(int $compressionSize, int $uncompressionSize, bool $required): void
     {
         if (\PHP_INT_SIZE === 4) {
             static::markTestSkipped('only php 64-bit');
-
-            return;
         }
 
         $zipEntry = new ZipEntry('entry');
@@ -1431,10 +1310,7 @@ class ZipEntryTest extends TestCase
         static::assertSame($zipEntry->isZip64ExtensionsRequired(), $required);
     }
 
-    /**
-     * @return array
-     */
-    public function provideIsZip64ExtensionsRequired()
+    public function provideIsZip64ExtensionsRequired(): array
     {
         return [
             [11111111, 22222222, false],
@@ -1451,12 +1327,10 @@ class ZipEntryTest extends TestCase
     /**
      * @dataProvider provideExtraTime
      *
-     * @param ExtraFieldsCollection   $extraFieldsCollection
-     * @param \DateTimeInterface      $mtime
-     * @param \DateTimeInterface|null $atime
-     * @param \DateTimeInterface|null $ctime
+     * @param ?\DateTimeInterface $atime
+     * @param ?\DateTimeInterface $ctime
      */
-    public function testMTimeATimeCTime(ExtraFieldsCollection $extraFieldsCollection, $mtime, $atime, $ctime)
+    public function testMTimeATimeCTime(ExtraFieldsCollection $extraFieldsCollection, \DateTimeInterface $mtime, ?\DateTimeInterface $atime, ?\DateTimeInterface $ctime): void
     {
         $unixTimestamp = time();
 
@@ -1492,10 +1366,8 @@ class ZipEntryTest extends TestCase
 
     /**
      * @throws \Exception
-     *
-     * @return array
      */
-    public function provideExtraTime()
+    public function provideExtraTime(): array
     {
         $ntfsExtra = NtfsExtraField::create(
             new \DateTimeImmutable('-1 week'),
@@ -1568,7 +1440,7 @@ class ZipEntryTest extends TestCase
     /**
      * @throws ZipException
      */
-    public function testClone()
+    public function testClone(): void
     {
         $newUnixExtra = new NewUnixExtraField();
 
@@ -1588,7 +1460,7 @@ class ZipEntryTest extends TestCase
         static::assertNotSame($cloneEntry->getData(), $zipData);
     }
 
-    public function testExtraCollection()
+    public function testExtraCollection(): void
     {
         $zipEntry = new ZipEntry('entry');
         $cdCollection = $zipEntry->getCdExtraFields();

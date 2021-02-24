@@ -1,5 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
+/*
+ * This file is part of the nelexa/zip package.
+ * (c) Ne-Lexa <https://github.com/Ne-Lexa/php-zip>
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace PhpZip\Tests\SlowTests;
 
 use PhpZip\Constants\ZipCompressionMethod;
@@ -18,18 +27,14 @@ class Zip64Test extends ZipTestCase
     /**
      * @throws ZipException
      */
-    public function testCreateLargeZip64File()
+    public function testCreateLargeZip64File(): void
     {
         if (\PHP_INT_SIZE === 4) { // php 32 bit
             static::markTestSkipped('Only php-64 bit.');
-
-            return;
         }
 
         if (!self::existsProgram('fallocate')) {
             static::markTestSkipped('Cannot find the program "fallocate" for the test');
-
-            return;
         }
 
         $basedir = \dirname($this->outputFilename);
@@ -46,19 +51,15 @@ class Zip64Test extends ZipTestCase
                     FilesUtil::humanSize($needFreeSpace - $diskFreeSpace)
                 )
             );
-
-            return;
         }
 
         try {
-            $commandCreateLargeBinFile = 'fallocate -l ' . escapeshellarg($sizeLargeBinFile) . ' ' . escapeshellarg($tmpLargeFile);
+            $commandCreateLargeBinFile = 'fallocate -l ' . $sizeLargeBinFile . ' ' . escapeshellarg($tmpLargeFile);
 
             exec($commandCreateLargeBinFile, $output, $returnCode);
 
             if ($returnCode !== 0) {
                 static::markTestIncomplete('Cannot create large file. Error code: ' . $returnCode);
-
-                return;
             }
 
             $zipFile = new ZipFile();

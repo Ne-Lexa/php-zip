@@ -1,5 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
+/*
+ * This file is part of the nelexa/zip package.
+ * (c) Ne-Lexa <https://github.com/Ne-Lexa/php-zip>
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace PhpZip\Tests;
 
 use PhpZip\Util\StringUtil;
@@ -10,7 +19,7 @@ use PhpZip\ZipFile;
  */
 abstract class ZipFileSetTestCase extends ZipTestCase
 {
-    protected static $files = [
+    protected static array $files = [
         '.hidden' => 'Hidden file',
         'text file.txt' => 'Text file',
         'Текстовый документ.txt' => 'Текстовый документ',
@@ -30,13 +39,13 @@ abstract class ZipFileSetTestCase extends ZipTestCase
     /**
      * Before test.
      */
-    protected function setUp()
+    protected function setUp(): void
     {
         parent::setUp();
         $this->fillDirectory();
     }
 
-    protected function fillDirectory()
+    protected function fillDirectory(): void
     {
         foreach (self::$files as $name => $content) {
             $fullName = $this->outputDirname . '/' . $name;
@@ -56,16 +65,11 @@ abstract class ZipFileSetTestCase extends ZipTestCase
         }
     }
 
-    /**
-     * @param ZipFile $zipFile
-     * @param array   $actualResultFiles
-     * @param string  $localPath
-     */
     protected static function assertFilesResult(
         ZipFile $zipFile,
         array $actualResultFiles = [],
-        $localPath = '/'
-    ) {
+        string $localPath = '/'
+    ): void {
         $localPath = rtrim($localPath, '/');
         $localPath = empty($localPath) ? '' : $localPath . '/';
         static::assertCount(\count($zipFile), $actualResultFiles);

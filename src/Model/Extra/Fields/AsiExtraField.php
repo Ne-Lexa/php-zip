@@ -1,5 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
+/*
+ * This file is part of the nelexa/zip package.
+ * (c) Ne-Lexa <https://github.com/Ne-Lexa/php-zip>
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace PhpZip\Model\Extra\Fields;
 
 use PhpZip\Constants\UnixStat;
@@ -44,40 +53,32 @@ use PhpZip\Model\ZipEntry;
  *
  * @see ftp://ftp.info-zip.org/pub/infozip/doc/appnote-iz-latest.zip Info-ZIP version Specification
  */
-class AsiExtraField implements ZipExtraField
+final class AsiExtraField implements ZipExtraField
 {
     /** @var int Header id */
-    const HEADER_ID = 0x756e;
+    public const HEADER_ID = 0x756e;
 
-    const USER_GID_PID = 1000;
+    public const USER_GID_PID = 1000;
 
     /** Bits used for permissions (and sticky bit). */
-    const PERM_MASK = 07777;
+    public const PERM_MASK = 07777;
 
     /** @var int Standard Unix stat(2) file mode. */
-    private $mode;
+    private int $mode;
 
     /** @var int User ID. */
-    private $uid;
+    private int $uid;
 
     /** @var int Group ID. */
-    private $gid;
+    private int $gid;
 
     /**
      * @var string File this entry points to, if it is a symbolic link.
      *             Empty string - if entry is not a symbolic link.
      */
-    private $link;
+    private string $link;
 
-    /**
-     * AsiExtraField constructor.
-     *
-     * @param int    $mode
-     * @param int    $uid
-     * @param int    $gid
-     * @param string $link
-     */
-    public function __construct($mode, $uid = self::USER_GID_PID, $gid = self::USER_GID_PID, $link = '')
+    public function __construct(int $mode, int $uid = self::USER_GID_PID, int $gid = self::USER_GID_PID, string $link = '')
     {
         $this->mode = $mode;
         $this->uid = $uid;
@@ -89,10 +90,8 @@ class AsiExtraField implements ZipExtraField
      * Returns the Header ID (type) of this Extra Field.
      * The Header ID is an unsigned short integer (two bytes)
      * which must be constant during the life cycle of this object.
-     *
-     * @return int
      */
-    public function getHeaderId()
+    public function getHeaderId(): int
     {
         return self::HEADER_ID;
     }
@@ -101,13 +100,13 @@ class AsiExtraField implements ZipExtraField
      * Populate data from this array as if it was in local file data.
      *
      * @param string        $buffer the buffer to read data from
-     * @param ZipEntry|null $entry
+     * @param ZipEntry|null $entry  optional zip entry
      *
      * @throws Crc32Exception
      *
-     * @return static
+     * @return AsiExtraField
      */
-    public static function unpackLocalFileData($buffer, ZipEntry $entry = null)
+    public static function unpackLocalFileData(string $buffer, ?ZipEntry $entry = null): self
     {
         $givenChecksum = unpack('V', $buffer)[1];
         $buffer = substr($buffer, 4);
@@ -117,27 +116,32 @@ class AsiExtraField implements ZipExtraField
             throw new Crc32Exception('Asi Unix Extra Filed Data', $givenChecksum, $realChecksum);
         }
 
-        $data = unpack('vmode/VlinkSize/vuid/vgid', $buffer);
+        [
+            'mode' => $mode,
+            'linkSize' => $linkSize,
+            'uid' => $uid,
+            'gid' => $gid,
+        ] = unpack('vmode/VlinkSize/vuid/vgid', $buffer);
         $link = '';
 
-        if ($data['linkSize'] > 0) {
+        if ($linkSize > 0) {
             $link = substr($buffer, 10);
         }
 
-        return new self($data['mode'], $data['uid'], $data['gid'], $link);
+        return new self($mode, $uid, $gid, $link);
     }
 
     /**
      * Populate data from this array as if it was in central directory data.
      *
      * @param string        $buffer the buffer to read data from
-     * @param ZipEntry|null $entry
+     * @param ZipEntry|null $entry  optional zip entry
      *
      * @throws Crc32Exception
      *
      * @return AsiExtraField
      */
-    public static function unpackCentralDirData($buffer, ZipEntry $entry = null)
+    public static function unpackCentralDirData(string $buffer, ?ZipEntry $entry = null): self
     {
         return self::unpackLocalFileData($buffer, $entry);
     }
@@ -148,7 +152,7 @@ class AsiExtraField implements ZipExtraField
      *
      * @return string the data
      */
-    public function packLocalFileData()
+    public function packLocalFileData(): string
     {
         $data = pack(
             'vVvv',
@@ -167,7 +171,7 @@ class AsiExtraField implements ZipExtraField
      *
      * @return string the data
      */
-    public function packCentralDirData()
+    public function packCentralDirData(): string
     {
         return $this->packLocalFileData();
     }
@@ -178,7 +182,7 @@ class AsiExtraField implements ZipExtraField
      * @return string name of the file this entry links to if it is a
      *                symbolic link, the empty string otherwise
      */
-    public function getLink()
+    public function getLink(): string
     {
         return $this->link;
     }
@@ -189,9 +193,9 @@ class AsiExtraField implements ZipExtraField
      * @param string $link name of the file this entry links to, empty
      *                     string if it is not a symbolic link
      */
-    public function setLink($link)
+    public function setLink(string $link): void
     {
-        $this->link = (string) $link;
+        $this->link = $link;
         $this->mode = $this->getPermissionsMode($this->mode);
     }
 
@@ -200,7 +204,7 @@ class AsiExtraField implements ZipExtraField
      *
      * @return bool true if this is a symbolic link
      */
-    public function isLink()
+    public function isLink(): bool
     {
         return !empty($this->link);
     }
@@ -212,7 +216,7 @@ class AsiExtraField implements ZipExtraField
      *
      * @return int the type with the mode
      */
-    protected function getPermissionsMode($mode)
+    private function getPermissionsMode(int $mode): int
     {
         $type = 0;
 
@@ -232,63 +236,42 @@ class AsiExtraField implements ZipExtraField
      *
      * @return bool true if this entry is a directory
      */
-    public function isDirectory()
+    public function isDirectory(): bool
     {
         return ($this->mode & UnixStat::UNX_IFDIR) !== 0 && !$this->isLink();
     }
 
-    /**
-     * @return int
-     */
-    public function getMode()
+    public function getMode(): int
     {
         return $this->mode;
     }
 
-    /**
-     * @param int $mode
-     */
-    public function setMode($mode)
+    public function setMode(int $mode): void
     {
         $this->mode = $this->getPermissionsMode($mode);
     }
 
-    /**
-     * @return int
-     */
-    public function getUserId()
+    public function getUserId(): int
     {
         return $this->uid;
     }
 
-    /**
-     * @param int $uid
-     */
-    public function setUserId($uid)
+    public function setUserId(int $uid): void
     {
-        $this->uid = (int) $uid;
+        $this->uid = $uid;
     }
 
-    /**
-     * @return int
-     */
-    public function getGroupId()
+    public function getGroupId(): int
     {
         return $this->gid;
     }
 
-    /**
-     * @param int $gid
-     */
-    public function setGroupId($gid)
+    public function setGroupId(int $gid): void
     {
-        $this->gid = (int) $gid;
+        $this->gid = $gid;
     }
 
-    /**
-     * @return string
-     */
-    public function __toString()
+    public function __toString(): string
     {
         return sprintf(
             '0x%04x ASI: Mode=%o UID=%d GID=%d Link="%s',

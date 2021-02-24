@@ -1,5 +1,6 @@
-/vendor
-*.iml
 /.idea
-/composer.lock
-/*.cache
+build/
+/vendor
+*.cache
+composer.lock
+psalm.xml

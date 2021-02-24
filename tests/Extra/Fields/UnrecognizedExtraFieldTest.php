@@ -1,5 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
+/*
+ * This file is part of the nelexa/zip package.
+ * (c) Ne-Lexa <https://github.com/Ne-Lexa/php-zip>
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace PhpZip\Tests\Extra\Fields;
 
 use PHPUnit\Framework\TestCase;
@@ -15,7 +24,7 @@ use PhpZip\Model\Extra\Fields\UnrecognizedExtraField;
  */
 final class UnrecognizedExtraFieldTest extends TestCase
 {
-    public function testExtraField()
+    public function testExtraField(): void
     {
         $headerId = 0xF00D;
         $binaryData = "\x01\x02\x03\x04\x05";
@@ -35,22 +44,18 @@ final class UnrecognizedExtraFieldTest extends TestCase
         self::assertSame($unrecognizedExtraField->packCentralDirData(), $newBinaryData);
     }
 
-    public function testUnpackLocalData()
+    public function testUnpackLocalData(): void
     {
-        $this->setExpectedException(
-            RuntimeException::class,
-            'Unsupport parse'
-        );
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Unsupport parse');
 
         UnrecognizedExtraField::unpackLocalFileData("\x01\x02");
     }
 
-    public function testUnpackCentralDirData()
+    public function testUnpackCentralDirData(): void
     {
-        $this->setExpectedException(
-            RuntimeException::class,
-            'Unsupport parse'
-        );
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Unsupport parse');
 
         UnrecognizedExtraField::unpackCentralDirData("\x01\x02");
     }
