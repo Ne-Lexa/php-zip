@@ -1,6 +1,13 @@
 <?php
 
-/** @noinspection PhpComposerExtensionStubsInspection */
+declare(strict_types=1);
+
+/*
+ * This file is part of the nelexa/zip package.
+ * (c) Ne-Lexa <https://github.com/Ne-Lexa/php-zip>
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
 
 namespace PhpZip\Tests\Internal\Epub;
 
@@ -21,39 +28,25 @@ use PhpZip\ZipFile;
  */
 class EpubFile extends ZipFile
 {
-    /**
-     * @return ZipWriter
-     */
-    protected function createZipWriter()
+    protected function createZipWriter(): ZipWriter
     {
         return new EpubWriter($this->zipContainer);
     }
 
     /**
      * @param resource $inputStream
-     * @param array    $options
-     *
-     * @return ZipReader
      */
-    protected function createZipReader($inputStream, array $options = [])
+    protected function createZipReader($inputStream, array $options = []): ZipReader
     {
         return new EpubReader($inputStream, $options);
     }
 
-    /**
-     * @param ImmutableZipContainer|null $sourceContainer
-     *
-     * @return ZipContainer
-     */
-    protected function createZipContainer(ImmutableZipContainer $sourceContainer = null)
+    protected function createZipContainer(?ImmutableZipContainer $sourceContainer = null): ZipContainer
     {
         return new EpubZipContainer($sourceContainer);
     }
 
-    /**
-     * @param ZipEntry $zipEntry
-     */
-    protected function addZipEntry(ZipEntry $zipEntry)
+    protected function addZipEntry(ZipEntry $zipEntry): void
     {
         $zipEntry->setCreatedOS(ZipPlatform::OS_DOS);
         $zipEntry->setExtractedOS(ZipPlatform::OS_UNIX);
@@ -62,25 +55,25 @@ class EpubFile extends ZipFile
 
     /**
      * @throws ZipEntryNotFoundException
-     *
-     * @return string
      */
-    public function getMimeType()
+    public function getMimeType(): string
     {
         return $this->zipContainer->getMimeType();
     }
 
-    public function getEpubInfo()
+    /**
+     * @throws ZipException
+     * @throws ZipEntryNotFoundException
+     */
+    public function getEpubInfo(): EpubInfo
     {
         return new EpubInfo($this->getEntryContents($this->getRootFile()));
     }
 
     /**
      * @throws ZipException
-     *
-     * @return string
      */
-    public function getRootFile()
+    public function getRootFile(): string
     {
         $entryName = 'META-INF/container.xml';
         $contents = $this->getEntryContents($entryName);

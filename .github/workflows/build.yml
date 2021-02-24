@@ -1,0 +1,121 @@
+name: build
+
+on:
+    - push
+    - pull_request
+
+jobs:
+    tests:
+        name:    PHP ${{ matrix.php }} Test on ${{ matrix.os }}
+
+        env:
+            extensions:       bz2, dom, iconv, fileinfo, openssl, xml, zlib
+            key:              cache-v1
+            PHPUNIT_COVERAGE: 0
+            PHP_INI:          date.timezone='UTC', memory_limit=-1, opcache.enable=1, opcache.enable_cli=1
+
+        strategy:
+            matrix:
+                os:
+                    - ubuntu-latest
+                    - windows-latest
+                    - macos-latest
+                php:
+                    - '7.4'
+                    - '8.0'
+
+        runs-on: ${{ matrix.os }}
+
+        steps:
+            -
+                name: Checkout
+                uses: actions/checkout@v1
+
+            -
+                name: Install linux dependencies
+                if:   matrix.os == 'ubuntu-latest'
+                run:  sudo apt-get install unzip p7zip-full
+
+            -
+                name: Install windows dependencies
+                if:   matrix.os == 'windows-latest'
+                run:  choco install zip unzip 7zip
+
+            -
+                name: Install macos dependencies
+                if:   matrix.os == 'macos-latest'
+                run:  brew install zip unzip p7zip
+
+            -
+                name: Install PHP with extensions
+                uses: shivammathur/setup-php@v2
+                with:
+                    php-version: 7.4
+                    extensions:  ${{ env.extensions }}
+                    coverage:    pcov
+                    ini-values:  ${{ env.PHP_INI }}
+                    tools:       composer:v2, cs2pr
+
+            -
+                name: Determine composer cache directory on Linux or MacOS
+                if:   matrix.os == 'ubuntu-latest' || matrix.os == 'macos-latest'
+                run:  echo "COMPOSER_CACHE_DIR=$(composer config cache-dir)" >> $GITHUB_ENV
+
+            -
+                name: Determine composer cache directory on Windows
+                if:   matrix.os == 'windows-latest'
+                run:  echo "COMPOSER_CACHE_DIR=~\AppData\Local\Composer" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+            -
+                name: Set coverage args
+                if:   matrix.os == 'ubuntu-latest' && matrix.php == '8.0'
+                run:  echo "PHPUNIT_COVERAGE=1" >> $GITHUB_ENV
+
+            -
+                name: Cache composer dependencies
+                uses: actions/cache@v2
+                with:
+                    path:         ${{ env.COMPOSER_CACHE_DIR }}
+                    key:          php${{ matrix.php }}-composer-${{ hashFiles('**/composer.json') }}
+                    restore-keys: php${{ matrix.php }}-composer-
+
+            -
+                name: Check PHP Version
+                run:  php -v
+
+            -
+                name: Check Composer Version
+                run:  composer -V
+
+            -
+                name: Check PHP Extensions
+                run:  php -m
+
+            -
+                name: Validate composer.json and composer.lock
+                run:  composer validate
+
+            -
+                name: Install dependencies with composer
+                run:  composer update --prefer-dist --no-interaction --no-progress --optimize-autoloader --ansi
+
+            -
+                name: Run tests with phpunit
+                if:   env.PHPUNIT_COVERAGE == 0
+                run:  vendor/bin/phpunit -v --testsuite "all_tests" --group small,medium,large
+
+            -
+                name: Run tests with phpunit and coverage
+                if:   env.PHPUNIT_COVERAGE == 1
+                run:  vendor/bin/phpunit -v --coverage-clover=coverage.clover --testsuite "all_tests" --group small,medium,large
+
+            -
+                name: Static analysis
+                run:  vendor/bin/psalm --shepherd --stats --output-format=checkstyle | cs2pr --graceful-warnings --colorize
+
+            -
+                name: Upload code coverage scrutinizer
+                if:   env.PHPUNIT_COVERAGE == 1
+                run:  |
+                      wget https://scrutinizer-ci.com/ocular.phar
+                      php ocular.phar code-coverage:upload --format=php-clover coverage.clover

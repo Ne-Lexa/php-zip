@@ -1,48 +1,52 @@
 <?php
 
-/** @noinspection PhpComposerExtensionStubsInspection */
+declare(strict_types=1);
+
+/*
+ * This file is part of the nelexa/zip package.
+ * (c) Ne-Lexa <https://github.com/Ne-Lexa/php-zip>
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
 
 namespace PhpZip\Constants;
 
-/**
- * Class DosCodePage.
- */
 final class DosCodePage
 {
-    const CP_LATIN_US = 'cp437';
+    public const CP_LATIN_US = 'cp437';
 
-    const CP_GREEK = 'cp737';
+    public const CP_GREEK = 'cp737';
 
-    const CP_BALT_RIM = 'cp775';
+    public const CP_BALT_RIM = 'cp775';
 
-    const CP_LATIN1 = 'cp850';
+    public const CP_LATIN1 = 'cp850';
 
-    const CP_LATIN2 = 'cp852';
+    public const CP_LATIN2 = 'cp852';
 
-    const CP_CYRILLIC = 'cp855';
+    public const CP_CYRILLIC = 'cp855';
 
-    const CP_TURKISH = 'cp857';
+    public const CP_TURKISH = 'cp857';
 
-    const CP_PORTUGUESE = 'cp860';
+    public const CP_PORTUGUESE = 'cp860';
 
-    const CP_ICELANDIC = 'cp861';
+    public const CP_ICELANDIC = 'cp861';
 
-    const CP_HEBREW = 'cp862';
+    public const CP_HEBREW = 'cp862';
 
-    const CP_CANADA = 'cp863';
+    public const CP_CANADA = 'cp863';
 
-    const CP_ARABIC = 'cp864';
+    public const CP_ARABIC = 'cp864';
 
-    const CP_NORDIC = 'cp865';
+    public const CP_NORDIC = 'cp865';
 
-    const CP_CYRILLIC_RUSSIAN = 'cp866';
+    public const CP_CYRILLIC_RUSSIAN = 'cp866';
 
-    const CP_GREEK2 = 'cp869';
+    public const CP_GREEK2 = 'cp869';
 
-    const CP_THAI = 'cp874';
+    public const CP_THAI = 'cp874';
 
     /** @var string[] */
-    private static $CP_CHARSETS = [
+    private const CP_CHARSETS = [
         self::CP_LATIN_US,
         self::CP_GREEK,
         self::CP_BALT_RIM,
@@ -62,12 +66,9 @@ final class DosCodePage
     ];
 
     /**
-     * @param string $str
-     * @param string $sourceEncoding
-     *
-     * @return string
+     * @noinspection PhpComposerExtensionStubsInspection
      */
-    public static function toUTF8($str, $sourceEncoding)
+    public static function toUTF8(string $str, string $sourceEncoding): string
     {
         $s = iconv($sourceEncoding, 'UTF-8', $str);
 
@@ -79,12 +80,9 @@ final class DosCodePage
     }
 
     /**
-     * @param string $str
-     * @param string $destEncoding
-     *
-     * @return string
+     * @noinspection PhpComposerExtensionStubsInspection
      */
-    public static function fromUTF8($str, $destEncoding)
+    public static function fromUTF8(string $str, string $destEncoding): string
     {
         $s = iconv('UTF-8', $destEncoding, $str);
 
@@ -98,8 +96,8 @@ final class DosCodePage
     /**
      * @return string[]
      */
-    public static function getCodePages()
+    public static function getCodePages(): array
     {
-        return self::$CP_CHARSETS;
+        return self::CP_CHARSETS;
     }
 }

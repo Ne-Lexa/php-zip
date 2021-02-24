@@ -1,25 +1,25 @@
 <?php
 
+declare(strict_types=1);
+
+/*
+ * This file is part of the nelexa/zip package.
+ * (c) Ne-Lexa <https://github.com/Ne-Lexa/php-zip>
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace PhpZip\Model\Data;
 
 use PhpZip\Exception\ZipException;
 use PhpZip\Model\ZipData;
 use PhpZip\Model\ZipEntry;
 
-/**
- * Class ZipFileData.
- */
 class ZipFileData implements ZipData
 {
-    /** @var \SplFileInfo */
-    private $file;
+    private \SplFileInfo $file;
 
     /**
-     * ZipStringData constructor.
-     *
-     * @param ZipEntry     $zipEntry
-     * @param \SplFileInfo $fileInfo
-     *
      * @throws ZipException
      */
     public function __construct(ZipEntry $zipEntry, \SplFileInfo $fileInfo)
@@ -55,7 +55,7 @@ class ZipFileData implements ZipData
      *
      * @return string returns data as string
      */
-    public function getDataAsString()
+    public function getDataAsString(): string
     {
         if (!$this->file->isReadable()) {
             throw new ZipException(sprintf('The %s file is no longer readable.', $this->file->getPathname()));
@@ -69,13 +69,10 @@ class ZipFileData implements ZipData
      *
      * @throws ZipException
      */
-    public function copyDataToStream($outStream)
+    public function copyDataToStream($outStream): void
     {
-        try {
-            $stream = $this->getDataAsStream();
-            stream_copy_to_stream($stream, $outStream);
-        } finally {
-            fclose($stream);
-        }
+        $stream = $this->getDataAsStream();
+        stream_copy_to_stream($stream, $outStream);
+        fclose($stream);
     }
 }

@@ -1,30 +1,36 @@
 <?php
 
+declare(strict_types=1);
+
+/*
+ * This file is part of the nelexa/zip package.
+ * (c) Ne-Lexa <https://github.com/Ne-Lexa/php-zip>
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace PhpZip\Constants;
 
 use PhpZip\Exception\InvalidArgumentException;
 
-/**
- * Class ZipEncryptionMethod.
- */
 final class ZipEncryptionMethod
 {
-    const NONE = -1;
+    public const NONE = -1;
 
     /** @var int Traditional PKWARE encryption. */
-    const PKWARE = 0;
+    public const PKWARE = 0;
 
     /** @var int WinZip AES-256 */
-    const WINZIP_AES_256 = 1;
+    public const WINZIP_AES_256 = 1;
 
     /** @var int WinZip AES-128 */
-    const WINZIP_AES_128 = 2;
+    public const WINZIP_AES_128 = 2;
 
     /** @var int WinZip AES-192 */
-    const WINZIP_AES_192 = 3;
+    public const WINZIP_AES_192 = 3;
 
     /** @var array<int, string> */
-    private static $ENCRYPTION_METHODS = [
+    private const ENCRYPTION_METHODS = [
         self::NONE => 'no encryption',
         self::PKWARE => 'Traditional PKWARE encryption',
         self::WINZIP_AES_128 => 'WinZip AES-128',
@@ -32,39 +38,20 @@ final class ZipEncryptionMethod
         self::WINZIP_AES_256 => 'WinZip AES-256',
     ];
 
-    /**
-     * @param int $value
-     *
-     * @return string
-     */
-    public static function getEncryptionMethodName($value)
+    public static function getEncryptionMethodName(int $value): string
     {
-        $value = (int) $value;
-
-        return isset(self::$ENCRYPTION_METHODS[$value]) ?
-            self::$ENCRYPTION_METHODS[$value] :
-            'Unknown Encryption Method';
+        return self::ENCRYPTION_METHODS[$value] ?? 'Unknown Encryption Method';
     }
 
-    /**
-     * @param int $encryptionMethod
-     *
-     * @return bool
-     */
-    public static function hasEncryptionMethod($encryptionMethod)
+    public static function hasEncryptionMethod(int $encryptionMethod): bool
     {
-        return isset(self::$ENCRYPTION_METHODS[$encryptionMethod]);
+        return isset(self::ENCRYPTION_METHODS[$encryptionMethod]);
     }
 
-    /**
-     * @param int $encryptionMethod
-     *
-     * @return bool
-     */
-    public static function isWinZipAesMethod($encryptionMethod)
+    public static function isWinZipAesMethod(int $encryptionMethod): bool
     {
         return \in_array(
-            (int) $encryptionMethod,
+            $encryptionMethod,
             [
                 self::WINZIP_AES_256,
                 self::WINZIP_AES_192,
@@ -75,14 +62,10 @@ final class ZipEncryptionMethod
     }
 
     /**
-     * @param int $encryptionMethod
-     *
      * @throws InvalidArgumentException
      */
-    public static function checkSupport($encryptionMethod)
+    public static function checkSupport(int $encryptionMethod): void
     {
-        $encryptionMethod = (int) $encryptionMethod;
-
         if (!self::hasEncryptionMethod($encryptionMethod)) {
             throw new InvalidArgumentException(sprintf(
                 'Encryption method %d is not supported.',

@@ -1,8 +1,17 @@
 <?php
 
+declare(strict_types=1);
+
+/*
+ * This file is part of the nelexa/zip package.
+ * (c) Ne-Lexa <https://github.com/Ne-Lexa/php-zip>
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace PhpZip\IO\Filter\Cipher\Pkware;
 
-use PhpZip\Exception\ZipException;
+use PhpZip\Exception\ZipAuthenticationException;
 use PhpZip\Model\ZipEntry;
 
 /**
@@ -10,37 +19,27 @@ use PhpZip\Model\ZipEntry;
  */
 class PKDecryptionStreamFilter extends \php_user_filter
 {
-    const FILTER_NAME = 'phpzip.decryption.pkware';
+    public const FILTER_NAME = 'phpzip.decryption.pkware';
 
-    /** @var int */
-    private $checkByte = 0;
+    private int $checkByte = 0;
 
-    /** @var int */
-    private $readLength = 0;
+    private int $readLength = 0;
 
-    /** @var int */
-    private $size = 0;
+    private int $size = 0;
 
-    /** @var bool */
-    private $readHeader = false;
+    private bool $readHeader = false;
 
-    /** @var PKCryptContext */
-    private $context;
+    private PKCryptContext $context;
 
-    /**
-     * @return bool
-     */
-    public static function register()
+    public static function register(): bool
     {
         return stream_filter_register(self::FILTER_NAME, __CLASS__);
     }
 
     /**
      * @see https://php.net/manual/en/php-user-filter.oncreate.php
-     *
-     * @return bool
      */
-    public function onCreate()
+    public function onCreate(): bool
     {
         if (!isset($this->params['entry'])) {
             return false;
@@ -78,18 +77,12 @@ class PKDecryptionStreamFilter extends \php_user_filter
     /**
      * Decryption filter.
      *
-     * @param resource $in
-     * @param resource $out
-     * @param int      $consumed
-     * @param bool     $closing
-     *
-     * @throws ZipException
-     *
-     * @return int
+     * @throws ZipAuthenticationException
      *
      * @todo USE FFI in php 7.4
+     * @noinspection PhpDocSignatureInspection
      */
-    public function filter($in, $out, &$consumed, $closing)
+    public function filter($in, $out, &$consumed, $closing): int
     {
         while ($bucket = stream_bucket_make_writeable($in)) {
             $buffer = $bucket->data;

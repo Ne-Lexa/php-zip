@@ -1,5 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
+/*
+ * This file is part of the nelexa/zip package.
+ * (c) Ne-Lexa <https://github.com/Ne-Lexa/php-zip>
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace PhpZip\Tests\Extra\Fields;
 
 use PHPUnit\Framework\TestCase;
@@ -20,22 +29,16 @@ final class WinZipAesExtraFieldTest extends TestCase
     /**
      * @dataProvider provideExtraField
      *
-     * @param int    $vendorVersion
-     * @param int    $keyStrength
-     * @param int    $compressionMethod
-     * @param int    $saltSize
-     * @param string $binaryData
-     *
      * @throws ZipException
      * @throws ZipUnsupportMethodException
      */
     public function testExtraField(
-        $vendorVersion,
-        $keyStrength,
-        $compressionMethod,
-        $saltSize,
-        $binaryData
-    ) {
+        int $vendorVersion,
+        int $keyStrength,
+        int $compressionMethod,
+        int $saltSize,
+        string $binaryData
+    ): void {
         $extraField = new WinZipAesExtraField($vendorVersion, $keyStrength, $compressionMethod);
         self::assertSame($extraField->getHeaderId(), WinZipAesExtraField::HEADER_ID);
         self::assertSame($extraField->getVendorVersion(), $vendorVersion);
@@ -50,10 +53,7 @@ final class WinZipAesExtraFieldTest extends TestCase
         self::assertEquals(WinZipAesExtraField::unpackCentralDirData($binaryData), $extraField);
     }
 
-    /**
-     * @return array
-     */
-    public function provideExtraField()
+    public function provideExtraField(): array
     {
         return [
             [
@@ -104,7 +104,7 @@ final class WinZipAesExtraFieldTest extends TestCase
     /**
      * @throws ZipUnsupportMethodException
      */
-    public function testSetter()
+    public function testSetter(): void
     {
         $extraField = new WinZipAesExtraField(
             WinZipAesExtraField::VERSION_AE1,
@@ -155,9 +155,10 @@ final class WinZipAesExtraFieldTest extends TestCase
     /**
      * @throws ZipUnsupportMethodException
      */
-    public function testConstructUnsupportVendorVersion()
+    public function testConstructUnsupportVendorVersion(): void
     {
-        $this->setExpectedException(InvalidArgumentException::class, 'Unsupport WinZip AES vendor version: 3');
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Unsupport WinZip AES vendor version: 3');
 
         new WinZipAesExtraField(
             3,
@@ -166,12 +167,10 @@ final class WinZipAesExtraFieldTest extends TestCase
         );
     }
 
-    /**
-     * @throws ZipUnsupportMethodException
-     */
-    public function testSetterUnsupportVendorVersion()
+    public function testSetterUnsupportVendorVersion(): void
     {
-        $this->setExpectedException(InvalidArgumentException::class, 'Unsupport WinZip AES vendor version: 3');
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Unsupport WinZip AES vendor version: 3');
 
         $extraField = new WinZipAesExtraField(
             WinZipAesExtraField::VERSION_AE1,
@@ -181,12 +180,10 @@ final class WinZipAesExtraFieldTest extends TestCase
         $extraField->setVendorVersion(3);
     }
 
-    /**
-     * @throws ZipUnsupportMethodException
-     */
-    public function testConstructUnsupportCompressionMethod()
+    public function testConstructUnsupportCompressionMethod(): void
     {
-        $this->setExpectedException(ZipUnsupportMethodException::class, 'Compression method 3 (Reduced compression factor 2) is not supported.');
+        $this->expectException(ZipUnsupportMethodException::class);
+        $this->expectExceptionMessage('Compression method 3 (Reduced compression factor 2) is not supported.');
 
         new WinZipAesExtraField(
             WinZipAesExtraField::VERSION_AE1,
@@ -195,12 +192,10 @@ final class WinZipAesExtraFieldTest extends TestCase
         );
     }
 
-    /**
-     * @throws ZipUnsupportMethodException
-     */
-    public function testSetterUnsupportCompressionMethod()
+    public function testSetterUnsupportCompressionMethod(): void
     {
-        $this->setExpectedException(ZipUnsupportMethodException::class, 'Compression method 3 (Reduced compression factor 2) is not supported.');
+        $this->expectException(ZipUnsupportMethodException::class);
+        $this->expectExceptionMessage('Compression method 3 (Reduced compression factor 2) is not supported.');
 
         $extraField = new WinZipAesExtraField(
             WinZipAesExtraField::VERSION_AE1,
@@ -213,9 +208,10 @@ final class WinZipAesExtraFieldTest extends TestCase
     /**
      * @throws ZipUnsupportMethodException
      */
-    public function testConstructUnsupportKeyStrength()
+    public function testConstructUnsupportKeyStrength(): void
     {
-        $this->setExpectedException(InvalidArgumentException::class, 'Key strength 16 not support value. Allow values: 1, 2, 3');
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Key strength 16 not support value. Allow values: 1, 2, 3');
 
         new WinZipAesExtraField(
             WinZipAesExtraField::VERSION_AE1,
@@ -225,11 +221,12 @@ final class WinZipAesExtraFieldTest extends TestCase
     }
 
     /**
-     * @throws ZipUnsupportMethodException
+     * @throws ZipException
      */
-    public function testSetterUnsupportKeyStrength()
+    public function testSetterUnsupportKeyStrength(): void
     {
-        $this->setExpectedException(InvalidArgumentException::class, 'Key strength 16 not support value. Allow values: 1, 2, 3');
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Key strength 16 not support value. Allow values: 1, 2, 3');
 
         new WinZipAesExtraField(
             WinZipAesExtraField::VERSION_AE1,

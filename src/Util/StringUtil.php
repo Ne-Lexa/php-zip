@@ -1,5 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
+/*
+ * This file is part of the nelexa/zip package.
+ * (c) Ne-Lexa <https://github.com/Ne-Lexa/php-zip>
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace PhpZip\Util;
 
 /**
@@ -9,40 +18,18 @@ namespace PhpZip\Util;
  */
 final class StringUtil
 {
-    /**
-     * @param string $haystack
-     * @param string $needle
-     *
-     * @return bool
-     */
-    public static function endsWith($haystack, $needle)
+    public static function endsWith(string $haystack, string $needle): bool
     {
-        $length = \strlen($needle);
-
-        if ($length === 0) {
-            return true;
-        }
-
-        return substr($haystack, -$length) === $needle;
+        return $needle === '' || ($haystack !== '' && substr_compare($haystack, $needle, -\strlen($needle)) === 0);
     }
 
-    /**
-     * @param string $string
-     *
-     * @return bool
-     */
-    public static function isBinary($string)
+    public static function isBinary(string $string): bool
     {
         return strpos($string, "\0") !== false;
     }
 
-    /**
-     * @param string $name
-     *
-     * @return bool
-     */
-    public static function isASCII($name)
+    public static function isASCII(string $name): bool
     {
-        return preg_match('~[^\x20-\x7e]~', (string) $name) === 0;
+        return preg_match('~[^\x20-\x7e]~', $name) === 0;
     }
 }

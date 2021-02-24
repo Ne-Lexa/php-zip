@@ -1,5 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
+/*
+ * This file is part of the nelexa/zip package.
+ * (c) Ne-Lexa <https://github.com/Ne-Lexa/php-zip>
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace PhpZip\Tests;
 
 use PhpZip\Constants\ZipCompressionMethod;
@@ -14,14 +23,14 @@ use PhpZip\ZipFile;
  */
 class Issue24Test extends ZipTestCase
 {
-    const PROTO_DUMMYFS = 'dummyfs';
+    public const PROTO_DUMMYFS = 'dummyfs';
 
     /**
      * This method is called before the first test of this test class is run.
      *
      * @noinspection PhpMissingParentCallCommonInspection
      */
-    public static function setUpBeforeClass()
+    public static function setUpBeforeClass(): void
     {
         stream_wrapper_register(self::PROTO_DUMMYFS, DummyFileSystemStream::class);
     }
@@ -30,7 +39,7 @@ class Issue24Test extends ZipTestCase
      * @throws ZipException
      * @throws \Exception
      */
-    public function testDummyFS()
+    public function testDummyFS(): void
     {
         $fileContents = str_repeat(base64_encode(random_bytes(12000)), 100);
 

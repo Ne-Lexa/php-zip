@@ -1,28 +1,26 @@
 <?php
 
+declare(strict_types=1);
+
+/*
+ * This file is part of the nelexa/zip package.
+ * (c) Ne-Lexa <https://github.com/Ne-Lexa/php-zip>
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace PhpZip\Util\Iterator;
 
 use PhpZip\Util\StringUtil;
 
 /**
  * Recursive iterator for ignore files.
- *
- * @author Ne-Lexa alexey@nelexa.ru
- * @license MIT
  */
 class IgnoreFilesRecursiveFilterIterator extends \RecursiveFilterIterator
 {
-    /**
-     * Ignore list files.
-     *
-     * @var array
-     */
-    private $ignoreFiles = ['..'];
+    /** Ignore list files. */
+    private array $ignoreFiles = ['..'];
 
-    /**
-     * @param \RecursiveIterator $iterator
-     * @param array              $ignoreFiles
-     */
     public function __construct(\RecursiveIterator $iterator, array $ignoreFiles)
     {
         parent::__construct($iterator);
@@ -35,10 +33,8 @@ class IgnoreFilesRecursiveFilterIterator extends \RecursiveFilterIterator
      * @see http://php.net/manual/en/filteriterator.accept.php
      *
      * @return bool true if the current element is acceptable, otherwise false
-     *
-     * @since 5.1.0
      */
-    public function accept()
+    public function accept(): bool
     {
         /**
          * @var \SplFileInfo $fileInfo
@@ -66,8 +62,10 @@ class IgnoreFilesRecursiveFilterIterator extends \RecursiveFilterIterator
 
     /**
      * @return IgnoreFilesRecursiveFilterIterator
+     * @psalm-suppress UndefinedInterfaceMethod
+     * @noinspection PhpPossiblePolymorphicInvocationInspection
      */
-    public function getChildren()
+    public function getChildren(): self
     {
         return new self($this->getInnerIterator()->getChildren(), $this->ignoreFiles);
     }

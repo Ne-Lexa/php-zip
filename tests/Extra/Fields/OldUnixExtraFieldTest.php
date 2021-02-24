@@ -1,5 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
+/*
+ * This file is part of the nelexa/zip package.
+ * (c) Ne-Lexa <https://github.com/Ne-Lexa/php-zip>
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace PhpZip\Tests\Extra\Fields;
 
 use PHPUnit\Framework\TestCase;
@@ -17,25 +26,23 @@ final class OldUnixExtraFieldTest extends TestCase
     /**
      * @dataProvider provideExtraField
      *
-     * @param int|null $accessTime
-     * @param int|null $modifyTime
-     * @param int|null $uid
-     * @param int|null $gid
-     * @param string   $localBinaryData
-     * @param string   $cdBinaryData
-     *
      * @noinspection PhpTooManyParametersInspection
+     *
+     * @param ?int $accessTime
+     * @param ?int $modifyTime
+     * @param ?int $uid
+     * @param ?int $gid
      *
      * @throws \Exception
      */
     public function testExtraField(
-        $accessTime,
-        $modifyTime,
-        $uid,
-        $gid,
-        $localBinaryData,
-        $cdBinaryData
-    ) {
+        ?int $accessTime,
+        ?int $modifyTime,
+        ?int $uid,
+        ?int $gid,
+        string $localBinaryData,
+        string $cdBinaryData
+    ): void {
         $extraField = new OldUnixExtraField($accessTime, $modifyTime, $uid, $gid);
         self::assertSame($extraField->getHeaderId(), OldUnixExtraField::HEADER_ID);
 
@@ -89,10 +96,7 @@ final class OldUnixExtraFieldTest extends TestCase
         self::assertSame($extraField->packCentralDirData(), $cdBinaryData);
     }
 
-    /**
-     * @return array
-     */
-    public function provideExtraField()
+    public function provideExtraField(): array
     {
         return [
             [
@@ -130,7 +134,7 @@ final class OldUnixExtraFieldTest extends TestCase
         ];
     }
 
-    public function testSetter()
+    public function testSetter(): void
     {
         $extraField = new OldUnixExtraField(null, null, null, null);
 

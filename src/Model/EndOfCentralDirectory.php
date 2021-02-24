@@ -1,40 +1,36 @@
 <?php
 
+declare(strict_types=1);
+
+/*
+ * This file is part of the nelexa/zip package.
+ * (c) Ne-Lexa <https://github.com/Ne-Lexa/php-zip>
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace PhpZip\Model;
 
 /**
  * End of Central Directory.
- *
- * @author Ne-Lexa alexey@nelexa.ru
- * @license MIT
  */
 class EndOfCentralDirectory
 {
     /** @var int Count files. */
-    private $entryCount;
+    private int $entryCount;
 
     /** @var int Central Directory Offset. */
-    private $cdOffset;
+    private int $cdOffset;
 
-    /** @var int */
-    private $cdSize;
+    private int $cdSize;
 
     /** @var string|null The archive comment. */
-    private $comment;
+    private ?string $comment;
 
     /** @var bool Zip64 extension */
-    private $zip64;
+    private bool $zip64;
 
-    /**
-     * EndOfCentralDirectory constructor.
-     *
-     * @param int         $entryCount
-     * @param int         $cdOffset
-     * @param int         $cdSize
-     * @param bool        $zip64
-     * @param string|null $comment
-     */
-    public function __construct($entryCount, $cdOffset, $cdSize, $zip64, $comment = null)
+    public function __construct(int $entryCount, int $cdOffset, int $cdSize, bool $zip64, ?string $comment = null)
     {
         $this->entryCount = $entryCount;
         $this->cdOffset = $cdOffset;
@@ -43,50 +39,32 @@ class EndOfCentralDirectory
         $this->comment = $comment;
     }
 
-    /**
-     * @param string|null $comment
-     */
-    public function setComment($comment)
+    public function setComment(?string $comment): void
     {
         $this->comment = $comment;
     }
 
-    /**
-     * @return int
-     */
-    public function getEntryCount()
+    public function getEntryCount(): int
     {
         return $this->entryCount;
     }
 
-    /**
-     * @return int
-     */
-    public function getCdOffset()
+    public function getCdOffset(): int
     {
         return $this->cdOffset;
     }
 
-    /**
-     * @return int
-     */
-    public function getCdSize()
+    public function getCdSize(): int
     {
         return $this->cdSize;
     }
 
-    /**
-     * @return string|null
-     */
-    public function getComment()
+    public function getComment(): ?string
     {
         return $this->comment;
     }
 
-    /**
-     * @return bool
-     */
-    public function isZip64()
+    public function isZip64(): bool
     {
         return $this->zip64;
     }

@@ -1,23 +1,29 @@
 <?php
 
+declare(strict_types=1);
+
+/*
+ * This file is part of the nelexa/zip package.
+ * (c) Ne-Lexa <https://github.com/Ne-Lexa/php-zip>
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace PhpZip\Constants;
 
-/**
- * Class ZipPlatform.
- */
 final class ZipPlatform
 {
     /** @var int MS-DOS OS */
-    const OS_DOS = 0;
+    public const OS_DOS = 0;
 
     /** @var int Unix OS */
-    const OS_UNIX = 3;
+    public const OS_UNIX = 3;
 
-    /** MacOS platform */
-    const OS_MAC_OSX = 19;
+    /** @var int MacOS platform */
+    public const OS_MAC_OSX = 19;
 
     /** @var array Zip Platforms */
-    private static $platforms = [
+    private const PLATFORMS = [
         self::OS_DOS => 'MS-DOS',
         1 => 'Amiga',
         2 => 'OpenVMS',
@@ -41,13 +47,8 @@ final class ZipPlatform
         30 => 'AtheOS/Syllable',
     ];
 
-    /**
-     * @param int $platform
-     *
-     * @return string
-     */
-    public static function getPlatformName($platform)
+    public static function getPlatformName(int $platform): string
     {
-        return isset(self::$platforms[$platform]) ? self::$platforms[$platform] : 'Unknown';
+        return self::PLATFORMS[$platform] ?? 'Unknown';
     }
 }

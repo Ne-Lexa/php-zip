@@ -1,5 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
+/*
+ * This file is part of the nelexa/zip package.
+ * (c) Ne-Lexa <https://github.com/Ne-Lexa/php-zip>
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace PhpZip\IO\Stream;
 
 use PhpZip\Exception\ZipException;
@@ -15,7 +24,7 @@ use PhpZip\Model\ZipEntry;
 final class ZipEntryStreamWrapper
 {
     /** @var string the registered protocol */
-    const PROTOCOL = 'zipentry';
+    public const PROTOCOL = 'zipentry';
 
     /** @var resource */
     public $context;
@@ -23,10 +32,7 @@ final class ZipEntryStreamWrapper
     /** @var resource */
     private $fp;
 
-    /**
-     * @return bool
-     */
-    public static function register()
+    public static function register(): bool
     {
         $protocol = self::PROTOCOL;
 
@@ -41,14 +47,12 @@ final class ZipEntryStreamWrapper
         return false;
     }
 
-    public static function unregister()
+    public static function unregister(): void
     {
         stream_wrapper_unregister(self::PROTOCOL);
     }
 
     /**
-     * @param ZipEntry $entry
-     *
      * @return resource
      */
     public static function wrap(ZipEntry $entry)
@@ -79,26 +83,24 @@ final class ZipEntryStreamWrapper
      * This method is called immediately after the wrapper is
      * initialized (f.e. by {@see fopen()} and {@see file_get_contents()}).
      *
-     * @param string $path        specifies the URL that was passed to
-     *                            the original function
-     * @param string $mode        the mode used to open the file, as detailed
-     *                            for {@see fopen()}
-     * @param int    $options     Holds additional flags set by the streams
-     *                            API. It can hold one or more of the
-     *                            following values OR'd together.
-     * @param string $opened_path if the path is opened successfully, and
-     *                            STREAM_USE_PATH is set in options,
-     *                            opened_path should be set to the
-     *                            full path of the file/resource that
-     *                            was actually opened
+     * @param string      $path        specifies the URL that was passed to
+     *                                 the original function
+     * @param string      $mode        the mode used to open the file, as detailed
+     *                                 for {@see fopen()}
+     * @param int         $options     Holds additional flags set by the streams
+     *                                 API. It can hold one or more of the
+     *                                 following values OR'd together.
+     * @param string|null $opened_path if the path is opened successfully, and
+     *                                 STREAM_USE_PATH is set in options,
+     *                                 opened_path should be set to the
+     *                                 full path of the file/resource that
+     *                                 was actually opened
      *
      * @throws ZipException
      *
-     * @return bool
-     *
      * @see https://www.php.net/streamwrapper.stream-open
      */
-    public function stream_open($path, $mode, $options, &$opened_path)
+    public function stream_open(string $path, string $mode, int $options, ?string &$opened_path): bool
     {
         if ($this->context === null) {
             throw new \RuntimeException('stream context is null');
@@ -142,7 +144,7 @@ final class ZipEntryStreamWrapper
      *
      * @see https://www.php.net/streamwrapper.stream-read
      */
-    public function stream_read($count)
+    public function stream_read(int $count)
     {
         return fread($this->fp, $count);
     }
@@ -164,7 +166,7 @@ final class ZipEntryStreamWrapper
      *
      * @see https://www.php.net/streamwrapper.stream-seek
      */
-    public function stream_seek($offset, $whence = \SEEK_SET)
+    public function stream_seek(int $offset, int $whence = \SEEK_SET): bool
     {
         return fseek($this->fp, $offset, $whence) === 0;
     }
@@ -179,7 +181,7 @@ final class ZipEntryStreamWrapper
      *
      * @see https://www.php.net/streamwrapper.stream-tell
      */
-    public function stream_tell()
+    public function stream_tell(): int
     {
         $pos = ftell($this->fp);
 
@@ -201,7 +203,7 @@ final class ZipEntryStreamWrapper
      *
      * @see https://www.php.net/streamwrapper.stream-eof
      */
-    public function stream_eof()
+    public function stream_eof(): bool
     {
         return feof($this->fp);
     }
@@ -211,13 +213,11 @@ final class ZipEntryStreamWrapper
      *
      * This method is called in response to {@see fstat()}.
      *
-     * @return array
-     *
      * @see https://www.php.net/streamwrapper.stream-stat
      * @see https://www.php.net/stat
      * @see https://www.php.net/fstat
      */
-    public function stream_stat()
+    public function stream_stat(): array
     {
         return fstat($this->fp);
     }
@@ -237,7 +237,7 @@ final class ZipEntryStreamWrapper
      *
      * @see https://www.php.net/streamwrapper.stream-flush
      */
-    public function stream_flush()
+    public function stream_flush(): bool
     {
         return fflush($this->fp);
     }
@@ -247,15 +247,15 @@ final class ZipEntryStreamWrapper
      *
      * Will respond to truncation, e.g., through {@see ftruncate()}.
      *
-     * @param int $new_size the new size
+     * @param int $newSize the new size
      *
      * @return bool returns TRUE on success or FALSE on failure
      *
      * @see https://www.php.net/streamwrapper.stream-truncate
      */
-    public function stream_truncate($new_size)
+    public function stream_truncate(int $newSize): bool
     {
-        return ftruncate($this->fp, (int) $new_size);
+        return ftruncate($this->fp, $newSize);
     }
 
     /**
@@ -272,7 +272,7 @@ final class ZipEntryStreamWrapper
      *
      * @see https://www.php.net/streamwrapper.stream-write
      */
-    public function stream_write($data)
+    public function stream_write(string $data): int
     {
         $bytes = fwrite($this->fp, $data);
 
@@ -290,7 +290,7 @@ final class ZipEntryStreamWrapper
      *
      * @return resource
      */
-    public function stream_cast($cast_as)
+    public function stream_cast(int $cast_as)
     {
         return $this->fp;
     }
@@ -303,7 +303,7 @@ final class ZipEntryStreamWrapper
      *
      * @see https://www.php.net/streamwrapper.stream-close
      */
-    public function stream_close()
+    public function stream_close(): void
     {
     }
 }

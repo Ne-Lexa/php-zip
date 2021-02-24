@@ -1,25 +1,29 @@
 <?php
 
+declare(strict_types=1);
+
+/*
+ * This file is part of the nelexa/zip package.
+ * (c) Ne-Lexa <https://github.com/Ne-Lexa/php-zip>
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace PhpZip\Model;
 
-/**
- * Class ImmutableZipContainer.
- */
 class ImmutableZipContainer implements \Countable
 {
     /** @var ZipEntry[] */
-    protected $entries;
+    protected array $entries;
 
     /** @var string|null Archive comment */
-    protected $archiveComment;
+    protected ?string $archiveComment;
 
     /**
-     * ZipContainer constructor.
-     *
-     * @param ZipEntry[]  $entries
-     * @param string|null $archiveComment
+     * @param ZipEntry[] $entries
+     * @param ?string    $archiveComment
      */
-    public function __construct(array $entries, $archiveComment)
+    public function __construct(array $entries, ?string $archiveComment = null)
     {
         $this->entries = $entries;
         $this->archiveComment = $archiveComment;
@@ -28,15 +32,12 @@ class ImmutableZipContainer implements \Countable
     /**
      * @return ZipEntry[]
      */
-    public function &getEntries()
+    public function &getEntries(): array
     {
         return $this->entries;
     }
 
-    /**
-     * @return string|null
-     */
-    public function getArchiveComment()
+    public function getArchiveComment(): ?string
     {
         return $this->archiveComment;
     }
@@ -49,7 +50,7 @@ class ImmutableZipContainer implements \Countable
      * @return int The custom count as an integer.
      *             The return value is cast to an integer.
      */
-    public function count()
+    public function count(): int
     {
         return \count($this->entries);
     }

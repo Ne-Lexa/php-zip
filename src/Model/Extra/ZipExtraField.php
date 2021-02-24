@@ -1,5 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
+/*
+ * This file is part of the nelexa/zip package.
+ * (c) Ne-Lexa <https://github.com/Ne-Lexa/php-zip>
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace PhpZip\Model\Extra;
 
 use PhpZip\Model\ZipEntry;
@@ -15,30 +24,28 @@ interface ZipExtraField
      * Returns the Header ID (type) of this Extra Field.
      * The Header ID is an unsigned short integer (two bytes)
      * which must be constant during the life cycle of this object.
-     *
-     * @return int
      */
-    public function getHeaderId();
+    public function getHeaderId(): int;
 
     /**
      * Populate data from this array as if it was in local file data.
      *
      * @param string        $buffer the buffer to read data from
-     * @param ZipEntry|null $entry
+     * @param ZipEntry|null $entry  optional zip entry
      *
      * @return static
      */
-    public static function unpackLocalFileData($buffer, ZipEntry $entry = null);
+    public static function unpackLocalFileData(string $buffer, ?ZipEntry $entry = null): self;
 
     /**
      * Populate data from this array as if it was in central directory data.
      *
      * @param string        $buffer the buffer to read data from
-     * @param ZipEntry|null $entry
+     * @param ZipEntry|null $entry  optional zip entry
      *
      * @return static
      */
-    public static function unpackCentralDirData($buffer, ZipEntry $entry = null);
+    public static function unpackCentralDirData(string $buffer, ?ZipEntry $entry = null): self;
 
     /**
      * The actual data to put into local file data - without Header-ID
@@ -46,7 +53,7 @@ interface ZipExtraField
      *
      * @return string the data
      */
-    public function packLocalFileData();
+    public function packLocalFileData(): string;
 
     /**
      * The actual data to put into central directory - without Header-ID or
@@ -54,10 +61,7 @@ interface ZipExtraField
      *
      * @return string the data
      */
-    public function packCentralDirData();
+    public function packCentralDirData(): string;
 
-    /**
-     * @return string
-     */
-    public function __toString();
+    public function __toString(): string;
 }

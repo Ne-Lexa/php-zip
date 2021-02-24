@@ -1,30 +1,36 @@
 <?php
 
+declare(strict_types=1);
+
+/*
+ * This file is part of the nelexa/zip package.
+ * (c) Ne-Lexa <https://github.com/Ne-Lexa/php-zip>
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace PhpZip\IO\Filter\Cipher\Pkware;
 
 use PhpZip\Exception\RuntimeException;
 use PhpZip\Exception\ZipAuthenticationException;
-use PhpZip\Util\PackUtil;
+use PhpZip\Util\MathUtil;
 
 /**
  * Traditional PKWARE Encryption Engine.
  *
  * @see https://pkware.cachefly.net/webdocs/casestudies/APPNOTE.TXT .ZIP File Format Specification
- *
- * @author Ne-Lexa alexey@nelexa.ru
- * @license MIT
  */
 class PKCryptContext
 {
-    /** Encryption header size */
-    const STD_DEC_HDR_SIZE = 12;
+    /** @var int Encryption header size */
+    public const STD_DEC_HDR_SIZE = 12;
 
     /**
      * Crc table.
      *
      * @var int[]|array
      */
-    private static $CRC_TABLE = [
+    private const CRC_TABLE = [
         0x00000000,
         0x77073096,
         0xee0e612c,
@@ -283,19 +289,10 @@ class PKCryptContext
         0x2d02ef8d,
     ];
 
-    /**
-     * Encryption keys.
-     *
-     * @var array
-     */
-    private $keys;
+    /** @var array encryption keys */
+    private array $keys;
 
-    /**
-     * PKCryptContext constructor.
-     *
-     * @param string $password
-     */
-    public function __construct($password)
+    public function __construct(string $password)
     {
         if (\PHP_INT_SIZE === 4) {
             throw new RuntimeException('Traditional PKWARE Encryption is not supported in 32-bit PHP.');
@@ -307,18 +304,15 @@ class PKCryptContext
             878082192,
         ];
 
-        foreach (unpack('C*', $password) as $b) {
-            $this->updateKeys($b);
+        foreach (unpack('C*', $password) as $byte) {
+            $this->updateKeys($byte);
         }
     }
 
     /**
-     * @param string $header
-     * @param int    $checkByte
-     *
      * @throws ZipAuthenticationException
      */
-    public function checkHeader($header, $checkByte)
+    public function checkHeader(string $header, int $checkByte): void
     {
         $byte = 0;
 
@@ -328,16 +322,11 @@ class PKCryptContext
         }
 
         if ($byte !== $checkByte) {
-            throw new ZipAuthenticationException(sprintf('Invalid password'));
+            throw new ZipAuthenticationException('Invalid password');
         }
     }
 
-    /**
-     * @param string $content
-     *
-     * @return string
-     */
-    public function decryptString($content)
+    public function decryptString(string $content): string
     {
         $decryptContent = '';
 
@@ -352,10 +341,8 @@ class PKCryptContext
 
     /**
      * Decrypt byte.
-     *
-     * @return int
      */
-    private function decryptByte()
+    private function decryptByte(): int
     {
         $temp = $this->keys[2] | 2;
 
@@ -364,36 +351,24 @@ class PKCryptContext
 
     /**
      * Update keys.
-     *
-     * @param int $charAt
      */
-    private function updateKeys($charAt)
+    private function updateKeys(int $charAt): void
     {
         $this->keys[0] = $this->crc32($this->keys[0], $charAt);
         $this->keys[1] += ($this->keys[0] & 0xff);
-        $this->keys[1] = PackUtil::toSignedInt32($this->keys[1] * 134775813 + 1);
-        $this->keys[2] = PackUtil::toSignedInt32($this->crc32($this->keys[2], ($this->keys[1] >> 24) & 0xff));
+        $this->keys[1] = MathUtil::toSignedInt32($this->keys[1] * 134775813 + 1);
+        $this->keys[2] = MathUtil::toSignedInt32($this->crc32($this->keys[2], ($this->keys[1] >> 24) & 0xff));
     }
 
     /**
      * Update crc.
-     *
-     * @param int $oldCrc
-     * @param int $charAt
-     *
-     * @return int
      */
-    private function crc32($oldCrc, $charAt)
+    private function crc32(int $oldCrc, int $charAt): int
     {
-        return (($oldCrc >> 8) & 0xffffff) ^ self::$CRC_TABLE[($oldCrc ^ $charAt) & 0xff];
+        return (($oldCrc >> 8) & 0xffffff) ^ self::CRC_TABLE[($oldCrc ^ $charAt) & 0xff];
     }
 
-    /**
-     * @param string $content
-     *
-     * @return string
-     */
-    public function encryptString($content)
+    public function encryptString(string $content): string
     {
         $encryptContent = '';
 
@@ -404,12 +379,7 @@ class PKCryptContext
         return $encryptContent;
     }
 
-    /**
-     * @param int $byte
-     *
-     * @return int
-     */
-    private function encryptByte($byte)
+    private function encryptByte(int $byte): int
     {
         $tempVal = $byte ^ $this->decryptByte() & 0xff;
         $this->updateKeys($byte);

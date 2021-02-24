@@ -1,5 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
+/*
+ * This file is part of the nelexa/zip package.
+ * (c) Ne-Lexa <https://github.com/Ne-Lexa/php-zip>
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace PhpZip\Tests\Extra\Fields;
 
 use PHPUnit\Framework\TestCase;
@@ -17,15 +26,9 @@ final class AsiExtraFieldTest extends TestCase
     /**
      * @dataProvider provideExtraField
      *
-     * @param int    $mode
-     * @param int    $uid
-     * @param int    $gid
-     * @param string $link
-     * @param string $binaryData
-     *
      * @throws ZipException
      */
-    public function testExtraField($mode, $uid, $gid, $link, $binaryData)
+    public function testExtraField(int $mode, int $uid, int $gid, string $link, string $binaryData): void
     {
         $asiExtraField = new AsiExtraField($mode, $uid, $gid, $link);
         self::assertSame($asiExtraField->getHeaderId(), AsiExtraField::HEADER_ID);
@@ -42,10 +45,7 @@ final class AsiExtraFieldTest extends TestCase
         self::assertEquals(AsiExtraField::unpackCentralDirData($binaryData), $asiExtraField);
     }
 
-    /**
-     * @return array
-     */
-    public function provideExtraField()
+    public function provideExtraField(): array
     {
         return [
             [
@@ -65,7 +65,7 @@ final class AsiExtraFieldTest extends TestCase
         ];
     }
 
-    public function testSetter()
+    public function testSetter(): void
     {
         $extraField = new AsiExtraField(0777);
         $extraField->setMode(0100666);
@@ -89,12 +89,10 @@ final class AsiExtraFieldTest extends TestCase
     /**
      * @throws Crc32Exception
      */
-    public function testInvalidParse()
+    public function testInvalidParse(): void
     {
-        $this->setExpectedException(
-            Crc32Exception::class,
-            'Asi Unix Extra Filed Data (expected CRC32 value'
-        );
+        $this->expectException(Crc32Exception::class);
+        $this->expectExceptionMessage('Asi Unix Extra Filed Data (expected CRC32 value');
 
         AsiExtraField::unpackLocalFileData("\x01\x06\\\xF6\xEDA\x00\x00\x00\x00\xE8\x03\xE8\x03");
     }
