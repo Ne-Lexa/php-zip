@@ -50,7 +50,7 @@ jobs:
                 name: Install PHP with extensions
                 uses: shivammathur/setup-php@v2
                 with:
-                    php-version: 7.4
+                    php-version: ${{ matrix.php }}
                     extensions:  ${{ env.extensions }}
                     coverage:    pcov
                     ini-values:  ${{ env.PHP_INI }}
