@@ -49,7 +49,7 @@ jobs:
             -
                 name: Disable JIT for PHP 8
                 if:   matrix.php != '7.4'
-                run:  echo "PHP_INI=\"${PHP_INI}, opcache.jit\"" >> $GITHUB_ENV
+                run:  echo "PHP_INI=\"${PHP_INI}, opcache.jit=0, opcache.jit_buffer_size=0\"" >> $GITHUB_ENV
 
             -
                 name: Install PHP with extensions
