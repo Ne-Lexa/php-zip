@@ -78,7 +78,7 @@ jobs:
 
             -
                 name: Set coverage args
-                if:   matrix.os == 'ubuntu-latest' && matrix.php == '8.0'
+                if:   matrix.os == 'ubuntu-latest' && matrix.php == '7.4'
                 run:  echo "PHPUNIT_COVERAGE=1" >> $GITHUB_ENV
 
             -
