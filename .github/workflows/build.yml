@@ -47,6 +47,11 @@ jobs:
                 run:  brew install zip unzip p7zip
 
             -
+                name: Disable JIT for PHP 8
+                if:   matrix.php != '7.4'
+                run:  echo "PHP_INI=\"${PHP_INI}, opcache.jit\"" >> $GITHUB_ENV
+
+            -
                 name: Install PHP with extensions
                 uses: shivammathur/setup-php@v2
                 with:
@@ -54,7 +59,7 @@ jobs:
                     extensions:  ${{ env.extensions }}
                     coverage:    pcov
                     ini-values:  ${{ env.PHP_INI }}
-                    tools:       composer:v2, cs2pr
+                    tools:       composer:v2
 
             -
                 name: Determine composer cache directory on Linux or MacOS
