@@ -159,8 +159,6 @@ class PhpZipExtResourceTest extends ZipTestCase
             static::assertFileDoesNotExist($this->outputDirname . '/bug70752.txt');
 
             throw $exception;
-        } finally {
-            $zipFile->close();
         }
     }
 
