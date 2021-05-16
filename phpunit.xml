@@ -1,35 +1,28 @@
-<?xml version="1.0" encoding="utf-8" ?>
-
-<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/7.5/phpunit.xsd"
-         colors="true"
-         bootstrap="bootstrap.php">
-    <php>
-        <ini name="error_reporting" value="-1"/>
-    </php>
-
-    <testsuites>
-        <testsuite name="all_tests">
-            <directory>tests</directory>
-        </testsuite>
-        <testsuite name="only_fast_tests">
-            <directory>tests</directory>
-            <exclude>tests/SlowTests</exclude>
-        </testsuite>
-        <testsuite name="only_slow_tests">
-            <directory>tests/SlowTests</directory>
-        </testsuite>
-    </testsuites>
-
-    <groups>
-        <exclude>
-            <group>large</group>
-        </exclude>
-    </groups>
-
-    <filter>
-        <whitelist>
-            <directory>src</directory>
-        </whitelist>
-    </filter>
+<?xml version="1.0" encoding="utf-8"?>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/9.3/phpunit.xsd" colors="true" bootstrap="bootstrap.php">
+  <coverage>
+    <include>
+      <directory>src</directory>
+    </include>
+  </coverage>
+  <php>
+    <ini name="error_reporting" value="-1"/>
+  </php>
+  <testsuites>
+    <testsuite name="all_tests">
+      <directory>tests</directory>
+    </testsuite>
+    <testsuite name="only_fast_tests">
+      <directory>tests</directory>
+      <exclude>tests/SlowTests</exclude>
+    </testsuite>
+    <testsuite name="only_slow_tests">
+      <directory>tests/SlowTests</directory>
+    </testsuite>
+  </testsuites>
+  <groups>
+    <exclude>
+      <group>large</group>
+    </exclude>
+  </groups>
 </phpunit>

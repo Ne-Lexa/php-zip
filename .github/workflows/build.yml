@@ -10,7 +10,7 @@ jobs:
 
         env:
             extensions:       bz2, dom, iconv, fileinfo, openssl, xml, zlib, gd
-            key:              cache-v1
+            key:              cache-v2
             PHPUNIT_COVERAGE: 0
             PHP_INI:          date.timezone='UTC', memory_limit=-1, opcache.enable=1, opcache.enable_cli=1
 
