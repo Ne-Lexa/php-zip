@@ -51,18 +51,6 @@ class UnicodeCommentExtraField extends AbstractUnicodeExtraField
     const HEADER_ID = 0x6375;
 
     /**
-     * Returns the Header ID (type) of this Extra Field.
-     * The Header ID is an unsigned short integer (two bytes)
-     * which must be constant during the life cycle of this object.
-     *
-     * @return int
-     */
-    public function getHeaderId()
-    {
-        return self::HEADER_ID;
-    }
-
-    /**
      * @return string
      */
     public function __toString()
@@ -72,5 +60,17 @@ class UnicodeCommentExtraField extends AbstractUnicodeExtraField
             self::HEADER_ID,
             $this->getUnicodeValue()
         );
+    }
+
+    /**
+     * Returns the Header ID (type) of this Extra Field.
+     * The Header ID is an unsigned short integer (two bytes)
+     * which must be constant during the life cycle of this object.
+     *
+     * @return int
+     */
+    public function getHeaderId()
+    {
+        return self::HEADER_ID;
     }
 }

@@ -47,7 +47,7 @@ final class SymlinkTest extends ZipTestCase
         self::assertCorrectZipArchive($this->outputFilename);
 
         FilesUtil::removeDir($this->outputDirname);
-        self::assertFalse(is_dir($this->outputDirname));
+        self::assertDirectoryDoesNotExist($this->outputDirname);
         self::assertTrue(mkdir($this->outputDirname, 0755, true));
 
         $zipFile->openFile($this->outputFilename);

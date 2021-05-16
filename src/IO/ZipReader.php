@@ -59,7 +59,7 @@ class ZipReader
         }
         $meta = stream_get_meta_data($inStream);
 
-        $wrapperType = isset($meta['wrapper_type']) ? $meta['wrapper_type'] : 'Unknown';
+        $wrapperType = $meta['wrapper_type'] ?? 'Unknown';
         $supportStreamWrapperTypes = ['plainfile', 'PHP', 'user-space'];
 
         if (!\in_array($wrapperType, $supportStreamWrapperTypes, true)) {
@@ -72,10 +72,10 @@ class ZipReader
         }
 
         if (
-            $wrapperType === 'plainfile' &&
-            (
-                $meta['stream_type'] === 'dir' ||
-                (isset($meta['uri']) && is_dir($meta['uri']))
+            $wrapperType === 'plainfile'
+            && (
+                $meta['stream_type'] === 'dir'
+                || (isset($meta['uri']) && is_dir($meta['uri']))
             )
         ) {
             throw new InvalidArgumentException('Directory stream not supported');
@@ -92,6 +92,11 @@ class ZipReader
         /** @noinspection AdditionOperationOnArraysInspection */
         $options += $this->getDefaultOptions();
         $this->options = $options;
+    }
+
+    public function __destruct()
+    {
+        $this->close();
     }
 
     /**
@@ -162,15 +167,15 @@ class ZipReader
         $buffer = fread($this->inStream, $sizeECD);
 
         $unpack = unpack(
-            'vdiskNo/vcdDiskNo/vcdEntriesDisk/' .
-            'vcdEntries/VcdSize/VcdPos/vcommentLength',
+            'vdiskNo/vcdDiskNo/vcdEntriesDisk/'
+            . 'vcdEntries/VcdSize/VcdPos/vcommentLength',
             substr($buffer, 0, 18)
         );
 
         if (
-            $unpack['diskNo'] !== 0 ||
-            $unpack['cdDiskNo'] !== 0 ||
-            $unpack['cdEntriesDisk'] !== $unpack['cdEntries']
+            $unpack['diskNo'] !== 0
+            || $unpack['cdDiskNo'] !== 0
+            || $unpack['cdEntriesDisk'] !== $unpack['cdEntries']
         ) {
             throw new ZipException(
                 'ZIP file spanning/splitting is not supported!'
@@ -375,8 +380,8 @@ class ZipReader
                     $unicodePath = str_replace('\\', '/', $unicodePath);
 
                     if (
-                        $unicodePath !== '' &&
-                        substr_count($entryName, '/') === substr_count($unicodePath, '/')
+                        $unicodePath !== ''
+                        && substr_count($entryName, '/') === substr_count($unicodePath, '/')
                     ) {
                         $entryName = $unicodePath;
                     }
@@ -427,12 +432,12 @@ class ZipReader
         }
 
         $unpack = unpack(
-            'vversionMadeBy/vversionNeededToExtract/' .
-            'vgeneralPurposeBitFlag/vcompressionMethod/' .
-            'VlastModFile/Vcrc/VcompressedSize/' .
-            'VuncompressedSize/vfileNameLength/vextraFieldLength/' .
-            'vfileCommentLength/vdiskNumberStart/vinternalFileAttributes/' .
-            'VexternalFileAttributes/VoffsetLocalHeader',
+            'vversionMadeBy/vversionNeededToExtract/'
+            . 'vgeneralPurposeBitFlag/vcompressionMethod/'
+            . 'VlastModFile/Vcrc/VcompressedSize/'
+            . 'VuncompressedSize/vfileNameLength/vextraFieldLength/'
+            . 'vfileCommentLength/vdiskNumberStart/vinternalFileAttributes/'
+            . 'VexternalFileAttributes/VoffsetLocalHeader',
             fread($stream, 42)
         );
 
@@ -523,9 +528,9 @@ class ZipReader
      */
     protected function parseExtraFields($buffer, ZipEntry $zipEntry, $local = false)
     {
-        $collection = $local ?
-            $zipEntry->getLocalExtraFields() :
-            $zipEntry->getCdExtraFields();
+        $collection = $local
+            ? $zipEntry->getLocalExtraFields()
+            : $zipEntry->getCdExtraFields();
 
         if (!empty($buffer)) {
             $pos = 0;
@@ -548,9 +553,9 @@ class ZipReader
                 try {
                     if ($className !== null) {
                         try {
-                            $extraField = $local ?
-                                \call_user_func([$className, 'unpackLocalFileData'], $bufferData, $zipEntry) :
-                                \call_user_func([$className, 'unpackCentralDirData'], $bufferData, $zipEntry);
+                            $extraField = $local
+                                ? \call_user_func([$className, 'unpackLocalFileData'], $bufferData, $zipEntry)
+                                : \call_user_func([$className, 'unpackCentralDirData'], $bufferData, $zipEntry);
                         } catch (\Throwable $e) {
                             // skip errors while parsing invalid data
                             continue;
@@ -889,10 +894,5 @@ class ZipReader
         if (\is_resource($this->inStream)) {
             fclose($this->inStream);
         }
-    }
-
-    public function __destruct()
-    {
-        $this->close();
     }
 }

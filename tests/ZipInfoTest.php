@@ -54,8 +54,10 @@ final class ZipInfoTest extends ZipTestCase
      */
     public function testZipInfoEntryNotFound()
     {
-        $this->setExpectedException(
-            ZipEntryNotFoundException::class,
+        $this->expectException(
+            ZipEntryNotFoundException::class
+        );
+        $this->expectExceptionMessage(
             'Zip Entry "unknown.name" was not found in the archive.'
         );
 

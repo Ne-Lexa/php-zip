@@ -1,16 +1,18 @@
 <?php
 
+declare(strict_types=1);
+
 /**
- * PHP Code Style Fixer (config created for version 2.16.4 (Yellow Bird)).
+ * PHP Code Style Fixer (config created for version 3.0.0 (Constitution)).
  *
  * Use one of the following console commands to just see the
  * changes that will be made.
- * - `php-cs-fixer fix --config='.php_cs' --diff-format udiff --dry-run`
- * - `php '.php_cs'`
+ * - `php-cs-fixer fix --config='.php-cs-fixer.php' --dry-run`
+ * - `php '.php-cs-fixer.php'`
  *
  * Use one of the following console commands to fix PHP code:
- * - `php-cs-fixer fix --config='.php_cs' --diff-format udiff`
- * - `php '.php_cs' --force`
+ * - `php-cs-fixer fix --config='.php-cs-fixer.php'
+ * - `php '.php-cs-fixer.php' --force`
  *
  * @see https://cs.symfony.com/
  */
@@ -23,6 +25,14 @@ $rules = [
 
     // Each element of an array must be indented exactly once.
     'array_indentation' => true,
+
+    /*
+     * Converts simple usages of `array_push($x, $y);` to `$x[] = $y;`.
+     *
+     * Risky!
+     * Risky when the function `array_push` is overridden.
+     */
+    'array_push' => true,
 
     // PHP arrays should be declared using the configured syntax.
     'array_syntax' => [
@@ -51,23 +61,7 @@ $rules = [
     'blank_line_after_opening_tag' => true,
 
     // An empty line feed must precede any configured statement.
-    'blank_line_before_statement' => [
-        'statements' => [
-            'continue',
-            'declare',
-            'return',
-            'throw',
-            'try',
-            'case',
-            'die',
-            'exit',
-            'do',
-            'foreach',
-            'goto',
-            'if',
-            'while',
-        ],
-    ],
+    'blank_line_before_statement' => true,
 
     /*
      * The body of each structure MUST be enclosed by braces. Braces
@@ -82,8 +76,8 @@ $rules = [
     'cast_spaces' => true,
 
     /*
-     * Class, trait and interface elements must be separated with one
-     * blank line.
+     * Class, trait and interface elements must be separated with one or
+     * none blank line.
      */
     'class_attributes_separation' => true,
 
@@ -98,6 +92,9 @@ $rules = [
     // Converts `::class` keywords to FQCN strings.
     'class_keyword_remove' => false,
 
+    // Namespace must not contain spacing, comments or PHPDoc.
+    'clean_namespace' => true,
+
     // Using `isset($var) &&` multiple times should be done in one call.
     'combine_consecutive_issets' => true,
 
@@ -111,7 +108,7 @@ $rules = [
      * Risky!
      * Risky when the function `dirname` is overridden.
      */
-    'combine_nested_dirname' => false,
+    'combine_nested_dirname' => true,
 
     /*
      * Comments with annotation should be docblock when used on
@@ -132,7 +129,7 @@ $rules = [
      *
      * Rule is applied only in a PHP 7.1+ environment.
      */
-    'compact_nullable_typehint' => false,
+    'compact_nullable_typehint' => true,
 
     // Concatenation should be spaced according configuration.
     'concat_space' => [
@@ -181,7 +178,9 @@ $rules = [
      * Doctrine annotations must use configured operator for assignment
      * in arrays.
      */
-    'doctrine_annotation_array_assignment' => true,
+    'doctrine_annotation_array_assignment' => [
+        'operator' => ':',
+    ],
 
     /*
      * Doctrine annotations without arguments must use the configured
@@ -200,7 +199,15 @@ $rules = [
      * space around named arguments assignment operator; there must be
      * one space around array assignment operator.
      */
-    'doctrine_annotation_spaces' => true,
+    'doctrine_annotation_spaces' => [
+        'before_array_assignments_colon' => false,
+    ],
+
+    /*
+     * Replaces short-echo `<?=` with long format `<?php echo`/`<?php
+     * print` syntax, or vice-versa.
+     */
+    'echo_tag_syntax' => true,
 
     /*
      * The keyword `elseif` should be used instead of `else if` so that
@@ -270,7 +277,7 @@ $rules = [
      * Add curly braces to indirect variables to make them clear to
      * understand. Requires PHP >= 7.0.
      */
-    'explicit_indirect_variable' => false,
+    'explicit_indirect_variable' => true,
 
     /*
      * Converts implicit variables into explicit ones in double-quoted
@@ -332,9 +339,6 @@ $rules = [
      */
     'final_public_method_for_abstract_class' => false,
 
-    // Converts `static` access to `self` access in `final` classes.
-    'final_static_access' => true,
-
     /*
      * Order the flags in `fopen` calls, `b` and `t` must be last.
      *
@@ -377,15 +381,7 @@ $rules = [
      * Risky when any of the configured functions to replace are
      * overridden.
      */
-    'function_to_constant' => [
-        'functions' => [
-            'get_class',
-            'php_sapi_name',
-            'phpversion',
-            'pi',
-            'get_called_class',
-        ],
-    ],
+    'function_to_constant' => true,
 
     // Ensure single space between function's argument and its typehint.
     'function_typehint_space' => true,
@@ -393,12 +389,22 @@ $rules = [
     // Configured annotations should be omitted from PHPDoc.
     'general_phpdoc_annotation_remove' => true,
 
+    // Renames PHPDoc tags.
+    'general_phpdoc_tag_rename' => [
+        'replacements' => [
+            'inheritDocs' => 'inheritDoc',
+        ],
+    ],
+
     // Imports or fully qualifies global classes/functions/constants.
     'global_namespace_import' => [
         'import_constants' => false,
         'import_functions' => false,
         'import_classes' => false,
     ],
+
+    // There MUST be group use for the same namespaces.
+    'group_import' => false,
 
     // Add, replace or remove header comment.
     'header_comment' => false,
@@ -443,6 +449,9 @@ $rules = [
      * Risky when the function `is_null` is overridden.
      */
     'is_null' => true,
+
+    // Lambda must not import variables it doesn't use.
+    'lambda_not_used_import' => true,
 
     // All PHP files must use same line ending.
     'line_ending' => true,
@@ -589,6 +598,9 @@ $rules = [
         ],
     ],
 
+    // Master language constructs shall be used instead of aliases.
+    'no_alias_language_construct_call' => true,
+
     // Replace control structure alternative syntax to use braces.
     'no_alternative_syntax' => true,
 
@@ -630,30 +642,14 @@ $rules = [
     // There should not be empty PHPDoc blocks.
     'no_empty_phpdoc' => true,
 
-    // Remove useless semicolon statements.
+    // Remove useless (semicolon) statements.
     'no_empty_statement' => true,
 
     /*
      * Removes extra blank lines and/or blank lines following
      * configuration.
      */
-    'no_extra_blank_lines' => [
-        'tokens' => [
-            'extra',
-            'case',
-            'continue',
-            'default',
-            'curly_brace_block',
-            'parenthesis_brace_block',
-            'return',
-            'square_brace_block',
-            'use',
-            'throw',
-            'use_trait',
-            'useTrait',
-            'switch',
-        ],
-    ],
+    'no_extra_blank_lines' => true,
 
     /*
      * Replace accidental usage of homoglyphs (non ascii characters) in
@@ -701,9 +697,6 @@ $rules = [
      */
     'no_short_bool_cast' => true,
 
-    // Replace short-echo `<?=` with long format `<?php echo` syntax.
-    'no_short_echo_tag' => false,
-
     // Single-line whitespace before closing semicolon are prohibited.
     'no_singleline_whitespace_before_semicolons' => true,
 
@@ -743,14 +736,36 @@ $rules = [
     // There MUST be no trailing spaces inside comment or PHPDoc.
     'no_trailing_whitespace_in_comment' => true,
 
+    /*
+     * There must be no trailing whitespace in strings.
+     *
+     * Risky!
+     * Changing the whitespaces in strings might affect string
+     * comparisons and outputs.
+     */
+    'no_trailing_whitespace_in_string' => false,
+
     // Removes unneeded parentheses around control statements.
-    'no_unneeded_control_parentheses' => true,
+    'no_unneeded_control_parentheses' => [
+        'statements' => [
+            'break',
+            'clone',
+            'continue',
+            'echo_print',
+            'return',
+            'switch_case',
+            'yield',
+            'yield_from',
+        ],
+    ],
 
     /*
      * Removes unneeded curly braces that are superfluous and aren't
      * part of a control structure's body.
      */
-    'no_unneeded_curly_braces' => true,
+    'no_unneeded_curly_braces' => [
+        'namespaces' => true,
+    ],
 
     /*
      * A `final` class must not have `final` methods and `private`
@@ -779,12 +794,14 @@ $rules = [
      * Properties should be set to `null` instead of using `unset`.
      *
      * Risky!
-     * Changing variables to `null` instead of unsetting them will mean
-     * they still show up when looping over class variables. With PHP
-     * 7.4, this rule might introduce `null` assignments to property
-     * whose type declaration does not allow it.
+     * Risky when relying on attributes to be removed using `unset`
+     * rather than be set to `null`. Changing variables to `null`
+     * instead of unsetting means these still show up when looping over
+     * class variables and reference properties remain unbroken. With
+     * PHP 7.4, this rule might introduce `null` assignments to
+     * properties whose type declaration does not allow it.
      */
-    'no_unset_on_property' => false,
+    'no_unset_on_property' => true,
 
     // Unused `use` statements must be removed.
     'no_unused_imports' => true,
@@ -797,6 +814,14 @@ $rules = [
      * function.
      */
     'no_useless_return' => true,
+
+    /*
+     * There must be no `sprintf` calls with only the first argument.
+     *
+     * Risky!
+     * Risky when if the `sprintf` function is overridden.
+     */
+    'no_useless_sprintf' => true,
 
     /*
      * In array declaration, there MUST NOT be a whitespace before each
@@ -837,13 +862,33 @@ $rules = [
     'nullable_type_declaration_for_default_null_value' => false,
 
     /*
-     * There should not be space before or after object
-     * `T_OBJECT_OPERATOR` `->`.
+     * There should not be space before or after object operators `->`
+     * and `?->`.
      */
     'object_operator_without_whitespace' => true,
 
+    /*
+     * Operators - when multiline - must always be at the beginning or
+     * at the end of the line.
+     */
+    'operator_linebreak' => true,
+
     // Orders the elements of classes/interfaces/traits.
-    'ordered_class_elements' => false,
+    'ordered_class_elements' => [
+        'order' => [
+            'use_trait',
+            'constant_public',
+            'constant_protected',
+            'constant_private',
+            'property_public',
+            'property_protected',
+            'property_private',
+            'construct',
+            'destruct',
+            'magic',
+            'phpunit',
+        ],
+    ],
 
     // Ordering `use` statements.
     'ordered_imports' => [
@@ -867,6 +912,14 @@ $rules = [
     'ordered_interfaces' => false,
 
     /*
+     * Trait `use` statements must be sorted alphabetically.
+     *
+     * Risky!
+     * Risky when depending on order of the imports.
+     */
+    'ordered_traits' => false,
+
+    /*
      * PHPUnit assertion method calls like `->assertSame(true, $foo)`
      * should be written with dedicated method like
      * `->assertTrue($foo)`.
@@ -885,9 +938,7 @@ $rules = [
      * Fixer could be risky if one is overriding PHPUnit's native
      * methods.
      */
-    'php_unit_dedicate_assert' => [
-        'target' => '3.5',
-    ],
+    'php_unit_dedicate_assert' => true,
 
     /*
      * PHPUnit assertions like `assertIsArray` should be used over
@@ -897,7 +948,7 @@ $rules = [
      * Risky when PHPUnit methods are overridden or when project has
      * PHPUnit incompatibilities.
      */
-    'php_unit_dedicate_assert_internal_type' => false,
+    'php_unit_dedicate_assert_internal_type' => true,
 
     /*
      * Usages of `->setExpectedException*` methods MUST be replaced by
@@ -907,7 +958,9 @@ $rules = [
      * Risky when PHPUnit classes are overridden or not accessible, or
      * when project has PHPUnit incompatibilities.
      */
-    'php_unit_expectation' => false,
+    'php_unit_expectation' => [
+        'target' => '5.6',
+    ],
 
     // PHPUnit annotations should be a FQCNs including a root namespace.
     'php_unit_fqcn_annotation' => true,
@@ -930,7 +983,7 @@ $rules = [
      * Risky when PHPUnit classes are overridden or not accessible, or
      * when project has PHPUnit incompatibilities.
      */
-    'php_unit_mock' => false,
+    'php_unit_mock' => true,
 
     /*
      * Usage of PHPUnit's mock e.g. `->will($this->returnValue(..))`
@@ -941,7 +994,7 @@ $rules = [
      * Risky when PHPUnit classes are overridden or not accessible, or
      * when project has PHPUnit incompatibilities.
      */
-    'php_unit_mock_short_will_return' => false,
+    'php_unit_mock_short_will_return' => true,
 
     /*
      * PHPUnit classes MUST be used in namespaced version, e.g.
@@ -962,9 +1015,7 @@ $rules = [
      * Risky when PHPUnit classes are overridden or not accessible, or
      * when project has PHPUnit incompatibilities.
      */
-    'php_unit_namespaced' => [
-        'target' => '4.8',
-    ],
+    'php_unit_namespaced' => true,
 
     /*
      * Usages of `@expectedException*` annotations MUST be replaced by
@@ -977,9 +1028,6 @@ $rules = [
     'php_unit_no_expectation_annotation' => [
         'target' => 'newest',
     ],
-
-    // Order `@covers` annotation of PHPUnit tests.
-    'php_unit_ordered_covers' => true,
 
     /*
      * Changes the visibility of the `setUp()` and `tearDown()`
@@ -1047,18 +1095,7 @@ $rules = [
      * All items of the given phpdoc tags must be either left-aligned or
      * (by default) aligned vertically.
      */
-    'phpdoc_align' => [
-        'tags' => [
-            'return',
-            'throws',
-            'type',
-            'var',
-            'property',
-            'method',
-            'param',
-        ],
-        'align' => 'vertical',
-    ],
+    'phpdoc_align' => true,
 
     // PHPDoc annotation descriptions should not be a sentence.
     'phpdoc_annotation_without_dot' => true,
@@ -1069,8 +1106,8 @@ $rules = [
      */
     'phpdoc_indent' => true,
 
-    // Fix PHPDoc inline tags, make `@inheritdoc` always inline.
-    'phpdoc_inline_tag' => true,
+    // Fixes PHPDoc inline tags.
+    'phpdoc_inline_tag_normalizer' => true,
 
     /*
      * Changes doc blocks from single to multi line, or reversed. Works
@@ -1110,6 +1147,17 @@ $rules = [
      */
     'phpdoc_order' => true,
 
+    // Order phpdoc tags by value.
+    'phpdoc_order_by_value' => [
+        'annotations' => [
+            'covers',
+            'method',
+            'property',
+            'property-read',
+            'property-write',
+        ],
+    ],
+
     /*
      * The type of `@return` annotations of methods returning a
      * reference to itself must the configured one.
@@ -1139,6 +1187,16 @@ $rules = [
      */
     'phpdoc_summary' => true,
 
+    // Fixes casing of PHPDoc tags.
+    'phpdoc_tag_casing' => true,
+
+    // Forces PHPDoc tags to be either regular annotations or inline.
+    'phpdoc_tag_type' => [
+        'tags' => [
+            'inheritDoc' => 'inline',
+        ],
+    ],
+
     // Docblocks should only be used on structural elements.
     'phpdoc_to_comment' => false,
 
@@ -1156,6 +1214,19 @@ $rules = [
     'phpdoc_to_param_type' => false,
 
     /*
+     * EXPERIMENTAL: Takes `@var` annotation of non-mixed types and
+     * adjusts accordingly the property signature. Requires PHP >= 7.4.
+     *
+     * Risky!
+     * This rule is EXPERIMENTAL and [1] is not covered with backward
+     * compatibility promise. [2] `@var` annotation is mandatory for the
+     * fixer to make changes, signatures of properties without it (no
+     * docblock) will not be fixed. [3] Manual actions might be required
+     * for newly typed properties that are read before initialization.
+     */
+    'phpdoc_to_property_type' => false,
+
+    /*
      * EXPERIMENTAL: Takes `@return` annotation of non-mixed types and
      * adjusts accordingly the function signature. Requires PHP >= 7.0.
      *
@@ -1164,8 +1235,7 @@ $rules = [
      * compatibility promise. [2] `@return` annotation is mandatory for
      * the fixer to make changes, signatures of methods without it (no
      * docblock, inheritdocs) will not be fixed. [3] Manual actions are
-     * required if inherited signatures are not properly documented. [4]
-     * `@inheritdocs` support is under construction.
+     * required if inherited signatures are not properly documented.
      */
     'phpdoc_to_return_type' => false,
 
@@ -1208,7 +1278,7 @@ $rules = [
      * Risky!
      * Risky when the function `pow` is overridden.
      */
-    'pow_to_exponentiation' => false,
+    'pow_to_exponentiation' => true,
 
     /*
      * Converts `protected` variables and methods to `private` where
@@ -1225,16 +1295,7 @@ $rules = [
      * This fixer may change your class name, which will break the code
      * that depends on the old name.
      */
-    'psr0' => false,
-
-    /*
-     * Class names should match the file name.
-     *
-     * Risky!
-     * This fixer may change your class name, which will break the code
-     * that depends on the old name.
-     */
-    'psr4' => true,
+    'psr_autoloading' => false,
 
     /*
      * Replaces `rand`, `srand`, `getrandmax` functions calls with their
@@ -1245,11 +1306,22 @@ $rules = [
      */
     'random_api_migration' => [
         'replacements' => [
-            'getrandmax' => 'mt_getrandmax',
-            'rand' => 'mt_rand',
-            'srand' => 'mt_srand',
+            'mt_rand' => 'random_int',
+            'rand' => 'random_int',
         ],
     ],
+
+    /*
+     * Callables must be called without using `call_user_func*` when
+     * possible.
+     *
+     * Risky!
+     * Risky when the `call_user_func` or `call_user_func_array`
+     * function is overridden or when are used in constructions that
+     * should be avoided, like `call_user_func_array('foo', ['bar' =>
+     * 'baz'])` or `call_user_func($foo, $foo = 'bar')`.
+     */
+    'regular_callable_call' => true,
 
     /*
      * Local, dynamic and directly referenced variables should not be
@@ -1263,7 +1335,7 @@ $rules = [
      *
      * Rule is applied only in a PHP 7+ environment.
      */
-    'return_type_declaration' => false,
+    'return_type_declaration' => true,
 
     /*
      * Inside class or interface element `self` should be preferred to
@@ -1308,6 +1380,12 @@ $rules = [
      * `explicit_string_variable`.
      */
     'simple_to_complex_string_variable' => true,
+
+    /*
+     * Simplify `if` control structures that return the boolean result
+     * of their condition.
+     */
+    'simplified_if_return' => true,
 
     /*
      * A return statement wishing to return `void` should not return
@@ -1355,6 +1433,9 @@ $rules = [
     'single_quote' => [
         'strings_containing_single_quote_chars' => false,
     ],
+
+    // Ensures a single space after language constructs.
+    'single_space_after_construct' => true,
 
     // Each trait `use` must be done as single statement.
     'single_trait_insert_per_statement' => true,
@@ -1414,17 +1495,32 @@ $rules = [
     // Removes extra spaces between colon and case value.
     'switch_case_space' => true,
 
+    // Switch case must not be ended with `continue` but with `break`.
+    'switch_continue_to_break' => true,
+
     // Standardize spaces around ternary operator.
     'ternary_operator_spaces' => true,
+
+    /*
+     * Use the Elvis operator `?:` where possible.
+     *
+     * Risky!
+     * Risky when relying on functions called on both sides of the `?`
+     * operator.
+     */
+    'ternary_to_elvis_operator' => true,
 
     /*
      * Use `null` coalescing operator `??` where possible. Requires PHP
      * >= 7.0.
      */
-    'ternary_to_null_coalescing' => false,
+    'ternary_to_null_coalescing' => true,
 
-    // PHP multi-line arrays should have a trailing comma.
-    'trailing_comma_in_multiline_array' => true,
+    /*
+     * Multi-line arrays, arguments list and parameters list must have a
+     * trailing comma.
+     */
+    'trailing_comma_in_multiline' => true,
 
     /*
      * Arrays should be formatted like function/method arguments,
@@ -1436,11 +1532,26 @@ $rules = [
     'unary_operator_spaces' => true,
 
     /*
+     * Anonymous functions with one-liner return statement must use
+     * arrow functions.
+     *
+     * Risky!
+     * Risky when using `isset()` on outside variables that are not
+     * imported with `use ()`.
+     */
+    'use_arrow_functions' => false,
+
+    /*
      * Visibility MUST be declared on all properties and methods;
      * `abstract` and `final` MUST be declared before the visibility;
      * `static` MUST be declared after the visibility.
      */
-    'visibility_required' => true,
+    'visibility_required' => [
+        'elements' => [
+            'method',
+            'property',
+        ],
+    ],
 
     /*
      * Add `void` return type to functions with missing or empty return
@@ -1459,8 +1570,10 @@ $rules = [
     'whitespace_after_comma_in_array' => true,
 
     /*
-     * Write conditions in Yoda style (`true`), non-Yoda style (`false`)
-     * or ignore those conditions (`null`) based on configuration.
+     * Write conditions in Yoda style (`true`), non-Yoda style
+     * (`['equal' => false, 'identical' => false, 'less_and_greater' =>
+     * false]`) or ignore those conditions (`null`) based on
+     * configuration.
      */
     'yoda_style' => [
         'equal' => false,
@@ -1477,7 +1590,7 @@ if (\PHP_SAPI === 'cli' && !class_exists(\PhpCsFixer\Config::class)) {
     }
     $dryRun = !in_array('--force', $_SERVER['argv'], true);
 
-    $command = escapeshellarg($binFixer) . ' fix --config ' . escapeshellarg(__FILE__) . ' --diff-format udiff --ansi -vv';
+    $command = escapeshellarg($binFixer) . ' fix --config ' . escapeshellarg(__FILE__) . ' --diff --ansi -vv';
 
     if ($dryRun) {
         $command .= ' --dry-run';
@@ -1498,13 +1611,14 @@ if (\PHP_SAPI === 'cli' && !class_exists(\PhpCsFixer\Config::class)) {
     exit($returnCode);
 }
 
-return \PhpCsFixer\Config::create()
+return (new \PhpCsFixer\Config())
     ->setUsingCache(true)
-    ->setCacheFile(__DIR__ . '/.php_cs.cache')
+    ->setCacheFile(__DIR__ . '/.php-cs-fixer.cache')
     ->setRules($rules)
     ->setRiskyAllowed(true)
     ->setFinder(
         \PhpCsFixer\Finder::create()
+            ->ignoreUnreadableDirs()
             ->in(__DIR__)
     )
 ;

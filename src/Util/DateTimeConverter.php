@@ -82,12 +82,12 @@ class DateTimeConverter
 
         $date = getdate($unixTimestamp);
         $dosTime = (
-            (($date['year'] - 1980) << 25) |
-            ($date['mon'] << 21) |
-            ($date['mday'] << 16) |
-            ($date['hours'] << 11) |
-            ($date['minutes'] << 5) |
-            ($date['seconds'] >> 1)
+            (($date['year'] - 1980) << 25)
+            | ($date['mon'] << 21)
+            | ($date['mday'] << 16)
+            | ($date['hours'] << 11)
+            | ($date['minutes'] << 5)
+            | ($date['seconds'] >> 1)
         );
 
         if ($dosTime <= self::MIN_DOS_TIME) {

@@ -31,10 +31,8 @@ class ZipPasswordTest extends ZipFileSetTestCase
     public function testSetPassword()
     {
         if (\PHP_INT_SIZE === 4) { // php 32 bit
-            $this->setExpectedException(
-                RuntimeException::class,
-                'Traditional PKWARE Encryption is not supported in 32-bit PHP.'
-            );
+            $this->expectException(RuntimeException::class);
+            $this->expectExceptionMessage('Traditional PKWARE Encryption is not supported in 32-bit PHP.');
         }
 
         $password = base64_encode(random_bytes(100));
@@ -66,10 +64,10 @@ class ZipPasswordTest extends ZipFileSetTestCase
 
         foreach ($zipFile->getAllInfo() as $info) {
             static::assertTrue($info->isEncrypted());
-            static::assertContains('Traditional PKWARE encryption', $info->getEncryptionMethodName());
+            static::assertStringContainsString('Traditional PKWARE encryption', $info->getEncryptionMethodName());
             $decryptContent = $zipFile[$info->getName()];
             static::assertNotEmpty($decryptContent);
-            static::assertContains('<?php', $decryptContent);
+            static::assertStringContainsString('<?php', $decryptContent);
         }
 
         // change encryption method to WinZip Aes and update file
@@ -100,11 +98,11 @@ class ZipPasswordTest extends ZipFileSetTestCase
 
         foreach ($zipFile->getAllInfo() as $info) {
             static::assertTrue($info->isEncrypted());
-            static::assertContains('Deflated', $info->getMethodName());
-            static::assertContains('WinZip AES-256', $info->getEncryptionMethodName());
+            static::assertStringContainsString('Deflated', $info->getMethodName());
+            static::assertStringContainsString('WinZip AES-256', $info->getEncryptionMethodName());
             $decryptContent = $zipFile[$info->getName()];
             static::assertNotEmpty($decryptContent);
-            static::assertContains('<?php', $decryptContent);
+            static::assertStringContainsString('<?php', $decryptContent);
         }
 
         // clear password
@@ -132,8 +130,10 @@ class ZipPasswordTest extends ZipFileSetTestCase
     public function testTraditionalEncryption()
     {
         if (\PHP_INT_SIZE === 4) { // php 32 bit
-            $this->setExpectedException(
-                RuntimeException::class,
+            $this->expectException(
+                RuntimeException::class
+            );
+            $this->expectExceptionMessage(
                 'Traditional PKWARE Encryption is not supported in 32-bit PHP.'
             );
         }
@@ -155,7 +155,7 @@ class ZipPasswordTest extends ZipFileSetTestCase
         foreach ($zip->getAllInfo() as $info) {
             if (!$info->isFolder()) {
                 static::assertTrue($info->isEncrypted());
-                static::assertContains('Traditional PKWARE encryption', $info->getEncryptionMethodName());
+                static::assertStringContainsString('Traditional PKWARE encryption', $info->getEncryptionMethodName());
             }
         }
         $zip->close();
@@ -190,7 +190,7 @@ class ZipPasswordTest extends ZipFileSetTestCase
             if (!$info->isFolder()) {
                 static::assertTrue($info->isEncrypted());
                 static::assertSame($info->getEncryptionMethod(), $encryptionMethod);
-                static::assertContains('WinZip AES-' . $bitSize, $info->getEncryptionMethodName());
+                static::assertStringContainsString('WinZip AES-' . $bitSize, $info->getEncryptionMethodName());
             }
         }
         $zip->close();
@@ -215,8 +215,10 @@ class ZipPasswordTest extends ZipFileSetTestCase
     public function testEncryptionEntries()
     {
         if (\PHP_INT_SIZE === 4) { // php 32 bit
-            $this->setExpectedException(
-                RuntimeException::class,
+            $this->expectException(
+                RuntimeException::class
+            );
+            $this->expectExceptionMessage(
                 'Traditional PKWARE Encryption is not supported in 32-bit PHP.'
             );
         }
@@ -247,11 +249,11 @@ class ZipPasswordTest extends ZipFileSetTestCase
 
         $info = $zip->getEntryInfo('.hidden');
         static::assertTrue($info->isEncrypted());
-        static::assertContains('Traditional PKWARE encryption', $info->getEncryptionMethodName());
+        static::assertStringContainsString('Traditional PKWARE encryption', $info->getEncryptionMethodName());
 
         $info = $zip->getEntryInfo('text file.txt');
         static::assertTrue($info->isEncrypted());
-        static::assertContains('WinZip AES', $info->getEncryptionMethodName());
+        static::assertStringContainsString('WinZip AES', $info->getEncryptionMethodName());
 
         static::assertFalse($zip->getEntryInfo('Текстовый документ.txt')->isEncrypted());
         static::assertFalse($zip->getEntryInfo('empty dir/')->isEncrypted());
@@ -266,8 +268,10 @@ class ZipPasswordTest extends ZipFileSetTestCase
     public function testEncryptionEntriesWithDefaultPassword()
     {
         if (\PHP_INT_SIZE === 4) { // php 32 bit
-            $this->setExpectedException(
-                RuntimeException::class,
+            $this->expectException(
+                RuntimeException::class
+            );
+            $this->expectExceptionMessage(
                 'Traditional PKWARE Encryption is not supported in 32-bit PHP.'
             );
         }
@@ -301,15 +305,15 @@ class ZipPasswordTest extends ZipFileSetTestCase
 
         $info = $zip->getEntryInfo('.hidden');
         static::assertTrue($info->isEncrypted());
-        static::assertContains('Traditional PKWARE encryption', $info->getEncryptionMethodName());
+        static::assertStringContainsString('Traditional PKWARE encryption', $info->getEncryptionMethodName());
 
         $info = $zip->getEntryInfo('text file.txt');
         static::assertTrue($info->isEncrypted());
-        static::assertContains('WinZip AES', $info->getEncryptionMethodName());
+        static::assertStringContainsString('WinZip AES', $info->getEncryptionMethodName());
 
         $info = $zip->getEntryInfo('Текстовый документ.txt');
         static::assertTrue($info->isEncrypted());
-        static::assertContains('WinZip AES', $info->getEncryptionMethodName());
+        static::assertStringContainsString('WinZip AES', $info->getEncryptionMethodName());
 
         static::assertFalse($zip->getEntryInfo('empty dir/')->isEncrypted());
 
@@ -321,7 +325,8 @@ class ZipPasswordTest extends ZipFileSetTestCase
      */
     public function testSetEncryptionMethodInvalid()
     {
-        $this->setExpectedException(InvalidArgumentException::class, 'Encryption method 9999 is not supported.');
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Encryption method 9999 is not supported.');
 
         $zipFile = new ZipFile();
         $encryptionMethod = 9999;
@@ -369,7 +374,8 @@ class ZipPasswordTest extends ZipFileSetTestCase
      */
     public function testInvalidEncryptionMethodEntry()
     {
-        $this->setExpectedException(InvalidArgumentException::class, 'Encryption method 99 is not supported.');
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Encryption method 99 is not supported.');
 
         $zipFile = new ZipFile();
         $zipFile->addFromString('file', 'content', ZipCompressionMethod::STORED);
@@ -471,7 +477,7 @@ class ZipPasswordTest extends ZipFileSetTestCase
         foreach ($zipFile as $name => $contents) {
             static::assertNotEmpty($name);
             static::assertNotEmpty($contents);
-            static::assertContains('test contents', $contents);
+            static::assertStringContainsString('test contents', $contents);
             static::assertSame($zipFile2[$name], $contents);
         }
         $zipFile2->close();

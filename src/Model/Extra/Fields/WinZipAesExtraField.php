@@ -97,6 +97,20 @@ class WinZipAesExtraField implements ZipExtraField
     }
 
     /**
+     * @return string
+     */
+    public function __toString()
+    {
+        return sprintf(
+            '0x%04x WINZIP AES: VendorVersion=%d KeyStrength=0x%02x CompressionMethod=%s',
+            __CLASS__,
+            $this->vendorVersion,
+            $this->keyStrength,
+            $this->compressionMethod
+        );
+    }
+
+    /**
      * @param ZipEntry $entry
      *
      * @throws ZipUnsupportMethodException
@@ -118,11 +132,11 @@ class WinZipAesExtraField implements ZipExtraField
         //
         // https://www.winzip.com/win/en/aes_info.html
         $vendorVersion = (
-            $entry->getUncompressedSize() < 20 ||
-            $entry->getCompressionMethod() === ZipCompressionMethod::BZIP2
-        ) ?
-            self::VERSION_AE2 :
-            self::VERSION_AE1;
+            $entry->getUncompressedSize() < 20
+            || $entry->getCompressionMethod() === ZipCompressionMethod::BZIP2
+        )
+            ? self::VERSION_AE2
+            : self::VERSION_AE1;
 
         $field = new self($vendorVersion, $keyStrength, $entry->getCompressionMethod());
 
@@ -369,19 +383,5 @@ class WinZipAesExtraField implements ZipExtraField
     public function getSaltSize()
     {
         return (int) ($this->getEncryptionStrength() / 8 / 2);
-    }
-
-    /**
-     * @return string
-     */
-    public function __toString()
-    {
-        return sprintf(
-            '0x%04x WINZIP AES: VendorVersion=%d KeyStrength=0x%02x CompressionMethod=%s',
-            __CLASS__,
-            $this->vendorVersion,
-            $this->keyStrength,
-            $this->compressionMethod
-        );
     }
 }

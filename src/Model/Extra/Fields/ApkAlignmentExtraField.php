@@ -51,6 +51,19 @@ class ApkAlignmentExtraField implements ZipExtraField
     }
 
     /**
+     * @return string
+     */
+    public function __toString()
+    {
+        return sprintf(
+            '0x%04x APK Alignment: Multiple=%d Padding=%d',
+            self::HEADER_ID,
+            $this->multiple,
+            $this->padding
+        );
+    }
+
+    /**
      * Returns the Header ID (type) of this Extra Field.
      * The Header ID is an unsigned short integer (two bytes)
      * which must be constant during the life cycle of this object.
@@ -159,18 +172,5 @@ class ApkAlignmentExtraField implements ZipExtraField
     public function packCentralDirData()
     {
         return $this->packLocalFileData();
-    }
-
-    /**
-     * @return string
-     */
-    public function __toString()
-    {
-        return sprintf(
-            '0x%04x APK Alignment: Multiple=%d Padding=%d',
-            self::HEADER_ID,
-            $this->multiple,
-            $this->padding
-        );
     }
 }

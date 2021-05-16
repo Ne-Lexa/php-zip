@@ -66,9 +66,9 @@ class PKEncryptionStreamFilter extends \php_user_filter
         // init keys
         $this->context = new PKCryptContext($password);
 
-        $crc = $entry->isDataDescriptorRequired() || $entry->getCrc() === ZipEntry::UNKNOWN ?
-            ($entry->getDosTime() & 0x0000ffff) << 16 :
-            $entry->getCrc();
+        $crc = $entry->isDataDescriptorRequired() || $entry->getCrc() === ZipEntry::UNKNOWN
+            ? ($entry->getDosTime() & 0x0000ffff) << 16
+            : $entry->getCrc();
 
         try {
             $headerBytes = random_bytes(PKCryptContext::STD_DEC_HDR_SIZE);

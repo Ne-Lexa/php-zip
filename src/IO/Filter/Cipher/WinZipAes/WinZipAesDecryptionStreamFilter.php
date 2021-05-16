@@ -60,9 +60,9 @@ class WinZipAesDecryptionStreamFilter extends \php_user_filter
         $this->entry = $this->params['entry'];
 
         if (
-            $this->entry->getPassword() === null ||
-            !$this->entry->isEncrypted() ||
-            !$this->entry->hasExtraField(WinZipAesExtraField::HEADER_ID)
+            $this->entry->getPassword() === null
+            || !$this->entry->isEncrypted()
+            || !$this->entry->hasExtraField(WinZipAesExtraField::HEADER_ID)
         ) {
             return false;
         }
@@ -156,8 +156,8 @@ class WinZipAesDecryptionStreamFilter extends \php_user_filter
             $this->encBlockPosition += $offset;
 
             if (
-                $this->encBlockPosition === $this->encBlockLength &&
-                \strlen($this->buffer) === WinZipAesContext::FOOTER_SIZE
+                $this->encBlockPosition === $this->encBlockLength
+                && \strlen($this->buffer) === WinZipAesContext::FOOTER_SIZE
             ) {
                 $this->authenticationCode = $this->buffer;
                 $this->buffer = '';

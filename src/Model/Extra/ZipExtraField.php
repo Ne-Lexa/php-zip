@@ -12,6 +12,11 @@ use PhpZip\Model\ZipEntry;
 interface ZipExtraField
 {
     /**
+     * @return string
+     */
+    public function __toString();
+
+    /**
      * Returns the Header ID (type) of this Extra Field.
      * The Header ID is an unsigned short integer (two bytes)
      * which must be constant during the life cycle of this object.
@@ -55,9 +60,4 @@ interface ZipExtraField
      * @return string the data
      */
     public function packCentralDirData();
-
-    /**
-     * @return string
-     */
-    public function __toString();
 }

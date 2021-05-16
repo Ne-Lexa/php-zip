@@ -56,9 +56,8 @@ final class ZipCompressionMethod
      */
     public static function getCompressionMethodName($value)
     {
-        return isset(self::$ZIP_COMPRESSION_METHODS[$value]) ?
-            self::$ZIP_COMPRESSION_METHODS[$value] :
-            'Unknown Method';
+        return self::$ZIP_COMPRESSION_METHODS[$value]
+            ?? 'Unknown Method';
     }
 
     /**

@@ -53,9 +53,9 @@ class WinZipAesEncryptionStreamFilter extends \php_user_filter
         $this->entry = $this->params['entry'];
 
         if (
-            $this->entry->getPassword() === null ||
-            !$this->entry->isEncrypted() ||
-            !$this->entry->hasExtraField(WinZipAesExtraField::HEADER_ID)
+            $this->entry->getPassword() === null
+            || !$this->entry->isEncrypted()
+            || !$this->entry->hasExtraField(WinZipAesExtraField::HEADER_ID)
         ) {
             return false;
         }

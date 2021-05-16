@@ -32,6 +32,33 @@ class ZipInfo
     }
 
     /**
+     * @return string
+     */
+    public function __toString()
+    {
+        $ctime = $this->entry->getCTime();
+        $atime = $this->entry->getATime();
+        $comment = $this->getComment();
+
+        return __CLASS__ . ' {'
+            . 'Name="' . $this->getName() . '", '
+            . ($this->isFolder() ? 'Folder, ' : '')
+            . 'Size="' . FilesUtil::humanSize($this->getSize()) . '"'
+            . ', Compressed size="' . FilesUtil::humanSize($this->getCompressedSize()) . '"'
+            . ', Modified time="' . $this->entry->getMTime()->format(\DATE_W3C) . '", '
+            . ($ctime !== null ? 'Created time="' . $ctime->format(\DATE_W3C) . '", ' : '')
+            . ($atime !== null ? 'Accessed time="' . $atime->format(\DATE_W3C) . '", ' : '')
+            . ($this->isEncrypted() ? 'Encrypted, ' : '')
+            . ($comment !== null ? 'Comment="' . $comment . '", ' : '')
+            . (!empty($this->crc) ? 'Crc=0x' . dechex($this->crc) . ', ' : '')
+            . 'Method name="' . $this->getMethodName() . '", '
+            . 'Attributes="' . $this->getAttributes() . '", '
+            . 'Platform="' . $this->getPlatform() . '", '
+            . 'Version=' . $this->getVersion()
+            . '}';
+    }
+
+    /**
      * @param ZipEntry $entry
      *
      * @return string
@@ -235,32 +262,5 @@ class ZipInfo
             'platform' => $this->getPlatform(),
             'version' => $this->getVersion(),
         ];
-    }
-
-    /**
-     * @return string
-     */
-    public function __toString()
-    {
-        $ctime = $this->entry->getCTime();
-        $atime = $this->entry->getATime();
-        $comment = $this->getComment();
-
-        return __CLASS__ . ' {'
-            . 'Name="' . $this->getName() . '", '
-            . ($this->isFolder() ? 'Folder, ' : '')
-            . 'Size="' . FilesUtil::humanSize($this->getSize()) . '"'
-            . ', Compressed size="' . FilesUtil::humanSize($this->getCompressedSize()) . '"'
-            . ', Modified time="' . $this->entry->getMTime()->format(\DATE_W3C) . '", '
-            . ($ctime !== null ? 'Created time="' . $ctime->format(\DATE_W3C) . '", ' : '')
-            . ($atime !== null ? 'Accessed time="' . $atime->format(\DATE_W3C) . '", ' : '')
-            . ($this->isEncrypted() ? 'Encrypted, ' : '')
-            . ($comment !== null ? 'Comment="' . $comment . '", ' : '')
-            . (!empty($this->crc) ? 'Crc=0x' . dechex($this->crc) . ', ' : '')
-            . 'Method name="' . $this->getMethodName() . '", '
-            . 'Attributes="' . $this->getAttributes() . '", '
-            . 'Platform="' . $this->getPlatform() . '", '
-            . 'Version=' . $this->getVersion()
-            . '}';
     }
 }

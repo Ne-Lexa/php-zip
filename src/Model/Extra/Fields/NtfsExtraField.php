@@ -56,6 +56,32 @@ class NtfsExtraField implements ZipExtraField
     }
 
     /**
+     * @return string
+     */
+    public function __toString()
+    {
+        $args = [self::HEADER_ID];
+        $format = '0x%04x NtfsExtra:';
+
+        if ($this->modifyNtfsTime !== 0) {
+            $format .= ' Modify:[%s]';
+            $args[] = $this->getModifyDateTime()->format(\DATE_ATOM);
+        }
+
+        if ($this->accessNtfsTime !== 0) {
+            $format .= ' Access:[%s]';
+            $args[] = $this->getAccessDateTime()->format(\DATE_ATOM);
+        }
+
+        if ($this->createNtfsTime !== 0) {
+            $format .= ' Create:[%s]';
+            $args[] = $this->getCreateDateTime()->format(\DATE_ATOM);
+        }
+
+        return vsprintf($format, $args);
+    }
+
+    /**
      * @param \DateTimeInterface $modifyDateTime
      * @param \DateTimeInterface $accessDateTime
      * @param \DateTimeInterface $createNtfsTime
@@ -309,31 +335,5 @@ class NtfsExtraField implements ZipExtraField
         }
 
         return $dateTime;
-    }
-
-    /**
-     * @return string
-     */
-    public function __toString()
-    {
-        $args = [self::HEADER_ID];
-        $format = '0x%04x NtfsExtra:';
-
-        if ($this->modifyNtfsTime !== 0) {
-            $format .= ' Modify:[%s]';
-            $args[] = $this->getModifyDateTime()->format(\DATE_ATOM);
-        }
-
-        if ($this->accessNtfsTime !== 0) {
-            $format .= ' Access:[%s]';
-            $args[] = $this->getAccessDateTime()->format(\DATE_ATOM);
-        }
-
-        if ($this->createNtfsTime !== 0) {
-            $format .= ' Create:[%s]';
-            $args[] = $this->getCreateDateTime()->format(\DATE_ATOM);
-        }
-
-        return vsprintf($format, $args);
     }
 }

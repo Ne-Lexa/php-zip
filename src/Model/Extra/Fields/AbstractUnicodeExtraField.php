@@ -116,8 +116,8 @@ abstract class AbstractUnicodeExtraField implements ZipExtraField
             'CV',
             self::DEFAULT_VERSION,
             $this->crc32
-        ) .
-            $this->unicodeValue;
+        )
+            . $this->unicodeValue;
     }
 
     /**

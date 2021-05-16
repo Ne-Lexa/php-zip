@@ -45,34 +45,42 @@ class FileAttribUtil implements DosAttrs, UnixStat
         switch ($permission & self::UNX_IFMT) {
             case self::UNX_IFDIR:
                 $mode .= 'd';
+
                 break;
 
             case self::UNX_IFREG:
                 $mode .= '-';
+
                 break;
 
             case self::UNX_IFLNK:
                 $mode .= 'l';
+
                 break;
 
             case self::UNX_IFBLK:
                 $mode .= 'b';
+
                 break;
 
             case self::UNX_IFCHR:
                 $mode .= 'c';
+
                 break;
 
             case self::UNX_IFIFO:
                 $mode .= 'p';
+
                 break;
 
             case self::UNX_IFSOCK:
                 $mode .= 's';
+
                 break;
 
             default:
                 $mode .= '?';
+
                 break;
         }
         $mode .= ($permission & self::UNX_IRUSR) ? 'r' : '-';

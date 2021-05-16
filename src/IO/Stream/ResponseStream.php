@@ -87,27 +87,11 @@ class ResponseStream implements StreamInterface
     }
 
     /**
-     * Get stream metadata as an associative array or retrieve a specific key.
-     *
-     * The keys returned are identical to the keys returned from PHP's
-     * stream_get_meta_data() function.
-     *
-     * @see http://php.net/manual/en/function.stream-get-meta-data.php
-     *
-     * @param string $key specific metadata to retrieve
-     *
-     * @return array|mixed|null Returns an associative array if no key is
-     *                          provided. Returns a specific key value if a key is provided and the
-     *                          value is found, or null if the key is not found.
+     * Closes the stream when the destructed.
      */
-    public function getMetadata($key = null)
+    public function __destruct()
     {
-        if (!$this->stream) {
-            return $key ? null : [];
-        }
-        $meta = stream_get_meta_data($this->stream);
-
-        return isset($meta[$key]) ? $meta[$key] : null;
+        $this->close();
     }
 
     /**
@@ -133,6 +117,30 @@ class ResponseStream implements StreamInterface
         $this->rewind();
 
         return (string) stream_get_contents($this->stream);
+    }
+
+    /**
+     * Get stream metadata as an associative array or retrieve a specific key.
+     *
+     * The keys returned are identical to the keys returned from PHP's
+     * stream_get_meta_data() function.
+     *
+     * @see http://php.net/manual/en/function.stream-get-meta-data.php
+     *
+     * @param string $key specific metadata to retrieve
+     *
+     * @return array|mixed|null Returns an associative array if no key is
+     *                          provided. Returns a specific key value if a key is provided and the
+     *                          value is found, or null if the key is not found.
+     */
+    public function getMetadata($key = null)
+    {
+        if (!$this->stream) {
+            return $key ? null : [];
+        }
+        $meta = stream_get_meta_data($this->stream);
+
+        return $meta[$key] ?? null;
     }
 
     /**
@@ -163,7 +171,7 @@ class ResponseStream implements StreamInterface
         }
 
         if (!$this->stream) {
-            return null;
+            return;
         }
         // Clear the stat cache if the stream has a URI
         if ($this->uri !== null) {
@@ -176,8 +184,6 @@ class ResponseStream implements StreamInterface
 
             return $this->size;
         }
-
-        return null;
     }
 
     /**
@@ -295,14 +301,6 @@ class ResponseStream implements StreamInterface
     public function getContents()
     {
         return $this->stream ? stream_get_contents($this->stream) : '';
-    }
-
-    /**
-     * Closes the stream when the destructed.
-     */
-    public function __destruct()
-    {
-        $this->close();
     }
 
     /**

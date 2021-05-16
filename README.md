@@ -1,15 +1,21 @@
-`PhpZip`
-========
+<h1 align="center"><img src="logo.svg" alt="PhpZip" width="250" height="51"></h1>
+
 `PhpZip` is a php-library for extended work with ZIP-archives.
 
-[![Build Status](https://travis-ci.org/Ne-Lexa/php-zip.svg?branch=master)](https://travis-ci.org/Ne-Lexa/php-zip)
+[![Packagist Version](https://img.shields.io/packagist/v/nelexa/zip.svg)](https://packagist.org/packages/nelexa/zip)
+[![Packagist Downloads](https://img.shields.io/packagist/dt/nelexa/zip.svg?color=%23ff007f)](https://packagist.org/packages/nelexa/zip)
 [![Code Coverage](https://scrutinizer-ci.com/g/Ne-Lexa/php-zip/badges/coverage.png?b=master)](https://scrutinizer-ci.com/g/Ne-Lexa/php-zip/?branch=master)
-[![Latest Stable Version](https://poser.pugx.org/nelexa/zip/v/stable)](https://packagist.org/packages/nelexa/zip)
-[![Total Downloads](https://poser.pugx.org/nelexa/zip/downloads)](https://packagist.org/packages/nelexa/zip)
-[![Minimum PHP Version](http://img.shields.io/badge/php-%3E%3D%205.5-8892BF.svg)](https://php.net/)
-[![License](https://poser.pugx.org/nelexa/zip/license)](https://packagist.org/packages/nelexa/zip)
+[![Build Status](https://github.com/Ne-Lexa/php-zip/workflows/build/badge.svg)](https://github.com/Ne-Lexa/php-zip/actions)
+[![License](https://img.shields.io/packagist/l/nelexa/zip.svg)](https://github.com/Ne-Lexa/php-zip/blob/master/LICENSE)
 
 [Russian Documentation](README.RU.md)
+
+### Versions & Dependencies
+| Version         | PHP          | Documentation                                                         |
+| --------------- | ------------ | --------------------------------------------------------------------- |
+| ^4.0 (master)   | ^7.4 \| ^8.0 | [Docs v4.0](https://github.com/Ne-Lexa/php-zip/blob/master/README.md) |
+| 3.4.*           | ^7.1 \| ^8.0 | current docs                                                          |
+| 3.0.* - 3.3.*   | ^5.5 \| ^7.0 | [Docs v3.3](https://github.com/Ne-Lexa/php-zip/blob/3.3.3/README.md)  |
 
 Table of contents
 -----------------

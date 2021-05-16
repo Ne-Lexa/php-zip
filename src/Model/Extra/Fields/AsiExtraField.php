@@ -86,6 +86,21 @@ class AsiExtraField implements ZipExtraField
     }
 
     /**
+     * @return string
+     */
+    public function __toString()
+    {
+        return sprintf(
+            '0x%04x ASI: Mode=%o UID=%d GID=%d Link="%s',
+            self::HEADER_ID,
+            $this->mode,
+            $this->uid,
+            $this->gid,
+            $this->link
+        );
+    }
+
+    /**
      * Returns the Header ID (type) of this Extra Field.
      * The Header ID is an unsigned short integer (two bytes)
      * which must be constant during the life cycle of this object.
@@ -283,20 +298,5 @@ class AsiExtraField implements ZipExtraField
     public function setGroupId($gid)
     {
         $this->gid = (int) $gid;
-    }
-
-    /**
-     * @return string
-     */
-    public function __toString()
-    {
-        return sprintf(
-            '0x%04x ASI: Mode=%o UID=%d GID=%d Link="%s',
-            self::HEADER_ID,
-            $this->mode,
-            $this->uid,
-            $this->gid,
-            $this->link
-        );
     }
 }

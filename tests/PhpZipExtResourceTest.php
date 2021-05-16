@@ -87,7 +87,7 @@ class PhpZipExtResourceTest extends ZipTestCase
         $zipFile->extractTo($this->outputDirname);
         $zipFile->close();
 
-        static::assertTrue(is_dir($this->outputDirname . '/test/empty'));
+        static::assertDirectoryExists($this->outputDirname . '/test/empty');
     }
 
     /**
@@ -109,7 +109,8 @@ class PhpZipExtResourceTest extends ZipTestCase
      */
     public function testBug49072()
     {
-        $this->setExpectedException(Crc32Exception::class, 'file1');
+        $this->expectException(Crc32Exception::class);
+        $this->expectExceptionMessage('file1');
 
         $filename = __DIR__ . '/resources/pecl/bug49072.zip';
 
@@ -128,13 +129,17 @@ class PhpZipExtResourceTest extends ZipTestCase
     public function testBug70752()
     {
         if (\PHP_INT_SIZE === 4) { // php 32 bit
-            $this->setExpectedException(
-                RuntimeException::class,
+            $this->expectException(
+                RuntimeException::class
+            );
+            $this->expectExceptionMessage(
                 'Traditional PKWARE Encryption is not supported in 32-bit PHP.'
             );
         } else { // php 64 bit
-            $this->setExpectedException(
-                ZipAuthenticationException::class,
+            $this->expectException(
+                ZipAuthenticationException::class
+            );
+            $this->expectExceptionMessage(
                 'Invalid password'
             );
         }
@@ -151,7 +156,7 @@ class PhpZipExtResourceTest extends ZipTestCase
             $zipFile->extractTo($this->outputDirname);
             static::markTestIncomplete('failed test');
         } catch (ZipException $exception) {
-            static::assertFileNotExists($this->outputDirname . '/bug70752.txt');
+            static::assertFileDoesNotExist($this->outputDirname . '/bug70752.txt');
 
             throw $exception;
         } finally {
@@ -168,7 +173,8 @@ class PhpZipExtResourceTest extends ZipTestCase
      */
     public function testPecl12414()
     {
-        $this->setExpectedException(ZipException::class, 'Corrupt zip file. Cannot read zip entry.');
+        $this->expectException(ZipException::class);
+        $this->expectExceptionMessage('Corrupt zip file. Cannot read zip entry.');
 
         $filename = __DIR__ . '/resources/pecl/pecl12414.zip';
 

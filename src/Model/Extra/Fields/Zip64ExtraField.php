@@ -52,6 +52,39 @@ class Zip64ExtraField implements ZipExtraField
     }
 
     /**
+     * @return string
+     */
+    public function __toString()
+    {
+        $args = [self::HEADER_ID];
+        $format = '0x%04x ZIP64: ';
+        $formats = [];
+
+        if ($this->uncompressedSize !== null) {
+            $formats[] = 'SIZE=%d';
+            $args[] = $this->uncompressedSize;
+        }
+
+        if ($this->compressedSize !== null) {
+            $formats[] = 'COMP_SIZE=%d';
+            $args[] = $this->compressedSize;
+        }
+
+        if ($this->localHeaderOffset !== null) {
+            $formats[] = 'OFFSET=%d';
+            $args[] = $this->localHeaderOffset;
+        }
+
+        if ($this->diskStart !== null) {
+            $formats[] = 'DISK_START=%d';
+            $args[] = $this->diskStart;
+        }
+        $format .= implode(' ', $formats);
+
+        return vsprintf($format, $args);
+    }
+
+    /**
      * Returns the Header ID (type) of this Extra Field.
      * The Header ID is an unsigned short integer (two bytes)
      * which must be constant during the life cycle of this object.
@@ -274,38 +307,5 @@ class Zip64ExtraField implements ZipExtraField
     public function setDiskStart($diskStart)
     {
         $this->diskStart = $diskStart;
-    }
-
-    /**
-     * @return string
-     */
-    public function __toString()
-    {
-        $args = [self::HEADER_ID];
-        $format = '0x%04x ZIP64: ';
-        $formats = [];
-
-        if ($this->uncompressedSize !== null) {
-            $formats[] = 'SIZE=%d';
-            $args[] = $this->uncompressedSize;
-        }
-
-        if ($this->compressedSize !== null) {
-            $formats[] = 'COMP_SIZE=%d';
-            $args[] = $this->compressedSize;
-        }
-
-        if ($this->localHeaderOffset !== null) {
-            $formats[] = 'OFFSET=%d';
-            $args[] = $this->localHeaderOffset;
-        }
-
-        if ($this->diskStart !== null) {
-            $formats[] = 'DISK_START=%d';
-            $args[] = $this->diskStart;
-        }
-        $format .= implode(' ', $formats);
-
-        return vsprintf($format, $args);
     }
 }

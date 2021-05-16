@@ -19,6 +19,30 @@ class ExtraFieldsCollection implements \ArrayAccess, \Countable, \Iterator
     protected $collection = [];
 
     /**
+     * @return string
+     */
+    public function __toString()
+    {
+        $formats = [];
+
+        foreach ($this->collection as $key => $value) {
+            $formats[] = (string) $value;
+        }
+
+        return implode("\n", $formats);
+    }
+
+    /**
+     * If clone extra fields.
+     */
+    public function __clone()
+    {
+        foreach ($this->collection as $k => $v) {
+            $this->collection[$k] = clone $v;
+        }
+    }
+
+    /**
      * Returns the number of Extra Fields in this collection.
      *
      * @return int
@@ -41,7 +65,7 @@ class ExtraFieldsCollection implements \ArrayAccess, \Countable, \Iterator
     {
         $this->validateHeaderId($headerId);
 
-        return isset($this->collection[$headerId]) ? $this->collection[$headerId] : null;
+        return $this->collection[$headerId] ?? null;
     }
 
     /**
@@ -128,8 +152,6 @@ class ExtraFieldsCollection implements \ArrayAccess, \Countable, \Iterator
 
             return $ef;
         }
-
-        return null;
     }
 
     /**
@@ -157,7 +179,7 @@ class ExtraFieldsCollection implements \ArrayAccess, \Countable, \Iterator
      */
     public function offsetGet($offset)
     {
-        return isset($this->collection[$offset]) ? $this->collection[$offset] : null;
+        return $this->collection[$offset] ?? null;
     }
 
     /**
@@ -248,29 +270,5 @@ class ExtraFieldsCollection implements \ArrayAccess, \Countable, \Iterator
     public function clear()
     {
         $this->collection = [];
-    }
-
-    /**
-     * @return string
-     */
-    public function __toString()
-    {
-        $formats = [];
-
-        foreach ($this->collection as $key => $value) {
-            $formats[] = (string) $value;
-        }
-
-        return implode("\n", $formats);
-    }
-
-    /**
-     * If clone extra fields.
-     */
-    public function __clone()
-    {
-        foreach ($this->collection as $k => $v) {
-            $this->collection[$k] = clone $v;
-        }
     }
 }

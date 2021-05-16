@@ -101,7 +101,5 @@ final class ZipExtraDriver
         if (isset(self::$implementations[$headerId])) {
             return self::$implementations[$headerId];
         }
-
-        return null;
     }
 }

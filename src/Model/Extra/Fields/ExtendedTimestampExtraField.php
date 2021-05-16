@@ -117,6 +117,32 @@ class ExtendedTimestampExtraField implements ZipExtraField
     }
 
     /**
+     * @return string
+     */
+    public function __toString()
+    {
+        $args = [self::HEADER_ID];
+        $format = '0x%04x ExtendedTimestamp:';
+
+        if ($this->modifyTime !== null) {
+            $format .= ' Modify:[%s]';
+            $args[] = date(\DATE_W3C, $this->modifyTime);
+        }
+
+        if ($this->accessTime !== null) {
+            $format .= ' Access:[%s]';
+            $args[] = date(\DATE_W3C, $this->accessTime);
+        }
+
+        if ($this->createTime !== null) {
+            $format .= ' Create:[%s]';
+            $args[] = date(\DATE_W3C, $this->createTime);
+        }
+
+        return vsprintf($format, $args);
+    }
+
+    /**
      * @param int|null $modifyTime
      * @param int|null $accessTime
      * @param int|null $createTime
@@ -414,33 +440,7 @@ class ExtendedTimestampExtraField implements ZipExtraField
         try {
             return $timestamp !== null ? new \DateTimeImmutable('@' . $timestamp) : null;
         } catch (\Exception $e) {
-            return null;
+            return;
         }
-    }
-
-    /**
-     * @return string
-     */
-    public function __toString()
-    {
-        $args = [self::HEADER_ID];
-        $format = '0x%04x ExtendedTimestamp:';
-
-        if ($this->modifyTime !== null) {
-            $format .= ' Modify:[%s]';
-            $args[] = date(\DATE_W3C, $this->modifyTime);
-        }
-
-        if ($this->accessTime !== null) {
-            $format .= ' Access:[%s]';
-            $args[] = date(\DATE_W3C, $this->accessTime);
-        }
-
-        if ($this->createTime !== null) {
-            $format .= ' Create:[%s]';
-            $args[] = date(\DATE_W3C, $this->createTime);
-        }
-
-        return vsprintf($format, $args);
     }
 }

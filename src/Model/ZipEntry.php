@@ -64,11 +64,27 @@ class ZipEntry
 
     /**
      * Pseudo compression method for WinZip AES encrypted entries.
-     * Require php extension openssl or mcrypt.
+     * Require php extension openssl.
      *
      * @deprecated Use {@see ZipCompressionMethod::WINZIP_AES}
      */
     const METHOD_WINZIP_AES = ZipCompressionMethod::WINZIP_AES;
+
+    /**
+     * Collections of Extra Fields in Central Directory.
+     * Keys from Header ID [int] and value Extra Field [ExtraField].
+     *
+     * @var ExtraFieldsCollection
+     */
+    protected $cdExtraFields;
+
+    /**
+     * Collections of Extra Fields int local header.
+     * Keys from Header ID [int] and value Extra Field [ExtraField].
+     *
+     * @var ExtraFieldsCollection
+     */
+    protected $localExtraFields;
 
     /** @var string Entry name (filename in archive) */
     private $name;
@@ -118,22 +134,6 @@ class ZipEntry
     /** @var int relative Offset Of Local File Header */
     private $localHeaderOffset = 0;
 
-    /**
-     * Collections of Extra Fields in Central Directory.
-     * Keys from Header ID [int] and value Extra Field [ExtraField].
-     *
-     * @var ExtraFieldsCollection
-     */
-    protected $cdExtraFields;
-
-    /**
-     * Collections of Extra Fields int local header.
-     * Keys from Header ID [int] and value Extra Field [ExtraField].
-     *
-     * @var ExtraFieldsCollection
-     */
-    protected $localExtraFields;
-
     /** @var string|null comment field */
     private $comment;
 
@@ -161,6 +161,16 @@ class ZipEntry
 
         $this->cdExtraFields = new ExtraFieldsCollection();
         $this->localExtraFields = new ExtraFieldsCollection();
+    }
+
+    public function __clone()
+    {
+        $this->cdExtraFields = clone $this->cdExtraFields;
+        $this->localExtraFields = clone $this->localExtraFields;
+
+        if ($this->data !== null) {
+            $this->data = clone $this->data;
+        }
     }
 
     /**
@@ -267,9 +277,9 @@ class ZipEntry
         if ($this->extractVersion !== self::UNKNOWN) {
             $this->extractVersion = max(
                 $this->extractVersion,
-                $this->isDirectory ?
-                    ZipVersion::v20_DEFLATED_FOLDER_ZIPCRYPTO :
-                    ZipVersion::v10_DEFAULT_MIN
+                $this->isDirectory
+                    ? ZipVersion::v20_DEFLATED_FOLDER_ZIPCRYPTO
+                    : ZipVersion::v10_DEFAULT_MIN
             );
         }
 
@@ -343,7 +353,7 @@ class ZipEntry
      *
      * @internal
      */
-    public function setData($data)
+    public function setData(ZipData $data = null)
     {
         $this->data = $data;
     }
@@ -487,9 +497,9 @@ class ZipEntry
             }
 
             if (
-                $this->compressionMethod === ZipCompressionMethod::DEFLATED ||
-                $this->isDirectory ||
-                $this->encryptionMethod === ZipEncryptionMethod::PKWARE
+                $this->compressionMethod === ZipCompressionMethod::DEFLATED
+                || $this->isDirectory
+                || $this->encryptionMethod === ZipEncryptionMethod::PKWARE
             ) {
                 return ZipVersion::v20_DEFLATED_FOLDER_ZIPCRYPTO;
             }
@@ -1151,8 +1161,8 @@ class ZipEntry
         $headerId = (int) $headerId;
 
         return
-            isset($this->localExtraFields[$headerId]) ||
-            isset($this->cdExtraFields[$headerId]);
+            isset($this->localExtraFields[$headerId])
+            || isset($this->cdExtraFields[$headerId]);
     }
 
     /**
@@ -1358,12 +1368,12 @@ class ZipEntry
         }
 
         if (
-            $compressionLevel < ZipCompressionLevel::LEVEL_MIN ||
-            $compressionLevel > ZipCompressionLevel::LEVEL_MAX
+            $compressionLevel < ZipCompressionLevel::LEVEL_MIN
+            || $compressionLevel > ZipCompressionLevel::LEVEL_MAX
         ) {
             throw new InvalidArgumentException(
-                'Invalid compression level. Minimum level ' .
-                ZipCompressionLevel::LEVEL_MIN . '. Maximum level ' . ZipCompressionLevel::LEVEL_MAX
+                'Invalid compression level. Minimum level '
+                . ZipCompressionLevel::LEVEL_MIN . '. Maximum level ' . ZipCompressionLevel::LEVEL_MAX
             );
         }
         $this->compressionLevel = $compressionLevel;
@@ -1385,15 +1395,18 @@ class ZipEntry
             switch ($this->compressionLevel) {
                 case ZipCompressionLevel::MAXIMUM:
                     $bit1 = true;
+
                     break;
 
                 case ZipCompressionLevel::FAST:
                     $bit2 = true;
+
                     break;
 
                 case ZipCompressionLevel::SUPER_FAST:
                     $bit1 = true;
                     $bit2 = true;
+
                     break;
                 // default is ZipCompressionLevel::NORMAL
             }
@@ -1535,8 +1548,6 @@ class ZipEntry
         if ($oldUnixExtra !== null) {
             return $oldUnixExtra->getAccessDateTime();
         }
-
-        return null;
     }
 
     /**
@@ -1556,18 +1567,6 @@ class ZipEntry
 
         if ($extendedExtra !== null) {
             return $extendedExtra->getCreateDateTime();
-        }
-
-        return null;
-    }
-
-    public function __clone()
-    {
-        $this->cdExtraFields = clone $this->cdExtraFields;
-        $this->localExtraFields = clone $this->localExtraFields;
-
-        if ($this->data !== null) {
-            $this->data = clone $this->data;
         }
     }
 }

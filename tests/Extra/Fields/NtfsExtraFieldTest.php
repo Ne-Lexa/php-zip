@@ -14,8 +14,10 @@ use PhpZip\Model\Extra\Fields\NtfsExtraField;
  */
 final class NtfsExtraFieldTest extends TestCase
 {
-    protected function setUp()
+    protected function setUp(): void
     {
+        parent::setUp();
+
         if (\PHP_INT_SIZE === 4) {
             self::markTestSkipped('only 64 bit test');
         }
@@ -156,9 +158,9 @@ final class NtfsExtraFieldTest extends TestCase
         $atimeTimestamp,
         $ctimeTimestamp
     ) {
-        self::assertEquals(NtfsExtraField::ntfsTimeToTimestamp($mtimeNtfs), $mtimeTimestamp, '', 0.00001);
-        self::assertEquals(NtfsExtraField::ntfsTimeToTimestamp($atimeNtfs), $atimeTimestamp, '', 0.00001);
-        self::assertEquals(NtfsExtraField::ntfsTimeToTimestamp($ctimeNtfs), $ctimeTimestamp, '', 0.00001);
+        self::assertEqualsWithDelta(NtfsExtraField::ntfsTimeToTimestamp($mtimeNtfs), $mtimeTimestamp, 0.00001);
+        self::assertEqualsWithDelta(NtfsExtraField::ntfsTimeToTimestamp($atimeNtfs), $atimeTimestamp, 0.00001);
+        self::assertEqualsWithDelta(NtfsExtraField::ntfsTimeToTimestamp($ctimeNtfs), $ctimeTimestamp, 0.00001);
 
         self::assertEqualsIntegerWithDelta(NtfsExtraField::timestampToNtfsTime($mtimeTimestamp), $mtimeNtfs, 10);
         self::assertEqualsIntegerWithDelta(NtfsExtraField::timestampToNtfsTime($atimeTimestamp), $atimeNtfs, 10);

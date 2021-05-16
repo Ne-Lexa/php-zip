@@ -72,11 +72,13 @@ final class FilesUtil
                 case '*':
                     $regexPattern .= ($escaping ? '\\*' : '.*');
                     $escaping = false;
+
                     break;
 
                 case '?':
                     $regexPattern .= ($escaping ? '\\?' : '.');
                     $escaping = false;
+
                     break;
 
                 case '.':
@@ -90,6 +92,7 @@ final class FilesUtil
                 case '%':
                     $regexPattern .= '\\' . $currentChar;
                     $escaping = false;
+
                     break;
 
                 case '\\':
@@ -99,6 +102,7 @@ final class FilesUtil
                     } else {
                         $escaping = true;
                     }
+
                     break;
 
                 case '{':
@@ -109,6 +113,7 @@ final class FilesUtil
                         $inCurrent++;
                     }
                     $escaping = false;
+
                     break;
 
                 case '}':
@@ -121,6 +126,7 @@ final class FilesUtil
                         $regexPattern = '}';
                     }
                     $escaping = false;
+
                     break;
 
                 case ',':
@@ -131,6 +137,7 @@ final class FilesUtil
                     } else {
                         $regexPattern = ',';
                     }
+
                     break;
                 default:
                     $escaping = false;
@@ -406,11 +413,9 @@ final class FilesUtil
             'x-epoc/x-sisx-app',
         ];
 
-        if (\in_array($mimeType, $badDeflateCompMimeTypes, true)) {
-            return true;
-        }
+        return (bool) (\in_array($mimeType, $badDeflateCompMimeTypes, true))
 
-        return false;
+         ;
     }
 
     /**

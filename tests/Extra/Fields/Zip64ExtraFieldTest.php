@@ -15,8 +15,10 @@ use PhpZip\Model\ZipEntry;
  */
 final class Zip64ExtraFieldTest extends TestCase
 {
-    protected function setUp()
+    protected function setUp(): void
     {
+        parent::setUp();
+
         if (\PHP_INT_SIZE === 4) {
             self::markTestSkipped('only 64 bit test');
         }

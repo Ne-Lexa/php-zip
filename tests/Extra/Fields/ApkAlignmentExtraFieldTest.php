@@ -96,8 +96,10 @@ final class ApkAlignmentExtraFieldTest extends TestCase
      */
     public function testInvalidParse()
     {
-        $this->setExpectedException(
-            ZipException::class,
+        $this->expectException(
+            ZipException::class
+        );
+        $this->expectExceptionMessage(
             'Minimum 6 bytes of the extensible data block/field used for alignment of uncompressed entries.'
         );
 

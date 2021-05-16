@@ -134,7 +134,7 @@ class ZipContainer extends ImmutableZipContainer
     {
         $entryName = $entryName instanceof ZipEntry ? $entryName->getName() : (string) $entryName;
 
-        return isset($this->entries[$entryName]) ? $this->entries[$entryName] : null;
+        return $this->entries[$entryName] ?? null;
     }
 
     /**
@@ -225,8 +225,8 @@ class ZipContainer extends ImmutableZipContainer
         $entry = $entry instanceof ZipEntry ? $entry->getName() : (string) $entry;
 
         if (
-            $this->sourceContainer !== null &&
-            isset($this->entries[$entry], $this->sourceContainer->entries[$entry])
+            $this->sourceContainer !== null
+            && isset($this->entries[$entry], $this->sourceContainer->entries[$entry])
         ) {
             $this->entries[$entry] = clone $this->sourceContainer->entries[$entry];
 

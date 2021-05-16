@@ -37,8 +37,10 @@ final class UnrecognizedExtraFieldTest extends TestCase
 
     public function testUnpackLocalData()
     {
-        $this->setExpectedException(
-            RuntimeException::class,
+        $this->expectException(
+            RuntimeException::class
+        );
+        $this->expectExceptionMessage(
             'Unsupport parse'
         );
 
@@ -47,8 +49,10 @@ final class UnrecognizedExtraFieldTest extends TestCase
 
     public function testUnpackCentralDirData()
     {
-        $this->setExpectedException(
-            RuntimeException::class,
+        $this->expectException(
+            RuntimeException::class
+        );
+        $this->expectExceptionMessage(
             'Unsupport parse'
         );
 

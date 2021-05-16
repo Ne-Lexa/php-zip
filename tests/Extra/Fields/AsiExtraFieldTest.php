@@ -91,8 +91,10 @@ final class AsiExtraFieldTest extends TestCase
      */
     public function testInvalidParse()
     {
-        $this->setExpectedException(
-            Crc32Exception::class,
+        $this->expectException(
+            Crc32Exception::class
+        );
+        $this->expectExceptionMessage(
             'Asi Unix Extra Filed Data (expected CRC32 value'
         );
 

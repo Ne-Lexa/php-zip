@@ -42,6 +42,9 @@ use Symfony\Component\Finder\SplFileInfo as SymfonySplFileInfo;
  */
 class ZipFile implements ZipFileInterface
 {
+    /** @var ZipContainer */
+    protected $zipContainer;
+
     /** @var array default mime types */
     private static $defaultMimeTypes = [
         'zip' => 'application/zip',
@@ -55,9 +58,6 @@ class ZipFile implements ZipFileInterface
         'xpi' => 'application/x-xpinstall',
     ];
 
-    /** @var ZipContainer */
-    protected $zipContainer;
-
     /** @var ZipReader|null */
     private $reader;
 
@@ -67,6 +67,14 @@ class ZipFile implements ZipFileInterface
     public function __construct()
     {
         $this->zipContainer = $this->createZipContainer(null);
+    }
+
+    /**
+     * Release all resources.
+     */
+    public function __destruct()
+    {
+        $this->close();
     }
 
     /**
@@ -376,7 +384,7 @@ class ZipFile implements ZipFileInterface
      * @param string            $destDir          location where to extract the files
      * @param array|string|null $entries          entries to extract
      * @param array             $options          extract options
-     * @param array             $extractedEntries if the extractedEntries argument
+     * @param array|null        $extractedEntries if the extractedEntries argument
      *                                            is present, then the  specified
      *                                            array will be filled with
      *                                            information about the
@@ -576,9 +584,9 @@ class ZipFile implements ZipFileInterface
                 $compressionMethod = ZipCompressionMethod::STORED;
             } else {
                 $mimeType = FilesUtil::getMimeTypeFromString($contents);
-                $compressionMethod = FilesUtil::isBadCompressionMimeType($mimeType) ?
-                    ZipCompressionMethod::STORED :
-                    ZipCompressionMethod::DEFLATED;
+                $compressionMethod = FilesUtil::isBadCompressionMimeType($mimeType)
+                    ? ZipCompressionMethod::STORED
+                    : ZipCompressionMethod::DEFLATED;
             }
         }
 
@@ -714,9 +722,9 @@ class ZipFile implements ZipFileInterface
             } elseif ($file->getSize() < 512) {
                 $compressionMethod = ZipCompressionMethod::STORED;
             } else {
-                $compressionMethod = FilesUtil::isBadCompressionFile($file->getPathname()) ?
-                    ZipCompressionMethod::STORED :
-                    ZipCompressionMethod::DEFLATED;
+                $compressionMethod = FilesUtil::isBadCompressionFile($file->getPathname())
+                    ? ZipCompressionMethod::STORED
+                    : ZipCompressionMethod::DEFLATED;
             }
 
             $zipEntry->setCompressionMethod($compressionMethod);
@@ -838,9 +846,9 @@ class ZipFile implements ZipFileInterface
                     $bufferContents = stream_get_contents($stream, min(1024, $length));
                     rewind($stream);
                     $mimeType = FilesUtil::getMimeTypeFromString($bufferContents);
-                    $compressionMethod = FilesUtil::isBadCompressionMimeType($mimeType) ?
-                        ZipCompressionMethod::STORED :
-                        ZipCompressionMethod::DEFLATED;
+                    $compressionMethod = FilesUtil::isBadCompressionMimeType($mimeType)
+                        ? ZipCompressionMethod::STORED
+                        : ZipCompressionMethod::DEFLATED;
                 }
                 $zipEntry->setUncompressedSize($length);
             }
@@ -999,9 +1007,9 @@ class ZipFile implements ZipFileInterface
             $localPath = '';
         }
 
-        $iterator = $iterator instanceof \RecursiveIterator ?
-            new \RecursiveIteratorIterator($iterator) :
-            new \IteratorIterator($iterator);
+        $iterator = $iterator instanceof \RecursiveIterator
+            ? new \RecursiveIteratorIterator($iterator)
+            : new \IteratorIterator($iterator);
         /**
          * @var string[] $files
          * @var string   $path
@@ -1841,14 +1849,6 @@ class ZipFile implements ZipFileInterface
         }
 
         return $this->saveAsFile($meta['uri']);
-    }
-
-    /**
-     * Release all resources.
-     */
-    public function __destruct()
-    {
-        $this->close();
     }
 
     /**

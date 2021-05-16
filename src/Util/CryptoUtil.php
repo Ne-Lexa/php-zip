@@ -40,15 +40,11 @@ class CryptoUtil
     {
         if (\extension_loaded('openssl')) {
             $numBits = \strlen($key) * 8;
-            /** @noinspection PhpComposerExtensionStubsInspection */
+
             return openssl_decrypt($data, 'AES-' . $numBits . '-CTR', $key, \OPENSSL_RAW_DATA, $iv);
         }
 
-        if (\extension_loaded('mcrypt')) {
-            return mcrypt_decrypt(\MCRYPT_RIJNDAEL_128, $key, $data, 'ctr', $iv);
-        }
-
-        throw new RuntimeException('Extension openssl or mcrypt not loaded');
+        throw new RuntimeException('Openssl extension not loaded');
     }
 
     /**
@@ -64,14 +60,10 @@ class CryptoUtil
     {
         if (\extension_loaded('openssl')) {
             $numBits = \strlen($key) * 8;
-            /** @noinspection PhpComposerExtensionStubsInspection */
+
             return openssl_encrypt($data, 'AES-' . $numBits . '-CTR', $key, \OPENSSL_RAW_DATA, $iv);
         }
 
-        if (\extension_loaded('mcrypt')) {
-            return mcrypt_encrypt(\MCRYPT_RIJNDAEL_128, $key, $data, 'ctr', $iv);
-        }
-
-        throw new RuntimeException('Extension openssl or mcrypt not loaded');
+        throw new RuntimeException('Openssl extension not loaded');
     }
 }

@@ -23,6 +23,14 @@ class JarMarkerExtraField implements ZipExtraField
     const HEADER_ID = 0xCAFE;
 
     /**
+     * @return string
+     */
+    public function __toString()
+    {
+        return sprintf('0x%04x Jar Marker', self::HEADER_ID);
+    }
+
+    /**
      * @param ZipContainer $container
      */
     public static function setJarMarker(ZipContainer $container)
@@ -106,13 +114,5 @@ class JarMarkerExtraField implements ZipExtraField
     public static function unpackCentralDirData($buffer, ZipEntry $entry = null)
     {
         return self::unpackLocalFileData($buffer, $entry);
-    }
-
-    /**
-     * @return string
-     */
-    public function __toString()
-    {
-        return sprintf('0x%04x Jar Marker', self::HEADER_ID);
     }
 }

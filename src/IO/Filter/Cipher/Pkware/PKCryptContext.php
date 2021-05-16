@@ -328,7 +328,7 @@ class PKCryptContext
         }
 
         if ($byte !== $checkByte) {
-            throw new ZipAuthenticationException(sprintf('Invalid password'));
+            throw new ZipAuthenticationException('Invalid password');
         }
     }
 

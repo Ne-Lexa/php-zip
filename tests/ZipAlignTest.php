@@ -55,7 +55,7 @@ class ZipAlignTest extends ZipTestCase
         for ($i = 0; $i < 100; $i++) {
             $zipFile->addFromString(
                 'entry' . $i . '.txt',
-                random_bytes(mt_rand(100, 4096)),
+                random_bytes(random_int(100, 4096)),
                 ZipCompressionMethod::STORED
             );
         }
@@ -97,7 +97,7 @@ class ZipAlignTest extends ZipTestCase
         for ($i = 0; $i < 100; $i++) {
             $zipFile->addFromString(
                 'entry' . $i . '.txt',
-                random_bytes(mt_rand(100, 4096)),
+                random_bytes(random_int(100, 4096)),
                 ZipCompressionMethod::STORED
             );
         }
@@ -126,7 +126,7 @@ class ZipAlignTest extends ZipTestCase
         for ($i = 0; $i < 100; $i++) {
             $zipFile->addFromString(
                 'entry' . $i . '.txt',
-                random_bytes(mt_rand(100, 4096)),
+                random_bytes(random_int(100, 4096)),
                 ZipCompressionMethod::STORED
             );
         }
@@ -147,14 +147,14 @@ class ZipAlignTest extends ZipTestCase
         $zipFile->openFile($this->outputFilename);
         $zipFile->deleteFromRegex('~entry2[\\d]+\\.txt$~s');
         for ($i = 0; $i < 100; $i++) {
-            $isStored = (bool) mt_rand(0, 1);
+            $isStored = (bool) random_int(0, 1);
 
             $zipFile->addFromString(
                 'entry_new_' . ($isStored ? 'stored' : 'deflated') . '_' . $i . '.txt',
-                random_bytes(mt_rand(100, 4096)),
-                $isStored ?
-                    ZipCompressionMethod::STORED :
-                    ZipCompressionMethod::DEFLATED
+                random_bytes(random_int(100, 4096)),
+                $isStored
+                    ? ZipCompressionMethod::STORED
+                    : ZipCompressionMethod::DEFLATED
             );
         }
         $zipFile->setZipAlign(4);

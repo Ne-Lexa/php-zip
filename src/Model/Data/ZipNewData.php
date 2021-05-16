@@ -51,10 +51,44 @@ class ZipNewData implements ZipData
         }
 
         $resourceId = (int) $this->stream;
-        self::$guardClonedStream[$resourceId] =
-            isset(self::$guardClonedStream[$resourceId]) ?
-                self::$guardClonedStream[$resourceId] + 1 :
-                0;
+        self::$guardClonedStream[$resourceId]
+            = isset(self::$guardClonedStream[$resourceId])
+                ? self::$guardClonedStream[$resourceId] + 1
+                : 0;
+    }
+
+    /**
+     * The stream will be closed when closing the zip archive.
+     *
+     * The method implements protection against closing the stream of the cloned object.
+     *
+     * @see ZipFile::close()
+     */
+    public function __destruct()
+    {
+        $resourceId = (int) $this->stream;
+
+        if (isset(self::$guardClonedStream[$resourceId]) && self::$guardClonedStream[$resourceId] > 0) {
+            self::$guardClonedStream[$resourceId]--;
+
+            return;
+        }
+
+        if (\is_resource($this->stream)) {
+            fclose($this->stream);
+        }
+    }
+
+    /**
+     * @see https://php.net/manual/en/language.oop5.cloning.php
+     */
+    public function __clone()
+    {
+        $resourceId = (int) $this->stream;
+        self::$guardClonedStream[$resourceId]
+            = isset(self::$guardClonedStream[$resourceId])
+                ? self::$guardClonedStream[$resourceId] + 1
+                : 1;
     }
 
     /**
@@ -94,39 +128,5 @@ class ZipNewData implements ZipData
         $stream = $this->getDataAsStream();
         rewind($stream);
         stream_copy_to_stream($stream, $outStream);
-    }
-
-    /**
-     * @see https://php.net/manual/en/language.oop5.cloning.php
-     */
-    public function __clone()
-    {
-        $resourceId = (int) $this->stream;
-        self::$guardClonedStream[$resourceId] =
-            isset(self::$guardClonedStream[$resourceId]) ?
-                self::$guardClonedStream[$resourceId] + 1 :
-                1;
-    }
-
-    /**
-     * The stream will be closed when closing the zip archive.
-     *
-     * The method implements protection against closing the stream of the cloned object.
-     *
-     * @see ZipFile::close()
-     */
-    public function __destruct()
-    {
-        $resourceId = (int) $this->stream;
-
-        if (isset(self::$guardClonedStream[$resourceId]) && self::$guardClonedStream[$resourceId] > 0) {
-            self::$guardClonedStream[$resourceId]--;
-
-            return;
-        }
-
-        if (\is_resource($this->stream)) {
-            fclose($this->stream);
-        }
     }
 }

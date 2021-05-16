@@ -74,6 +74,19 @@ class NewUnixExtraField implements ZipExtraField
     }
 
     /**
+     * @return string
+     */
+    public function __toString()
+    {
+        return sprintf(
+            '0x%04x NewUnix: UID=%d GID=%d',
+            self::HEADER_ID,
+            $this->uid,
+            $this->gid
+        );
+    }
+
+    /**
      * Returns the Header ID (type) of this Extra Field.
      * The Header ID is an unsigned short integer (two bytes)
      * which must be constant during the life cycle of this object.
@@ -220,18 +233,5 @@ class NewUnixExtraField implements ZipExtraField
     public function getVersion()
     {
         return $this->version;
-    }
-
-    /**
-     * @return string
-     */
-    public function __toString()
-    {
-        return sprintf(
-            '0x%04x NewUnix: UID=%d GID=%d',
-            self::HEADER_ID,
-            $this->uid,
-            $this->gid
-        );
     }
 }

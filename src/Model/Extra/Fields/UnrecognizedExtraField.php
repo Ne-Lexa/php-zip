@@ -30,6 +30,17 @@ class UnrecognizedExtraField implements ZipExtraField
     }
 
     /**
+     * @return string
+     */
+    public function __toString()
+    {
+        $args = [$this->headerId, $this->data];
+        $format = '0x%04x Unrecognized Extra Field: "%s"';
+
+        return vsprintf($format, $args);
+    }
+
+    /**
      * @param int $headerId
      */
     public function setHeaderId($headerId)
@@ -72,7 +83,7 @@ class UnrecognizedExtraField implements ZipExtraField
     }
 
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
     public function packLocalFileData()
     {
@@ -80,7 +91,7 @@ class UnrecognizedExtraField implements ZipExtraField
     }
 
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
     public function packCentralDirData()
     {
@@ -101,16 +112,5 @@ class UnrecognizedExtraField implements ZipExtraField
     public function setData($data)
     {
         $this->data = (string) $data;
-    }
-
-    /**
-     * @return string
-     */
-    public function __toString()
-    {
-        $args = [$this->headerId, $this->data];
-        $format = '0x%04x Unrecognized Extra Field: "%s"';
-
-        return vsprintf($format, $args);
     }
 }

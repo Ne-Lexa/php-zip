@@ -1,8 +1,7 @@
 .gitattributes export-ignore
 .github export-ignore
 .gitignore export-ignore
-.php_cs export-ignore
-.travis.yml export-ignore
+.php-cs-fixer.php export-ignore
 bootstrap.php export-ignore
 phpunit.xml export-ignore
 tests export-ignore

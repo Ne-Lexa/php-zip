@@ -85,6 +85,37 @@ class OldUnixExtraField implements ZipExtraField
     }
 
     /**
+     * @return string
+     */
+    public function __toString()
+    {
+        $args = [self::HEADER_ID];
+        $format = '0x%04x OldUnix:';
+
+        if (($modifyTime = $this->getModifyDateTime()) !== null) {
+            $format .= ' Modify:[%s]';
+            $args[] = $modifyTime->format(\DATE_ATOM);
+        }
+
+        if (($accessTime = $this->getAccessDateTime()) !== null) {
+            $format .= ' Access:[%s]';
+            $args[] = $accessTime->format(\DATE_ATOM);
+        }
+
+        if ($this->uid !== null) {
+            $format .= ' UID=%d';
+            $args[] = $this->uid;
+        }
+
+        if ($this->gid !== null) {
+            $format .= ' GID=%d';
+            $args[] = $this->gid;
+        }
+
+        return vsprintf($format, $args);
+    }
+
+    /**
      * Returns the Header ID (type) of this Extra Field.
      * The Header ID is an unsigned short integer (two bytes)
      * which must be constant during the life cycle of this object.
@@ -226,10 +257,10 @@ class OldUnixExtraField implements ZipExtraField
     public function getAccessDateTime()
     {
         try {
-            return $this->accessTime === null ? null :
-                new \DateTimeImmutable('@' . $this->accessTime);
+            return $this->accessTime === null ? null
+                : new \DateTimeImmutable('@' . $this->accessTime);
         } catch (\Exception $e) {
-            return null;
+            return;
         }
     }
 
@@ -255,10 +286,10 @@ class OldUnixExtraField implements ZipExtraField
     public function getModifyDateTime()
     {
         try {
-            return $this->modifyTime === null ? null :
-                new \DateTimeImmutable('@' . $this->modifyTime);
+            return $this->modifyTime === null ? null
+                : new \DateTimeImmutable('@' . $this->modifyTime);
         } catch (\Exception $e) {
-            return null;
+            return;
         }
     }
 
@@ -292,36 +323,5 @@ class OldUnixExtraField implements ZipExtraField
     public function setGid($gid)
     {
         $this->gid = $gid;
-    }
-
-    /**
-     * @return string
-     */
-    public function __toString()
-    {
-        $args = [self::HEADER_ID];
-        $format = '0x%04x OldUnix:';
-
-        if (($modifyTime = $this->getModifyDateTime()) !== null) {
-            $format .= ' Modify:[%s]';
-            $args[] = $modifyTime->format(\DATE_ATOM);
-        }
-
-        if (($accessTime = $this->getAccessDateTime()) !== null) {
-            $format .= ' Access:[%s]';
-            $args[] = $accessTime->format(\DATE_ATOM);
-        }
-
-        if ($this->uid !== null) {
-            $format .= ' UID=%d';
-            $args[] = $this->uid;
-        }
-
-        if ($this->gid !== null) {
-            $format .= ' GID=%d';
-            $args[] = $this->gid;
-        }
-
-        return vsprintf($format, $args);
     }
 }

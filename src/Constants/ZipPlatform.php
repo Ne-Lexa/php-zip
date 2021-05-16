@@ -48,6 +48,6 @@ final class ZipPlatform
      */
     public static function getPlatformName($platform)
     {
-        return isset(self::$platforms[$platform]) ? self::$platforms[$platform] : 'Unknown';
+        return self::$platforms[$platform] ?? 'Unknown';
     }
 }

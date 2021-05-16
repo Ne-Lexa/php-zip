@@ -41,9 +41,8 @@ final class ZipEncryptionMethod
     {
         $value = (int) $value;
 
-        return isset(self::$ENCRYPTION_METHODS[$value]) ?
-            self::$ENCRYPTION_METHODS[$value] :
-            'Unknown Encryption Method';
+        return self::$ENCRYPTION_METHODS[$value]
+            ?? 'Unknown Encryption Method';
     }
 
     /**

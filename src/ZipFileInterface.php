@@ -295,7 +295,7 @@ interface ZipFileInterface extends \Countable, \ArrayAccess, \Iterator
      * @param string            $destDir          location where to extract the files
      * @param array|string|null $entries          entries to extract
      * @param array             $options          extract options
-     * @param array             $extractedEntries if the extractedEntries argument
+     * @param array|null        $extractedEntries if the extractedEntries argument
      *                                            is present, then the  specified
      *                                            array will be filled with
      *                                            information about the

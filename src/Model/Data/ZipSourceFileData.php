@@ -48,20 +48,30 @@ class ZipSourceFileData implements ZipData
     }
 
     /**
+     * {@inheritDoc}
+     */
+    public function __destruct()
+    {
+        if (\is_resource($this->stream)) {
+            fclose($this->stream);
+        }
+    }
+
+    /**
      * @param ZipEntry $entry
      *
      * @return bool
      */
     public function hasRecompressData(ZipEntry $entry)
     {
-        return $this->sourceEntry->getCompressionLevel() !== $entry->getCompressionLevel() ||
-            $this->sourceEntry->getCompressionMethod() !== $entry->getCompressionMethod() ||
-            $this->sourceEntry->isEncrypted() !== $entry->isEncrypted() ||
-            $this->sourceEntry->getEncryptionMethod() !== $entry->getEncryptionMethod() ||
-            $this->sourceEntry->getPassword() !== $entry->getPassword() ||
-            $this->sourceEntry->getCompressedSize() !== $entry->getCompressedSize() ||
-            $this->sourceEntry->getUncompressedSize() !== $entry->getUncompressedSize() ||
-            $this->sourceEntry->getCrc() !== $entry->getCrc();
+        return $this->sourceEntry->getCompressionLevel() !== $entry->getCompressionLevel()
+            || $this->sourceEntry->getCompressionMethod() !== $entry->getCompressionMethod()
+            || $this->sourceEntry->isEncrypted() !== $entry->isEncrypted()
+            || $this->sourceEntry->getEncryptionMethod() !== $entry->getEncryptionMethod()
+            || $this->sourceEntry->getPassword() !== $entry->getPassword()
+            || $this->sourceEntry->getCompressedSize() !== $entry->getCompressedSize()
+            || $this->sourceEntry->getUncompressedSize() !== $entry->getUncompressedSize()
+            || $this->sourceEntry->getCrc() !== $entry->getCrc();
     }
 
     /**
@@ -158,15 +168,5 @@ class ZipSourceFileData implements ZipData
     public function getOffset()
     {
         return $this->offset;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function __destruct()
-    {
-        if (\is_resource($this->stream)) {
-            fclose($this->stream);
-        }
     }
 }

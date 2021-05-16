@@ -2,14 +2,14 @@
 
 namespace PhpZip\Tests;
 
-use PHPUnit\Framework\TestCase;
 use PhpZip\Constants\ZipConstants;
+use PhpZip\Tests\Polyfill\LegacyTestCase;
 use PhpZip\Util\FilesUtil;
 
 /**
  * PHPUnit test case and helper methods.
  */
-abstract class ZipTestCase extends TestCase
+abstract class ZipTestCase extends LegacyTestCase
 {
     /** @var string */
     protected $outputFilename;
@@ -22,7 +22,7 @@ abstract class ZipTestCase extends TestCase
      *
      * @noinspection PhpMissingParentCallCommonInspection
      */
-    protected function setUp()
+    protected function setUp(): void
     {
         $id = uniqid('phpzip', false);
         $tempDir = sys_get_temp_dir() . \DIRECTORY_SEPARATOR . 'phpunit-phpzip';
@@ -37,10 +37,8 @@ abstract class ZipTestCase extends TestCase
     /**
      * After test.
      */
-    protected function tearDown()
+    protected function tearDown(): void
     {
-        parent::tearDown();
-
         if ($this->outputFilename !== null && file_exists($this->outputFilename)) {
             unlink($this->outputFilename);
         }
@@ -92,8 +90,8 @@ abstract class ZipTestCase extends TestCase
         $output = implode(\PHP_EOL, $output);
 
         static::assertSame($returnCode, 0);
-        static::assertNotContains(' Errors', $output);
-        static::assertContains(' Ok', $output);
+        static::assertStringNotContainsString(' Errors', $output);
+        static::assertStringContainsString(' Ok', $output);
     }
 
     /**
@@ -123,8 +121,8 @@ abstract class ZipTestCase extends TestCase
 
         static::assertSame($returnCode, 0, $output);
         static::assertNotContains('incorrect password', $output);
-        static::assertContains(' OK', $output);
-        static::assertContains('No errors', $output);
+        static::assertStringContainsString(' OK', $output);
+        static::assertStringContainsString('No errors', $output);
     }
 
     /**
@@ -135,9 +133,9 @@ abstract class ZipTestCase extends TestCase
      */
     protected static function existsProgram($program, array $successCodes = [0])
     {
-        $command = \DIRECTORY_SEPARATOR === '\\' ?
-            escapeshellarg($program) :
-            'which ' . escapeshellarg($program);
+        $command = \DIRECTORY_SEPARATOR === '\\'
+            ? escapeshellarg($program)
+            : 'which ' . escapeshellarg($program);
         $command .= ' 2>&1';
 
         exec($command, $output, $returnCode);
@@ -157,7 +155,7 @@ abstract class ZipTestCase extends TestCase
 
             $output = implode(\PHP_EOL, $output);
 
-            static::assertContains('Empty zipfile', $output);
+            static::assertStringContainsString('Empty zipfile', $output);
         }
         $actualEmptyZipData = pack('VVVVVv', ZipConstants::END_CD, 0, 0, 0, 0, 0);
         static::assertStringEqualsFile($filename, $actualEmptyZipData);
@@ -189,7 +187,7 @@ abstract class ZipTestCase extends TestCase
         fwrite(\STDERR, 'Install on Windows:' . \PHP_EOL);
         fwrite(\STDERR, ' 1. Install Android Studio' . \PHP_EOL);
         fwrite(\STDERR, ' 2. Install Android Sdk' . \PHP_EOL);
-        fwrite(\STDERR, ' 3. Add zipalign path to \$Path' . \PHP_EOL);
+        fwrite(\STDERR, ' 3. Add zipalign path to $Path' . \PHP_EOL);
 
         return null;
     }
