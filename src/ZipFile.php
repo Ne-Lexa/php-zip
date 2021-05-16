@@ -516,7 +516,7 @@ class ZipFile implements ZipFileInterface
                 $zipData->copyDataToStream($handle);
             } catch (ZipException $e) {
                 if (is_file($file)) {
-                    unlink($file);
+                    @unlink($file);
                 }
 
                 throw $e;
@@ -1633,7 +1633,7 @@ class ZipFile implements ZipFileInterface
 
         if (!@rename($tempFilename, $filename)) {
             if (is_file($tempFilename)) {
-                unlink($tempFilename);
+                @unlink($tempFilename);
             }
 
             throw new ZipException(sprintf('Cannot move %s to %s', $tempFilename, $filename));
