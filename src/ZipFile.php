@@ -515,7 +515,9 @@ class ZipFile implements ZipFileInterface
             try {
                 $zipData->copyDataToStream($handle);
             } catch (ZipException $e) {
-                unlink($file);
+                if (is_file($file)) {
+                    unlink($file);
+                }
 
                 throw $e;
             }
