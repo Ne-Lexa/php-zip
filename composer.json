@@ -55,10 +55,5 @@
     "scripts": {
         "php:fix": "php .php-cs-fixer.php --force",
         "php:fix:debug": "php .php-cs-fixer.php"
-    },
-    "config": {
-        "platform": {
-            "php": "7.1.3"
-        }
     }
 }
