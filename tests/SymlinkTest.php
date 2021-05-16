@@ -23,9 +23,7 @@ final class SymlinkTest extends ZipTestCase
      */
     public function testSymlink($allowSymlink)
     {
-        if (self::skipTestForWindows()) {
-            return;
-        }
+        self::skipTestForWindows();
 
         if (!is_dir($this->outputDirname)) {
             self::assertTrue(mkdir($this->outputDirname, 0755, true));

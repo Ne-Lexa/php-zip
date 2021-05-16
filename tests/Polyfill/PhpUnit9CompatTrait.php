@@ -35,10 +35,13 @@ trait PhpUnit9CompatTrait
     /**
      * Asserts that a directory does not exist.
      *
+     * @noinspection PhpDeprecationInspection
+     *
+     * @param string $directory
+     * @param string $message
+     *
      * @throws ExpectationFailedException
      * @throws InvalidArgumentException
-     *
-     * @noinspection PhpDeprecationInspection
      */
     public static function assertDirectoryDoesNotExist(string $directory, string $message = ''): void
     {

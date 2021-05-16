@@ -43,13 +43,8 @@ class ZipFileTest extends ZipTestCase
      */
     public function testOpenFileCantOpen()
     {
-        if (static::skipTestForWindows()) {
-            return;
-        }
-
-        if (static::skipTestForRootUser()) {
-            return;
-        }
+        static::skipTestForWindows();
+        static::skipTestForRootUser();
 
         $this->expectException(ZipException::class);
         $this->expectExceptionMessage('can\'t open');
@@ -186,9 +181,9 @@ class ZipFileTest extends ZipTestCase
     public function testOpenFromStreamInvalidResourceType2()
     {
         $this->expectException(InvalidArgumentException::class);
-        $exceptionMessage = PHP_VERSION_ID < 80000 ?
-            'Invalid resource type' :
-            'Stream must be a resource';
+        $exceptionMessage = \PHP_VERSION_ID < 80000
+            ? 'Invalid resource type'
+            : 'Stream must be a resource';
         $this->expectExceptionMessage($exceptionMessage);
 
         $zipFile = new ZipFile();
@@ -1194,12 +1189,11 @@ class ZipFileTest extends ZipTestCase
      */
     public function testExtractFail3()
     {
+        static::skipTestForWindows();
+        static::skipTestForRootUser();
+
         $this->expectException(ZipException::class);
         $this->expectExceptionMessage('Destination is not writable directory');
-
-        if (static::skipTestForRootUser()) {
-            return;
-        }
 
         $zipFile = new ZipFile();
         $zipFile['file'] = 'content';
@@ -1453,13 +1447,8 @@ class ZipFileTest extends ZipTestCase
      */
     public function testAddFileCannotOpen()
     {
-        if (static::skipTestForWindows()) {
-            return;
-        }
-
-        if (static::skipTestForRootUser()) {
-            return;
-        }
+        static::skipTestForWindows();
+        static::skipTestForRootUser();
 
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('is not readable');
@@ -1801,13 +1790,8 @@ class ZipFileTest extends ZipTestCase
      */
     public function testSaveAsFileNotWritable()
     {
-        if (static::skipTestForWindows()) {
-            return;
-        }
-
-        if (static::skipTestForRootUser()) {
-            return;
-        }
+        static::skipTestForWindows();
+        static::skipTestForRootUser();
 
         static::assertTrue(mkdir($this->outputDirname, 0444, true));
         static::assertTrue(chmod($this->outputDirname, 0444));

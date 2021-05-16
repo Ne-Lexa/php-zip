@@ -192,32 +192,17 @@ abstract class ZipTestCase extends LegacyTestCase
         return null;
     }
 
-    /**
-     * @return bool
-     */
     public static function skipTestForRootUser()
     {
-        /** @noinspection PhpComposerExtensionStubsInspection */
         if (\extension_loaded('posix') && posix_getuid() === 0) {
             static::markTestSkipped('Skip the test for a user with root privileges');
-
-            return true;
         }
-
-        return false;
     }
 
-    /**
-     * @return bool
-     */
     public static function skipTestForWindows()
     {
         if (\DIRECTORY_SEPARATOR === '\\') {
             static::markTestSkipped('Skip on Windows');
-
-            return true;
         }
-
-        return false;
     }
 }
