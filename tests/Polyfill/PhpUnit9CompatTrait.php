@@ -24,7 +24,7 @@ trait PhpUnit9CompatTrait
     public static function assertFileDoesNotExist(string $filename, string $message = ''): void
     {
         if (version_compare(Version::id(), '9.1.0', '<')) {
-            static::assertFileNotExists($filename, $message);
+            self::assertFileNotExists($filename, $message);
 
             return;
         }
@@ -46,7 +46,7 @@ trait PhpUnit9CompatTrait
     public static function assertDirectoryDoesNotExist(string $directory, string $message = ''): void
     {
         if (version_compare(Version::id(), '9.1.0', '<')) {
-            static::assertDirectoryNotExists($directory, $message);
+            self::assertDirectoryNotExists($directory, $message);
 
             return;
         }

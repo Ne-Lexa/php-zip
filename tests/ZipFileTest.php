@@ -450,8 +450,6 @@ class ZipFileTest extends ZipTestCase
     {
         if (!\function_exists('mime_content_type')) {
             static::markTestSkipped('Function mime_content_type not exists');
-
-            return;
         }
         $outputFilename = $this->outputFilename;
         $this->outputFilename .= '.gif';

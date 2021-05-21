@@ -15,7 +15,7 @@ use PhpZip\ZipFile;
  *
  * @small
  */
-class PhpZipExtResourceTest extends ZipTestCase
+final class PhpZipExtResourceTest extends ZipTestCase
 {
     /**
      * Bug #7214 (zip_entry_read() binary safe).
@@ -33,11 +33,11 @@ class PhpZipExtResourceTest extends ZipTestCase
 
         foreach ($zipFile as $name => $contents) {
             $info = $zipFile->getEntryInfo($name);
-            static::assertSame(\strlen($contents), $info->getSize());
+            self::assertSame(\strlen($contents), $info->getSize());
         }
         $zipFile->close();
 
-        static::assertCorrectZipArchive($filename);
+        self::assertCorrectZipArchive($filename);
     }
 
     /**
@@ -57,13 +57,13 @@ class PhpZipExtResourceTest extends ZipTestCase
         $zipFile->saveAsFile($this->outputFilename);
         $zipFile->close();
 
-        static::assertCorrectZipArchive($this->outputFilename);
+        self::assertCorrectZipArchive($this->outputFilename);
 
         $zipFile->openFile($this->outputFilename);
-        static::assertCount(2, $zipFile);
-        static::assertTrue(isset($zipFile['1.txt']));
-        static::assertTrue(isset($zipFile['2.txt']));
-        static::assertSame($zipFile['2.txt'], $zipFile['1.txt']);
+        self::assertCount(2, $zipFile);
+        self::assertTrue(isset($zipFile['1.txt']));
+        self::assertTrue(isset($zipFile['2.txt']));
+        self::assertSame($zipFile['2.txt'], $zipFile['1.txt']);
         $zipFile->close();
     }
 
@@ -80,14 +80,14 @@ class PhpZipExtResourceTest extends ZipTestCase
      */
     public function testBug40228($filename)
     {
-        static::assertTrue(mkdir($this->outputDirname, 0755, true));
+        self::assertTrue(mkdir($this->outputDirname, 0755, true));
 
         $zipFile = new ZipFile();
         $zipFile->openFile($filename);
         $zipFile->extractTo($this->outputDirname);
         $zipFile->close();
 
-        static::assertDirectoryExists($this->outputDirname . '/test/empty');
+        self::assertDirectoryExists($this->outputDirname . '/test/empty');
     }
 
     /**
@@ -129,24 +129,16 @@ class PhpZipExtResourceTest extends ZipTestCase
     public function testBug70752()
     {
         if (\PHP_INT_SIZE === 4) { // php 32 bit
-            $this->expectException(
-                RuntimeException::class
-            );
-            $this->expectExceptionMessage(
-                'Traditional PKWARE Encryption is not supported in 32-bit PHP.'
-            );
+            $this->expectException(RuntimeException::class);
+            $this->expectExceptionMessage('Traditional PKWARE Encryption is not supported in 32-bit PHP.');
         } else { // php 64 bit
-            $this->expectException(
-                ZipAuthenticationException::class
-            );
-            $this->expectExceptionMessage(
-                'Invalid password'
-            );
+            $this->expectException(ZipAuthenticationException::class);
+            $this->expectExceptionMessage('Invalid password');
         }
 
         $filename = __DIR__ . '/resources/pecl/bug70752.zip';
 
-        static::assertTrue(mkdir($this->outputDirname, 0755, true));
+        self::assertTrue(mkdir($this->outputDirname, 0755, true));
 
         $zipFile = new ZipFile();
         $zipFile->openFile($filename);
@@ -154,9 +146,9 @@ class PhpZipExtResourceTest extends ZipTestCase
 
         try {
             $zipFile->extractTo($this->outputDirname);
-            static::markTestIncomplete('failed test');
+            self::markTestIncomplete('failed test');
         } catch (ZipException $exception) {
-            static::assertFileDoesNotExist($this->outputDirname . '/bug70752.txt');
+            self::assertFileDoesNotExist($this->outputDirname . '/bug70752.txt');
 
             throw $exception;
         }
