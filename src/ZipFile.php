@@ -1537,7 +1537,7 @@ class ZipFile implements \Countable, \ArrayAccess, \Iterator
         if (!\is_resource($handle)) {
             throw new InvalidArgumentException('handle is not resource');
         }
-        ftruncate($handle, 0);
+
         $this->writeZipToStream($handle);
         fclose($handle);
 
