@@ -66,9 +66,9 @@ final class Zip64ExtraFieldTest extends TestCase
         self::assertSame($extraField->getDiskStart(), $diskStart);
 
         $zipEntry = new ZipEntry('entry');
-        $zipEntry->setUncompressedSize($uncompressedSize !== null ? ZipConstants::ZIP64_MAGIC : 0xfffff);
-        $zipEntry->setCompressedSize($compressedSize !== null ? ZipConstants::ZIP64_MAGIC : 0xffff);
-        $zipEntry->setLocalHeaderOffset($localHeaderOffset !== null ? ZipConstants::ZIP64_MAGIC : 0xfff);
+        $zipEntry->setUncompressedSize($uncompressedSize !== null ? ZipConstants::ZIP64_MAGIC : 0xFFFFF);
+        $zipEntry->setCompressedSize($compressedSize !== null ? ZipConstants::ZIP64_MAGIC : 0xFFFF);
+        $zipEntry->setLocalHeaderOffset($localHeaderOffset !== null ? ZipConstants::ZIP64_MAGIC : 0xFFF);
 
         if ($localBinaryData !== null) {
             self::assertSame($localBinaryData, $extraField->packLocalFileData());

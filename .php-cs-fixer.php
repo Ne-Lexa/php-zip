@@ -105,9 +105,6 @@ $rules = [
      */
     'class_definition' => true,
 
-    
-    'class_keyword_remove' => false,
-
     // Namespace must not contain spacing, comments or PHPDoc.
     'clean_namespace' => true,
 
@@ -1758,7 +1755,7 @@ if (\PHP_SAPI === 'cli' && !class_exists(\PhpCsFixer\Config::class)) {
 
 return (new \PhpCsFixer\Config())
     ->setUsingCache(true)
-    ->setCacheFile(__DIR__ . '/.php_cs.cache')
+    ->setCacheFile(__DIR__ . '/.php-cs-fixer.cache')
     ->setRules($rules)
     ->setRiskyAllowed(true)
     ->setFinder(

@@ -56,7 +56,7 @@ use PhpZip\Model\ZipEntry;
 final class AsiExtraField implements ZipExtraField
 {
     /** @var int Header id */
-    public const HEADER_ID = 0x756e;
+    public const HEADER_ID = 0x756E;
 
     public const USER_GID_PID = 1000;
 

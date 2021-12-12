@@ -21,7 +21,7 @@ use PhpZip\Model\Extra\Fields\UnicodeCommentExtraField;
 final class UnicodeCommentExtraFieldTest extends AbstractUnicodeExtraFieldTest
 {
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
     protected function getUnicodeExtraFieldClassName()
     {

@@ -747,7 +747,7 @@ class ZipFileTest extends ZipTestCase
 
         $comment = 'Very long comment' . \PHP_EOL
             . 'Очень длинный комментарий' . \PHP_EOL;
-        $comment = str_repeat($comment, (int) ceil(0xffff / \strlen($comment)) + \strlen($comment) + 1);
+        $comment = str_repeat($comment, (int) ceil(0xFFFF / \strlen($comment)) + \strlen($comment) + 1);
 
         $zipFile = new ZipFile();
         $zipFile->setArchiveComment($comment);
@@ -840,7 +840,7 @@ class ZipFileTest extends ZipTestCase
 
         $comment = 'Very long comment' . \PHP_EOL
             . 'Очень длинный комментарий' . \PHP_EOL;
-        $comment = str_repeat($comment, (int) ceil(0xffff / \strlen($comment)) + \strlen($comment) + 1);
+        $comment = str_repeat($comment, (int) ceil(0xFFFF / \strlen($comment)) + \strlen($comment) + 1);
 
         $zipFile = new ZipFile();
         $zipFile->addFile(__FILE__, 'test');
@@ -925,7 +925,7 @@ class ZipFileTest extends ZipTestCase
             [-10],
             [-2],
             [10],
-            [0xffff],
+            [0xFFFF],
         ];
     }
 

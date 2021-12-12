@@ -94,7 +94,7 @@ final class ZipExtraDriver
 
     public static function getClassNameOrNull(int $headerId): ?string
     {
-        if ($headerId < 0 || $headerId > 0xffff) {
+        if ($headerId < 0 || $headerId > 0xFFFF) {
             throw new \InvalidArgumentException('$headerId out of range: ' . $headerId);
         }
 

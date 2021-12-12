@@ -36,7 +36,7 @@ class Zip64Test extends ZipTestCase
             static::markTestSkipped('Only php-64 bit.');
         }
 
-        $countFiles = 0xffff + 1;
+        $countFiles = 0xFFFF + 1;
 
         $zipFile = new ZipFile();
         for ($i = 0; $i < $countFiles; $i++) {

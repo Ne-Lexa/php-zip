@@ -53,7 +53,7 @@ class ExtraFieldsCollection implements \ArrayAccess, \Countable, \Iterator
 
     private function validateHeaderId(int $headerId): void
     {
-        if ($headerId < 0 || $headerId > 0xffff) {
+        if ($headerId < 0 || $headerId > 0xFFFF) {
             throw new \InvalidArgumentException('$headerId out of range');
         }
     }

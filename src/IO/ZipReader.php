@@ -216,7 +216,7 @@ class ZipReader
     protected function findEndOfCentralDirectory(): bool
     {
         $max = $this->size - ZipConstants::END_CD_MIN_LEN;
-        $min = $max >= 0xffff ? $max - 0xffff : 0;
+        $min = $max >= 0xFFFF ? $max - 0xFFFF : 0;
         // Search for End of central directory record.
         for ($position = $max; $position >= $min; $position--) {
             fseek($this->inStream, $position);
@@ -319,7 +319,7 @@ class ZipReader
             throw new ZipException('ZIP file spanning/splitting is not supported!');
         }
 
-        if ($entryCount < 0 || $entryCount > 0x7fffffff) {
+        if ($entryCount < 0 || $entryCount > 0x7FFFFFFF) {
             throw new ZipException('Total Number Of Entries In The Central Directory out of range!');
         }
 
