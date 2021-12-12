@@ -24,7 +24,7 @@ final class MathUtil
     public static function toSignedInt32(int $int): int
     {
         if (\PHP_INT_SIZE === 8) {
-            $int &= 0xffffffff;
+            $int &= 0xFFFFFFFF;
 
             if ($int & 0x80000000) {
                 return $int - 0x100000000;

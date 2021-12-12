@@ -91,7 +91,7 @@ class ResponseStream implements StreamInterface
     }
 
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      *
      * @noinspection PhpMissingReturnTypeInspection
      */
@@ -195,7 +195,7 @@ class ResponseStream implements StreamInterface
     }
 
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
     public function seek($offset, $whence = \SEEK_SET): void
     {
@@ -211,7 +211,7 @@ class ResponseStream implements StreamInterface
     }
 
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
     public function write($string)
     {
@@ -229,7 +229,7 @@ class ResponseStream implements StreamInterface
     }
 
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
     public function read($length): string
     {

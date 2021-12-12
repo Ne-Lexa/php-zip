@@ -201,7 +201,7 @@ class ZipEntry
 
         $length = \strlen($name);
 
-        if ($length > 0xffff) {
+        if ($length > 0xFFFF) {
             throw new InvalidArgumentException('Illegal zip entry name parameter');
         }
 
@@ -298,7 +298,7 @@ class ZipEntry
      */
     public function setCreatedOS(int $platform): self
     {
-        if ($platform < 0x00 || $platform > 0xff) {
+        if ($platform < 0x00 || $platform > 0xFF) {
             throw new InvalidArgumentException('Platform out of range');
         }
         $this->createdOS = $platform;
@@ -318,7 +318,7 @@ class ZipEntry
      */
     public function setExtractedOS(int $platform): self
     {
-        if ($platform < 0x00 || $platform > 0xff) {
+        if ($platform < 0x00 || $platform > 0xFF) {
             throw new InvalidArgumentException('Platform out of range');
         }
         $this->extractedOS = $platform;
@@ -485,7 +485,7 @@ class ZipEntry
      */
     public function setGeneralPurposeBitFlags(int $gpbf): self
     {
-        if ($gpbf < 0x0000 || $gpbf > 0xffff) {
+        if ($gpbf < 0x0000 || $gpbf > 0xFFFF) {
             throw new InvalidArgumentException('general purpose bit flags out of range');
         }
         $this->generalPurposeBitFlags = $gpbf;
@@ -617,7 +617,7 @@ class ZipEntry
      */
     public function setCompressionMethod(int $compressionMethod): self
     {
-        if ($compressionMethod < 0x0000 || $compressionMethod > 0xffff) {
+        if ($compressionMethod < 0x0000 || $compressionMethod > 0xFFFF) {
             throw new InvalidArgumentException('method out of range: ' . $compressionMethod);
         }
 
@@ -658,7 +658,7 @@ class ZipEntry
     public function setDosTime(int $dosTime): self
     {
         if (\PHP_INT_SIZE === 8) {
-            if ($dosTime < 0x00000000 || $dosTime > 0xffffffff) {
+            if ($dosTime < 0x00000000 || $dosTime > 0xFFFFFFFF) {
                 throw new InvalidArgumentException('DosTime out of range');
             }
         }
@@ -706,7 +706,7 @@ class ZipEntry
         $this->externalAttributes = $externalAttributes;
 
         if (\PHP_INT_SIZE === 8) {
-            if ($externalAttributes < 0x00000000 || $externalAttributes > 0xffffffff) {
+            if ($externalAttributes < 0x00000000 || $externalAttributes > 0xFFFFFFFF) {
                 throw new InvalidArgumentException('external attributes out of range: ' . $externalAttributes);
             }
         }
@@ -735,7 +735,7 @@ class ZipEntry
      */
     public function setInternalAttributes(int $internalAttributes): self
     {
-        if ($internalAttributes < 0x0000 || $internalAttributes > 0xffff) {
+        if ($internalAttributes < 0x0000 || $internalAttributes > 0xFFFF) {
             throw new InvalidArgumentException('internal attributes out of range');
         }
         $this->internalAttributes = $internalAttributes;
@@ -847,7 +847,7 @@ class ZipEntry
         if ($comment !== null) {
             $commentLength = \strlen($comment);
 
-            if ($commentLength > 0xffff) {
+            if ($commentLength > 0xFFFF) {
                 throw new InvalidArgumentException('Comment too long');
             }
 

@@ -24,7 +24,7 @@ use PhpZip\Model\ZipEntry;
 final class NtfsExtraField implements ZipExtraField
 {
     /** @var int Header id */
-    public const HEADER_ID = 0x000a;
+    public const HEADER_ID = 0x000A;
 
     /** @var int Tag ID */
     public const TIME_ATTR_TAG = 0x0001;

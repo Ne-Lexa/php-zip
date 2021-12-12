@@ -380,7 +380,7 @@ class ZipEntryTest extends TestCase
     {
         return [
             [-1],
-            [0xff + 1],
+            [0xFF + 1],
         ];
     }
 
@@ -808,7 +808,7 @@ class ZipEntryTest extends TestCase
     {
         return [
             [-1],
-            [0xffffffff + 1],
+            [0xFFFFFFFF + 1],
         ];
     }
 
@@ -951,7 +951,7 @@ class ZipEntryTest extends TestCase
     {
         return [
             [-1],
-            [0xffffffff + 1],
+            [0xFFFFFFFF + 1],
         ];
     }
 
@@ -980,7 +980,7 @@ class ZipEntryTest extends TestCase
     {
         return [
             [-1],
-            [0xffff + 1],
+            [0xFFFF + 1],
         ];
     }
 
@@ -1066,7 +1066,7 @@ class ZipEntryTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Comment too long');
 
-        $longComment = random_bytes(0xffff + 1);
+        $longComment = random_bytes(0xFFFF + 1);
         $zipEntry = new ZipEntry('entry');
         $zipEntry->setComment($longComment);
     }

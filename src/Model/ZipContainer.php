@@ -252,7 +252,7 @@ class ZipContainer extends ImmutableZipContainer
         if ($archiveComment !== null && $archiveComment !== '') {
             $length = \strlen($archiveComment);
 
-            if ($length > 0xffff) {
+            if ($length > 0xFFFF) {
                 throw new InvalidArgumentException('Length comment out of range');
             }
         }

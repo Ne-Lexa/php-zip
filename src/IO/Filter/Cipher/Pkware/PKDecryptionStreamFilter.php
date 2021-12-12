@@ -63,9 +63,9 @@ class PKDecryptionStreamFilter extends \php_user_filter
 
         // init check byte
         if ($entry->isDataDescriptorEnabled()) {
-            $this->checkByte = ($entry->getDosTime() >> 8) & 0xff;
+            $this->checkByte = ($entry->getDosTime() >> 8) & 0xFF;
         } else {
-            $this->checkByte = ($entry->getCrc() >> 24) & 0xff;
+            $this->checkByte = ($entry->getCrc() >> 24) & 0xFF;
         }
 
         $this->readLength = 0;
@@ -77,10 +77,15 @@ class PKDecryptionStreamFilter extends \php_user_filter
     /**
      * Decryption filter.
      *
-     * @throws ZipAuthenticationException
-     *
      * @todo USE FFI in php 7.4
      * @noinspection PhpDocSignatureInspection
+     *
+     * @param mixed $in
+     * @param mixed $out
+     * @param mixed $consumed
+     * @param mixed $closing
+     *
+     * @throws ZipAuthenticationException
      */
     public function filter($in, $out, &$consumed, $closing): int
     {
