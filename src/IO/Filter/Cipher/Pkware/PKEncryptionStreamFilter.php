@@ -66,7 +66,7 @@ class PKEncryptionStreamFilter extends \php_user_filter
         $this->context = new PKCryptContext($password);
 
         $crc = $entry->isDataDescriptorRequired() || $entry->getCrc() === ZipEntry::UNKNOWN
-            ? ($entry->getDosTime() & 0x0000ffff) << 16
+            ? ($entry->getDosTime() & 0x0000FFFF) << 16
             : $entry->getCrc();
 
         try {
@@ -75,8 +75,8 @@ class PKEncryptionStreamFilter extends \php_user_filter
             throw new \RuntimeException('Oops, our server is bust and cannot generate any random data.', 1, $e);
         }
 
-        $headerBytes[PKCryptContext::STD_DEC_HDR_SIZE - 1] = pack('c', ($crc >> 24) & 0xff);
-        $headerBytes[PKCryptContext::STD_DEC_HDR_SIZE - 2] = pack('c', ($crc >> 16) & 0xff);
+        $headerBytes[PKCryptContext::STD_DEC_HDR_SIZE - 1] = pack('c', ($crc >> 24) & 0xFF);
+        $headerBytes[PKCryptContext::STD_DEC_HDR_SIZE - 2] = pack('c', ($crc >> 16) & 0xFF);
 
         $this->headerBytes = $headerBytes;
         $this->writeLength = 0;
@@ -91,6 +91,11 @@ class PKEncryptionStreamFilter extends \php_user_filter
      * @todo USE FFI in php 7.4
      *
      * @noinspection PhpDocSignatureInspection
+     *
+     * @param mixed $in
+     * @param mixed $out
+     * @param mixed $consumed
+     * @param mixed $closing
      */
     public function filter($in, $out, &$consumed, $closing): int
     {

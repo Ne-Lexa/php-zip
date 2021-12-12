@@ -29,7 +29,7 @@ final class ApkAlignmentExtraField implements ZipExtraField
      *          well as for aligning the entries's data. See ZIP
      *          appnote.txt section 4.5 Extensible data fields.
      */
-    public const HEADER_ID = 0xd935;
+    public const HEADER_ID = 0xD935;
 
     /** @var int */
     public const ALIGNMENT_BYTES = 4;

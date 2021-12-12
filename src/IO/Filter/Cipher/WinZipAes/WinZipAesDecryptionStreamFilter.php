@@ -70,8 +70,14 @@ class WinZipAesDecryptionStreamFilter extends \php_user_filter
     }
 
     /**
-     * @throws ZipAuthenticationException
      * @noinspection PhpDocSignatureInspection
+     *
+     * @param mixed $in
+     * @param mixed $out
+     * @param mixed $consumed
+     * @param mixed $closing
+     *
+     * @throws ZipAuthenticationException
      */
     public function filter($in, $out, &$consumed, $closing): int
     {

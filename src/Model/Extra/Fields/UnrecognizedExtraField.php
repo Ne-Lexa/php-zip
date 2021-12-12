@@ -73,7 +73,7 @@ final class UnrecognizedExtraField implements ZipExtraField
     }
 
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
     public function packLocalFileData(): string
     {
@@ -81,7 +81,7 @@ final class UnrecognizedExtraField implements ZipExtraField
     }
 
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
     public function packCentralDirData(): string
     {

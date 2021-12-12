@@ -143,13 +143,13 @@ class ZipWriter
 
         $size = $nameLength + $extraLength;
 
-        if ($size > 0xffff) {
+        if ($size > 0xFFFF) {
             throw new ZipException(
                 sprintf(
                     '%s (the total size of %s bytes for the name, extra fields and comment exceeds the maximum size of %d bytes)',
                     $entry->getName(),
                     $size,
-                    0xffff
+                    0xFFFF
                 )
             );
         }
@@ -221,7 +221,7 @@ class ZipWriter
 
         $size = \strlen($extraData);
 
-        if ($size > 0xffff) {
+        if ($size > 0xFFFF) {
             throw new ZipException(
                 sprintf(
                     'Size extra out of range: %d. Extra data: %s',
@@ -678,7 +678,7 @@ class ZipWriter
     ): void {
         $cdEntriesCount = \count($this->zipContainer);
 
-        $cdEntriesZip64 = $cdEntriesCount > 0xffff;
+        $cdEntriesZip64 = $cdEntriesCount > 0xFFFF;
         $cdSizeZip64 = $centralDirectorySize > ZipConstants::ZIP64_MAGIC;
         $cdOffsetZip64 = $centralDirectoryOffset > ZipConstants::ZIP64_MAGIC;
 
@@ -768,10 +768,10 @@ class ZipWriter
                 0,
                 // total number of entries in the
                 // central directory on this disk  2 bytes
-                $cdEntriesZip64 ? 0xffff : $cdEntriesCount,
+                $cdEntriesZip64 ? 0xFFFF : $cdEntriesCount,
                 // total number of entries in
                 // the central directory           2 bytes
-                $cdEntriesZip64 ? 0xffff : $cdEntriesCount,
+                $cdEntriesZip64 ? 0xFFFF : $cdEntriesCount,
                 // size of the central directory   4 bytes
                 $cdSizeZip64 ? ZipConstants::ZIP64_MAGIC : $centralDirectorySize,
                 // offset of start of central

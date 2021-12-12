@@ -23,7 +23,7 @@ use PhpZip\Model\Extra\Fields\UnicodePathExtraField;
 final class UnicodePathExtraFieldTest extends AbstractUnicodeExtraFieldTest
 {
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
     protected function getUnicodeExtraFieldClassName()
     {

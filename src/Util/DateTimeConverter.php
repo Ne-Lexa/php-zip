@@ -65,12 +65,12 @@ class DateTimeConverter
         }
 //        date_default_timezone_set('UTC');
         return mktime(
-            (($dosTime >> 11) & 0x1f),         // hours
-            (($dosTime >> 5) & 0x3f),          // minutes
-            (($dosTime << 1) & 0x3e),          // seconds
-            (($dosTime >> 21) & 0x0f),         // month
-            (($dosTime >> 16) & 0x1f),         // day
-            ((($dosTime >> 25) & 0x7f) + 1980) // year
+            (($dosTime >> 11) & 0x1F),         // hours
+            (($dosTime >> 5) & 0x3F),          // minutes
+            (($dosTime << 1) & 0x3E),          // seconds
+            (($dosTime >> 21) & 0x0F),         // month
+            (($dosTime >> 16) & 0x1F),         // day
+            ((($dosTime >> 25) & 0x7F) + 1980) // year
         );
     }
 

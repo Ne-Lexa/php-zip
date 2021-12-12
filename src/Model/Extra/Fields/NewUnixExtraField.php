@@ -186,7 +186,7 @@ final class NewUnixExtraField implements ZipExtraField
 
     public function setUid(int $uid): void
     {
-        $this->uid = $uid & 0xffffffff;
+        $this->uid = $uid & 0xFFFFFFFF;
     }
 
     public function getGid(): int
@@ -196,7 +196,7 @@ final class NewUnixExtraField implements ZipExtraField
 
     public function setGid(int $gid): void
     {
-        $this->gid = $gid & 0xffffffff;
+        $this->gid = $gid & 0xFFFFFFFF;
     }
 
     public function getVersion(): int
