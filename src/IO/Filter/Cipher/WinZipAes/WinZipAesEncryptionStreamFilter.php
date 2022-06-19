@@ -89,6 +89,7 @@ class WinZipAesEncryptionStreamFilter extends \php_user_filter
                 if ($winZipExtra === null) {
                     throw new RuntimeException('$winZipExtra is null');
                 }
+                /** @psalm-var positive-int $saltSize */
                 $saltSize = $winZipExtra->getSaltSize();
 
                 try {
