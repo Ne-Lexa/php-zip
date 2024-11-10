@@ -16,35 +16,90 @@ final class ZipPlatform
     /** @var int MS-DOS OS */
     public const OS_DOS = 0;
 
+    /** @var int Amica OS */
+    public const OS_AMIGA = 1;
+
+    /** @var int OpenVMS */
+    public const OS_OPENVMS = 2;
+
     /** @var int Unix OS */
     public const OS_UNIX = 3;
 
-    /** @var int MacOS platform */
+    /** @var int VM/CMS */
+    public const OS_VM_CMS = 4;
+
+    /** @var int AtariST */
+    public const OS_ATARI_ST = 5;
+
+    /** @var int OS/2 (HPFS) */
+    public const OS_OS_2 = 6;
+
+    /** @var int Macintosh */
+    public const OS_MACINTOSH = 7;
+
+    /** @var int Z-System */
+    public const OS_Z_SYSTEM = 8;
+
+    /** @var int CPM */
+    public const OS_CPM = 9;
+
+    /** @var int Windows NTFS / TOPS-20 */
+    public const OS_WINDOWS_NTFS = 10;
+
+    /** @var int MVS */
+    public const OS_MVS = 11;
+
+    /** @var int VSE */
+    public const OS_VSE = 12;
+    public const OS_QDOS = 12;
+
+    /** @var int Acorn RISC OS */
+    public const OS_ACORN_RISC = 13;
+
+    /** @var int VFAT */
+    public const OS_VFAT = 14;
+
+    /** @var int alternate MVS */
+    public const OS_ALTERNATE_MVS = 15;
+
+    /** @var int BeOS */
+    public const OS_BEOS = 16;
+
+    /** @var int Tandem */
+    public const OS_TANDEM = 17;
+
+    /** @var int OS/400 or THEOS */
+    public const OS_OS_400 = 18;
+
+    /** @var int macOS */
     public const OS_MAC_OSX = 19;
+
+    /** @var int AtheOS */
+    public const OS_ATHEOS = 30;
 
     /** @var array Zip Platforms */
     private const PLATFORMS = [
         self::OS_DOS => 'MS-DOS',
-        1 => 'Amiga',
-        2 => 'OpenVMS',
+        self::OS_AMIGA => 'Amiga',
+        self::OS_OPENVMS => 'OpenVMS',
         self::OS_UNIX => 'Unix',
-        4 => 'VM/CMS',
-        5 => 'Atari ST',
-        6 => 'HPFS (OS/2, NT 3.x)',
-        7 => 'Macintosh',
-        8 => 'Z-System',
-        9 => 'CP/M',
-        10 => 'Windows NTFS or TOPS-20',
-        11 => 'MVS or NTFS',
-        12 => 'VSE or SMS/QDOS',
-        13 => 'Acorn RISC OS',
-        14 => 'VFAT',
-        15 => 'alternate MVS',
-        16 => 'BeOS',
-        17 => 'Tandem',
-        18 => 'OS/400',
+        self::OS_VM_CMS => 'VM/CMS',
+        self::OS_ATARI_ST => 'Atari ST',
+        self::OS_OS_2 => 'HPFS (OS/2, NT 3.x)',
+        self::OS_MACINTOSH => 'Macintosh',
+        self::OS_Z_SYSTEM => 'Z-System',
+        self::OS_CPM => 'CP/M',
+        self::OS_WINDOWS_NTFS => 'Windows NTFS or TOPS-20',
+        self::OS_MVS => 'MVS or NTFS',
+        self::OS_VSE => 'VSE or SMS/QDOS',
+        self::OS_ACORN_RISC => 'Acorn RISC OS',
+        self::OS_VFAT => 'VFAT',
+        self::OS_ALTERNATE_MVS => 'alternate MVS',
+        self::OS_BEOS => 'BeOS',
+        self::OS_TANDEM => 'Tandem',
+        self::OS_OS_400 => 'OS/400',
         self::OS_MAC_OSX => 'OS/X (Darwin)',
-        30 => 'AtheOS/Syllable',
+        self::OS_ATHEOS => 'AtheOS/Syllable',
     ];
 
     public static function getPlatformName(int $platform): string
