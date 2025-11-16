@@ -12,7 +12,7 @@ jobs:
             extensions:       bz2, dom, iconv, fileinfo, openssl, xml, zlib
             key:              cache-v1
             PHPUNIT_COVERAGE: 0
-            PHP_INI:          date.timezone='UTC', memory_limit=-1, opcache.enable=1, opcache.enable_cli=1
+            PHP_INI:          date.timezone=UTC, memory_limit=-1, opcache.enable=1, opcache.enable_cli=1
 
         strategy:
             matrix:
@@ -53,12 +53,12 @@ jobs:
             -
                 name: Disable JIT for PHP 8 on Linux and Mac
                 if:   (matrix.os == 'ubuntu-latest' || matrix.os == 'macos-latest') && matrix.php != '7.4'
-                run:  echo "PHP_INI=\"${PHP_INI}, opcache.jit=0, opcache.jit_buffer_size=0\"" >> $GITHUB_ENV
+                run:  echo "PHP_INI=${PHP_INI}, opcache.jit=0, opcache.jit_buffer_size=0" >> "$GITHUB_ENV"
 
             -
                 name: Disable JIT for PHP 8 on Windows
                 if:   matrix.os == 'windows-latest' && matrix.php != '7.4'
-                run:  echo "PHP_INI=\"$PHP_INI, opcache.jit=0, opcache.jit_buffer_size=0\"" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+                run:  echo "PHP_INI=$env:PHP_INI, opcache.jit=0, opcache.jit_buffer_size=0" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
 
             -
                 name: Install PHP with extensions
